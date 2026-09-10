@@ -1,9 +1,9 @@
-import type { MotionParams, Preset } from "./types";
+﻿import type { MotionParams, Preset } from "./types";
 
 /**
  * Canonical camera vocabulary. Every preset picks one. Keeping these as ids
  * (not free text) is what lets you swap the underlying model without the
- * preset library rotting — you retrain/remap the LoRA, the id stays.
+ * preset library rotting â€” you retrain/remap the LoRA, the id stays.
  */
 export const CAMERA_MOVES = [
   "static",
@@ -59,7 +59,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", slow motion, static camera",
     motion: motion({ cameraMove: "crash_zoom_in", intensity: 0.95, shakiness: 0.35 }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-crash-zoom", weight: 0.9 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-crash-zoom", weight: 0.9 }],
     swatch: ["#ff5f6d", "#ffc371"],
   },
   {
@@ -75,7 +76,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", fast motion, zoom out, shaky",
     motion: motion({ cameraMove: "dolly_in", intensity: 0.4, shakiness: 0.05, durationSec: 5 }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-dolly", weight: 0.6 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-dolly", weight: 0.6 }],
     swatch: ["#243949", "#517fa4"],
   },
   {
@@ -91,7 +93,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", subject rotating, static camera, warping background",
     motion: motion({ cameraMove: "orbit_left", intensity: 0.65, shakiness: 0.08 }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-orbit", weight: 0.8 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-orbit", weight: 0.8 }],
     swatch: ["#0f2027", "#2c5364"],
   },
   {
@@ -107,7 +110,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", tripod, static, slow",
     motion: motion({ cameraMove: "fpv_drone", intensity: 0.9, shakiness: 0.45, durationSec: 5 }),
     preferredModel: "wan2.2-t2v-a14b",
-    loras: [{ repo: "shotforge/wan22-fpv", weight: 0.85 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-fpv", weight: 0.85 }],
     swatch: ["#1e3c72", "#2a5298"],
   },
   {
@@ -123,7 +127,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", subject moving normally, fast subject motion",
     motion: motion({ cameraMove: "bullet_time", intensity: 0.8, shakiness: 0.02 }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-bullettime", weight: 0.9 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-bullettime", weight: 0.9 }],
     swatch: ["#3a1c71", "#d76d77"],
   },
   {
@@ -139,7 +144,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", push in, close up, cramped framing",
     motion: motion({ cameraMove: "crane_up", intensity: 0.7, shakiness: 0.06 }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-crane", weight: 0.7 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-crane", weight: 0.7 }],
     swatch: ["#134e5e", "#71b280"],
   },
 
@@ -157,7 +163,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", subject intact, no particles",
     motion: motion({ cameraMove: "dolly_in", intensity: 0.5, shakiness: 0.1 }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-disintegrate", weight: 1.0 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-disintegrate", weight: 1.0 }],
     swatch: ["#870000", "#190a05"],
   },
   {
@@ -173,7 +180,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", subject on ground, falling",
     motion: motion({ cameraMove: "crane_down", intensity: 0.6, shakiness: 0.12 }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-levitate", weight: 0.85 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-levitate", weight: 0.85 }],
     swatch: ["#4568dc", "#b06ab3"],
   },
   {
@@ -189,7 +197,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", matte surface, static",
     motion: motion({ cameraMove: "orbit_right", intensity: 0.55, shakiness: 0.05 }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-chrome", weight: 0.9 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-chrome", weight: 0.9 }],
     swatch: ["#bdc3c7", "#2c3e50"],
   },
   {
@@ -205,7 +214,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", cartoon fire, no flames",
     motion: motion({ cameraMove: "handheld_follow", intensity: 0.7, shakiness: 0.3 }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-fire", weight: 0.95 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-fire", weight: 0.95 }],
     swatch: ["#f12711", "#f5af19"],
   },
 
@@ -225,7 +235,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", cluttered background, hands, people, changing product shape",
     motion: motion({ cameraMove: "product_spin_360", intensity: 0.5, shakiness: 0.0, durationSec: 5 }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-turntable", weight: 0.8 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-turntable", weight: 0.8 }],
     swatch: ["#e0eafc", "#8ea7c9"],
   },
   {
@@ -241,7 +252,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", studio sterile look, floating product, deformed hands",
     motion: motion({ cameraMove: "handheld_follow", intensity: 0.45, shakiness: 0.35, aspect: "9:16" }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-ugc-hands", weight: 0.75 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-ugc-hands", weight: 0.75 }],
     swatch: ["#f7971e", "#ffd200"],
   },
   {
@@ -257,7 +269,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", fast motion, spilled mess, murky liquid",
     motion: motion({ cameraMove: "dolly_in", intensity: 0.35, shakiness: 0.04, aspect: "9:16" }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-liquid", weight: 0.85 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-liquid", weight: 0.85 }],
     swatch: ["#00c6ff", "#0072ff" ],
   },
   {
@@ -273,7 +286,8 @@ export const PRESETS: Preset[] = [
     negative: BASE_NEGATIVE + ", dark scene, cluttered, product obscured",
     motion: motion({ cameraMove: "top_down_reveal", intensity: 0.55, shakiness: 0.06, aspect: "1:1" }),
     preferredModel: "wan2.2-i2v-a14b",
-    loras: [{ repo: "shotforge/wan22-topdown", weight: 0.7 }],
+    loras: [],
+    plannedLoras: [{ repo: "nosh-tv/wan22-topdown", weight: 0.7 }],
     swatch: ["#ede574", "#e1f5c4"],
   },
   {

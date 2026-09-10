@@ -1,4 +1,4 @@
-import type { Job, ModelId, VideoProvider } from "../types";
+import type { Job, Modality, ModelId, VideoProvider } from "../types";
 
 /**
  * fal.ai queue API adapter.
@@ -20,6 +20,12 @@ type Family = "wan" | "ltx";
 
 interface Endpoint {
   family: Family;
+  /**
+   * What this endpoint can actually do. A fal endpoint is per-modality — the
+   * LTX one is image-to-video only — so a t2v job routed here would 422 on a
+   * missing image_url. Checked up front to fail with a useful message instead.
+   */
+  modalities: Modality[];
   /** Endpoint without LoRA support. */
   base: string;
   /** Variant accepting a `loras` array, when one exists. */
@@ -29,21 +35,25 @@ interface Endpoint {
 const ENDPOINTS: Partial<Record<ModelId, Endpoint>> = {
   "wan2.2-i2v-a14b": {
     family: "wan",
+    modalities: ["i2v"],
     base: "fal-ai/wan/v2.2-a14b/image-to-video",
     lora: "fal-ai/wan/v2.2-a14b/image-to-video/lora",
   },
   "wan2.2-t2v-a14b": {
     family: "wan",
+    modalities: ["t2v"],
     base: "fal-ai/wan/v2.2-a14b/text-to-video",
     lora: "fal-ai/wan/v2.2-a14b/text-to-video/lora",
   },
   "wan2.1-i2v-14b": {
     family: "wan",
+    modalities: ["i2v"],
     base: "fal-ai/wan-i2v",
     lora: "fal-ai/wan-i2v-lora",
   },
   "ltx-video-13b": {
     family: "ltx",
+    modalities: ["i2v"],
     base: "fal-ai/ltx-video-13b-distilled/image-to-video",
   },
 };
@@ -135,6 +145,12 @@ export const falProvider: VideoProvider = {
   async run(job, ctx) {
     const ep = ENDPOINTS[job.model];
     if (!ep) throw new Error(`fal has no endpoint mapped for ${job.model}`);
+    if (!ep.modalities.includes(job.modality)) {
+      throw new Error(
+        `fal's ${job.model} endpoint is ${ep.modalities.join("/")}-only, but this job is ${job.modality}` +
+          (job.modality === "t2v" ? " — supply a source image, or pick a text-to-video preset." : ""),
+      );
+    }
     if (job.modality === "i2v" && !job.imageUrl) {
       throw new Error("This preset is image-to-video and needs a source image");
     }

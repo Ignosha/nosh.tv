@@ -64,7 +64,16 @@ export interface Preset {
   negative: string;
   motion: MotionParams;
   preferredModel: ModelId;
+  /**
+   * LoRAs that actually exist and resolve. Sent to the provider. Keep empty
+   * until weights are real — a bad path fails the whole generation.
+   */
   loras: LoraRef[];
+  /**
+   * The training roadmap for this shot: LoRAs worth having but not yet trained.
+   * Never sent to a provider. Move an entry into `loras` once it's real.
+   */
+  plannedLoras?: LoraRef[];
   /** Two hex colors for the card gradient until you have real thumbnails. */
   swatch: [string, string];
 }
