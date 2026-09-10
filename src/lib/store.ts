@@ -1,68 +1,94 @@
-import { promises as fs } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import type { Job } from "./types";
 
 /**
- * File-backed job store. Deliberately dependency-free so `npm install` can't
- * fail on native build tools. Swap for Postgres the day you have two users at
- * once — the interface below is all the rest of the app knows about.
+ * File-backed job store. Dependency-free on purpose so `npm install` can't fail
+ * on native build tools. Swap for Postgres the day you have two users at once —
+ * the exported functions are all the rest of the app knows about.
+ *
+ * State lives on `globalThis`, which is not a shortcut: Next.js bundles each
+ * route handler separately, so a module-level `let` gives /api/generate and
+ * /api/jobs/[id] *different* copies of the cache. The writer's updates then
+ * never reach the reader and every job appears frozen mid-progress. A
+ * globalThis singleton is the standard fix, and it survives dev hot-reloads too.
  */
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const JOBS_FILE = path.join(DATA_DIR, "jobs.json");
+const MAX_JOBS = 200;
 
-// In-process cache so the polling UI doesn't hammer the disk.
-let cache: Map<string, Job> | null = null;
-let writeChain: Promise<void> = Promise.resolve();
+interface StoreState {
+  jobs: Map<string, Job>;
+  writeChain: Promise<void>;
+}
 
-async function load(): Promise<Map<string, Job>> {
-  if (cache) return cache;
-  try {
-    const raw = await fs.readFile(JOBS_FILE, "utf8");
-    const arr = JSON.parse(raw) as Job[];
-    cache = new Map(arr.map((j) => [j.id, j]));
-  } catch {
-    cache = new Map();
+const globalRef = globalThis as unknown as { __noshJobStore?: StoreState };
+
+function state(): StoreState {
+  if (!globalRef.__noshJobStore) {
+    let jobs: Map<string, Job>;
+    try {
+      const arr = JSON.parse(readFileSync(JOBS_FILE, "utf8")) as Job[];
+      jobs = new Map(arr.map((j) => [j.id, j]));
+    } catch {
+      jobs = new Map();
+    }
+    globalRef.__noshJobStore = { jobs, writeChain: Promise.resolve() };
   }
-  return cache;
+  return globalRef.__noshJobStore;
 }
 
-/** Serialised writes — concurrent route handlers would otherwise clobber. */
-function persist(): Promise<void> {
-  writeChain = writeChain.then(async () => {
-    const jobs = [...(cache?.values() ?? [])]
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, 200);
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.writeFile(JOBS_FILE, JSON.stringify(jobs, null, 2), "utf8");
+/**
+ * Serialised, debounced write-behind. The map is the source of truth; the file
+ * is only there so restarts don't lose history, so callers never wait on it.
+ */
+function persist(): void {
+  const s = state();
+  s.writeChain = s.writeChain.then(async () => {
+    const jobs = [...s.jobs.values()].sort((a, b) => b.createdAt - a.createdAt).slice(0, MAX_JOBS);
+    try {
+      mkdirSync(DATA_DIR, { recursive: true });
+      writeFileSync(JOBS_FILE, JSON.stringify(jobs, null, 2), "utf8");
+    } catch {
+      // Durability is a nice-to-have here; never fail a request over it.
+    }
   });
-  return writeChain;
 }
 
-export async function putJob(job: Job): Promise<Job> {
-  const map = await load();
-  map.set(job.id, job);
-  await persist();
+/**
+ * Mutations are synchronous against the in-memory map. This matters: an
+ * `await` between reading a job and writing it back opens a window where a
+ * concurrent progress update clobbers a terminal status.
+ */
+export function putJob(job: Job): Job {
+  state().jobs.set(job.id, job);
+  persist();
   return job;
 }
 
-export async function patchJob(id: string, patch: Partial<Job>): Promise<Job | undefined> {
-  const map = await load();
-  const existing = map.get(id);
+export function patchJob(id: string, patch: Partial<Job>): Job | undefined {
+  const s = state();
+  const existing = s.jobs.get(id);
   if (!existing) return undefined;
+
+  // Never let a late progress tick resurrect a job that already finished.
+  if ((existing.status === "succeeded" || existing.status === "failed") && !patch.status) {
+    return existing;
+  }
+
   const next: Job = { ...existing, ...patch, updatedAt: Date.now() };
-  map.set(id, next);
-  await persist();
+  s.jobs.set(id, next);
+  persist();
   return next;
 }
 
-export async function getJob(id: string): Promise<Job | undefined> {
-  return (await load()).get(id);
+export function getJob(id: string): Job | undefined {
+  return state().jobs.get(id);
 }
 
-export async function listJobs(limit = 30): Promise<Job[]> {
-  const map = await load();
-  return [...map.values()].sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
+export function listJobs(limit = 30): Job[] {
+  return [...state().jobs.values()].sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
 }
 
 export function newId(): string {

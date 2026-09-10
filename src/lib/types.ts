@@ -24,18 +24,33 @@ export interface MotionParams {
   /** 0..1 — handheld/organic noise. */
   shakiness: number;
   durationSec: number;
+  /**
+   * Generation fps. Wan 2.2 is trained at 16 — asking for 24 costs 50% more
+   * frames for motion that isn't 50% better. Prefer 16 + film interpolation.
+   */
   fps: number;
   aspect: Aspect;
+  /** Render resolution. Dropping to 480p is the cheapest quality/cost lever. */
+  resolution?: Resolution;
   /** Sampler steps. Distilled models want 4-8, full models 25-40. */
   steps?: number;
   guidance?: number;
   seed?: number;
 }
 
+export type Resolution = "480p" | "580p" | "720p";
+
 export interface LoraRef {
-  /** HF repo or local filename, e.g. "shotforge/wan22-crash-zoom-v3" */
+  /** HF repo, or a URL to weights, e.g. "nosh-tv/wan22-crash-zoom-v3" */
   repo: string;
   weight: number;
+  /**
+   * Which Wan 2.2 expert to apply to. The A14B model denoises in two stages:
+   * the high-noise expert lays down motion and composition, the low-noise one
+   * resolves detail and texture. Camera-motion LoRAs belong on "high";
+   * style/texture LoRAs on "low".
+   */
+  transformer?: "high" | "low" | "both";
 }
 
 export interface Preset {

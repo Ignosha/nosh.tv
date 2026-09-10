@@ -33,10 +33,13 @@ function motion(p: Partial<MotionParams> & Pick<MotionParams, "cameraMove">): Mo
     intensity: 0.7,
     shakiness: 0.15,
     durationSec: 5,
-    fps: 24,
+    // Wan 2.2's native rate. The fal adapter interpolates up to ~32fps on the
+    // way out, which looks better than paying to generate 24 real frames.
+    fps: 16,
     aspect: "16:9",
-    steps: 30,
-    guidance: 5,
+    resolution: "720p",
+    steps: 27,
+    guidance: 3.5,
     ...p,
   };
 }
@@ -281,7 +284,8 @@ export const PRESETS: Preset[] = [
     modality: ["i2v", "t2v"],
     promptTemplate: "{{subject}}, cinematic, smooth natural camera movement, well lit",
     negative: BASE_NEGATIVE,
-    motion: motion({ cameraMove: "dolly_in", intensity: 0.4, shakiness: 0.1, steps: 8, guidance: 3, durationSec: 4 }),
+    // LTX is distilled: 8 steps per pass, and it runs natively at 24fps.
+    motion: motion({ cameraMove: "dolly_in", intensity: 0.4, shakiness: 0.1, steps: 8, fps: 24, durationSec: 4 }),
     preferredModel: "ltx-video-13b",
     loras: [],
     swatch: ["#5f2c82", "#49a09d"],

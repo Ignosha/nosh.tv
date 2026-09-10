@@ -58,7 +58,7 @@ These are real, not TODO theatre:
 - **No auth, no credits, no rate limiting.** Anyone who can reach the server can spend your GPU budget.
 - **No moderation.** You need an input and output classifier before this touches the public internet.
 - **The runner dies with the process.** Serverless deploys will drop in-flight jobs. Needs a queue + worker.
-- **Provider endpoint slugs are unverified.** Check fal.ai/models and replicate.com/explore.
+- **Replicate endpoint slugs are unverified.** fal's are checked against its API docs; Replicate's are not — verify at replicate.com/explore before relying on that provider.
 - **LoRA repos in `presets.ts` are placeholders.** They name LoRAs you have to train (see MODEL_STRATEGY.md).
 - **No first-frame generation.** i2v presets need a source image; a real product generates that too.
 

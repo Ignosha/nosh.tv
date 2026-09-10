@@ -40,14 +40,28 @@ that with a stack of LoRAs trained per shot type.
    here: perfect labels, no licensing risk, infinite variations.
 2. **Caption consistently.** Same vocabulary every time — this is why `CAMERA_MOVES` in
    `presets.ts` is a fixed id list and not free text.
-3. **Train** with `diffusion-pipe` or `musubi-tuner`. Rank 32–64 is usually plenty.
-4. **Cost:** ~4–12 hours on one A100/H100. At ~$2–3/hr that's **$10–40 of GPU per LoRA**,
-   plus your data cost. Budget a few hundred dollars and several days of iteration per shot
-   that you actually care about.
+3. **Train.** Two routes, and the hosted one removes the biggest objection to this plan:
+   - **Hosted:** `fal-ai/wan-22-trainer/i2v-a14b` (and the `t2v-a14b` sibling) trains a Wan 2.2
+     LoRA from a dataset of images, videos, or both. No GPU to rent, no environment to build.
+   - **Self-hosted:** `diffusion-pipe` or `musubi-tuner` on a rented A100/H100. More control,
+     more yak-shaving. Rank 32–64 is usually plenty.
+4. **Cost:** ~4–12 hours on one A100/H100. At ~$2–3/hr that's **$10–40 of GPU per LoRA**, plus
+   your data cost. Budget a few hundred dollars and several days of iteration per shot you
+   actually care about.
 5. **Evaluate** against a fixed prompt set, same seeds, before/after. Keep the eval set in git.
 
+**Serving them:** LoRAs only apply on fal's `/lora` endpoint variants
+(`fal-ai/wan/v2.2-a14b/image-to-video/lora`). The base endpoints accept a `loras` array and
+silently ignore it, which presents as "my LoRA did nothing" rather than an error — the adapter
+in `src/lib/providers/fal.ts` routes on `preset.loras.length` and throws instead.
+
+**Which expert to target.** Wan 2.2 A14B denoises in two stages: a high-noise expert that lays
+down motion and composition, and a low-noise one that resolves detail and texture. Each LoRA
+declares `transformer: "high" | "low" | "both"`. Camera-motion LoRAs go on `"high"` — putting a
+motion LoRA on the low-noise expert is a common way to train something that does almost nothing.
+
 Ten good LoRAs is a differentiated product. That is the entire "custom model" story, and it is
-achievable by one person.
+achievable by one person — and, given the hosted trainer, without ever touching a GPU yourself.
 
 **Beyond LoRA**, when you have traction: a ControlNet-style camera-pose adapter trained on
 Blender-rendered pose/video pairs gives you *parametric* camera control — the user drags a path

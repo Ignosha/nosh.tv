@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     estCostUsd: estimateCostUsd(model, motion.durationSec, provider.id),
   };
 
-  await putJob(job);
+  putJob(job);
   startJob(job);
 
   return NextResponse.json({ job }, { status: 202 });
