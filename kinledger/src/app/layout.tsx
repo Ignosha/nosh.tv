@@ -16,14 +16,21 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f2ede2" },
-    { media: "(prefers-color-scheme: dark)", color: "#13120f" },
+    { media: "(prefers-color-scheme: light)", color: "#0d0c0a" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0c0a" },
   ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("kl-theme")==="light")document.documentElement.dataset.theme="light"}catch(e){}`,
+          }}
+        />
+      </head>
       <body>
         <a href="#main" className="sr-only">Skip to content</a>
         <Masthead />

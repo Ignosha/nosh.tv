@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { ledgerReading } from "@/lib/chains";
 import { IntakeForm } from "@/components/IntakeForm";
+import { EstateFigure } from "@/components/EstateFigure";
+import { AddressInstrument } from "@/components/AddressInstrument";
+import { Mark } from "@/components/Mark";
 
 export const revalidate = 60;
 
@@ -10,67 +13,75 @@ const usd = (n: number | null) =>
 export default async function Home() {
   const r = await ledgerReading();
   const readAt = new Date(r.readAt);
-  const anyLive = r.height !== null || r.btc !== null;
 
   return (
     <>
+      <div className="wrap">
+        <div className="desk-strip" aria-label="Live ledger status">
+          <span className="title">
+            <Mark size={18} /> The Estate Desk
+          </span>
+          <span>
+            Bitcoin ledger / {r.height === null ? "UNAVAILABLE" : <b>LIVE · block #{r.height.toLocaleString("en-US")}</b>}
+          </span>
+          <span className="right">
+            BTC {usd(r.btc)} · ETH {usd(r.eth)} · SOL {usd(r.sol)} · {readAt.toUTCString().slice(0, 16)}
+          </span>
+        </div>
+      </div>
+
       <section className="hero">
         <div className="wrap hero-grid">
           <div>
-            <span className="label">Crypto estate recovery</span>
+            <span className="eyebrow">Crypto estate recovery for families &amp; attorneys</span>
             <h1>
-              What they left is still <em>on the ledger.</em>
+              What they left is still on the ledger.
+              <br />
+              <em>Let&rsquo;s find it.</em>
             </h1>
             <p className="lede">
               Kinledger finds the crypto a loved one left behind, recovers what can honestly be recovered, and documents
               its value for the estate — working alongside your attorney, never around them.
             </p>
             <div className="hero-actions">
-              <Link href="#open-a-case" className="btn btn-primary">Open a case</Link>
-              <Link href="/scan" className="btn">Run a free estate scan</Link>
+              <Link href="/scan" className="btn btn-solid">
+                Run a free estate scan <span className="arrow">↗</span>
+              </Link>
+              <Link href="#open-a-case" className="btn">
+                Open a case <span className="arrow">→</span>
+              </Link>
             </div>
-            <ul className="hero-promises">
-              <li>No upfront fee for recovery</li>
-              <li>We never hold your funds</li>
-              <li>We never ask for a recovery phrase</li>
-            </ul>
-          </div>
-
-          <aside className="exhibit" data-tab="Exhibit A" aria-label="Live reading of the public ledger">
-            <div className="exhibit-head">
-              <span className="serif" style={{ fontSize: 22 }}>Public ledger, read now</span>
-              {anyLive ? <span className="stamp stamp-found">Live</span> : <span className="stamp stamp-pending">Unavailable</span>}
-            </div>
-            <ul className="ledger-rows">
-              <li>
-                <span className="k">Bitcoin block height</span>
-                <span>{r.height === null ? "unavailable" : "#" + r.height.toLocaleString("en-US")}</span>
-              </li>
-              <li>
-                <span className="k">BTC / USD</span>
-                <span>{usd(r.btc)}</span>
-              </li>
-              <li>
-                <span className="k">ETH / USD</span>
-                <span>{usd(r.eth)}</span>
-              </li>
-              <li>
-                <span className="k">SOL / USD</span>
-                <span>{usd(r.sol)}</span>
-              </li>
-            </ul>
-            <p className="faint" style={{ fontSize: 13, margin: "14px 0 0" }}>
-              Read {readAt.toISOString().slice(0, 16).replace("T", " ")} UTC from Blockstream and Coinbase. Every figure in
-              an estate report is read the same way: from the ledger itself, with its source named.
+            <p className="fine" style={{ marginTop: 18 }}>
+              No upfront recovery fee · We never hold your funds · We never ask for a recovery phrase
             </p>
-          </aside>
+          </div>
+          <EstateFigure />
+        </div>
+      </section>
+
+      <section className="section" id="instrument">
+        <div className="wrap">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24, flexWrap: "wrap", marginBottom: 32 }}>
+            <div>
+              <span className="label">01 / Try the instrument</span>
+              <h2 className="serif" style={{ fontSize: "clamp(32px, 4.4vw, 52px)", lineHeight: 1.04, letterSpacing: "-0.02em", margin: "12px 0 0" }}>
+                Start with one address.
+                <br />
+                <em style={{ color: "var(--accent)" }}>Keep the record.</em>
+              </h2>
+            </div>
+            <p className="muted" style={{ maxWidth: 24 + "em", margin: 0 }}>
+              Read what an address holds today and on the date of death, with every source named.
+            </p>
+          </div>
+          <AddressInstrument />
         </div>
       </section>
 
       <section className="section" id="problem">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 01</div>
+            <div className="docket-no">§ 02</div>
             <div>
               <h2>
                 Crypto doesn&rsquo;t pass on <em>by itself.</em>
@@ -104,7 +115,7 @@ export default async function Home() {
       <section className="section" id="services">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 02</div>
+            <div className="docket-no">§ 03</div>
             <div>
               <h2>
                 Services and <em>fees.</em>
@@ -157,7 +168,7 @@ export default async function Home() {
       <section className="section" id="process">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 03</div>
+            <div className="docket-no">§ 04</div>
             <div>
               <h2>
                 How a case <em>runs.</em>
@@ -193,7 +204,7 @@ export default async function Home() {
       <section className="section" id="attorneys">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 04</div>
+            <div className="docket-no">§ 05</div>
             <div>
               <h2>
                 For estate <em>attorneys.</em>
@@ -227,7 +238,7 @@ export default async function Home() {
       <section className="section" id="rules">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 05</div>
+            <div className="docket-no">§ 06</div>
             <div>
               <h2>
                 The rules we <em>keep.</em>
@@ -251,7 +262,7 @@ export default async function Home() {
       <section className="section" id="scan">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 06</div>
+            <div className="docket-no">§ 07</div>
             <div>
               <h2>
                 Start with a free <em>estate scan.</em>
@@ -270,7 +281,7 @@ export default async function Home() {
       <section className="section faq" id="faq">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 07</div>
+            <div className="docket-no">§ 08</div>
             <div>
               <h2>
                 Questions <em>families ask.</em>
@@ -303,7 +314,7 @@ export default async function Home() {
       <section className="section" id="open-a-case">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 08</div>
+            <div className="docket-no">§ 09</div>
             <div>
               <h2>
                 Open a <em>case.</em>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mark } from "./Mark";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function Masthead() {
   return (
@@ -15,7 +16,8 @@ export function Masthead() {
           <Link href="/#services" className="nav-hide">Services</Link>
           <Link href="/#attorneys" className="nav-hide">For attorneys</Link>
           <Link href="/#fees" className="nav-hide">Fees</Link>
-          <Link href="/scan">Estate scan</Link>
+          <Link href="/scan" className="nav-hide-sm">Estate scan</Link>
+          <ThemeToggle />
           <Link href="/#open-a-case" className="btn btn-small btn-primary">Open a case</Link>
         </nav>
       </div>
