@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { ledgerReading } from "@/lib/chains";
 import { IntakeForm } from "@/components/IntakeForm";
-import { EstateFigure } from "@/components/EstateFigure";
+import { CaseFolders } from "@/components/CaseFolders";
 import { AddressInstrument } from "@/components/AddressInstrument";
-import { Mark } from "@/components/Mark";
 
 export const revalidate = 60;
 
@@ -16,62 +15,53 @@ export default async function Home() {
 
   return (
     <>
-      <div className="wrap">
-        <div className="desk-strip" aria-label="Live ledger status">
-          <span className="title">
-            <Mark size={18} /> The Estate Desk
-          </span>
-          <span>
-            Bitcoin ledger / {r.height === null ? "UNAVAILABLE" : <b>LIVE · block #{r.height.toLocaleString("en-US")}</b>}
-          </span>
-          <span className="right">
-            BTC {usd(r.btc)} · ETH {usd(r.eth)} · SOL {usd(r.sol)} · {readAt.toUTCString().slice(0, 16)}
-          </span>
-        </div>
-      </div>
-
       <section className="hero">
         <div className="wrap hero-grid">
           <div>
-            <span className="eyebrow">Crypto estate recovery for families &amp; attorneys</span>
+            <span className="live-pill" aria-label="Live ledger reading">
+              <span className={`dot${r.height === null ? " off" : ""}`} />
+              {r.height === null ? (
+                "Live ledger reading unavailable"
+              ) : (
+                <>
+                  <b>Live</b> Bitcoin block {r.height.toLocaleString("en-US")} · BTC {usd(r.btc)} · ETH {usd(r.eth)}
+                </>
+              )}
+            </span>
             <h1>
-              What they left is still on the ledger.
-              <br />
-              <em>Let&rsquo;s find it.</em>
+              What they left behind <em>can still be found.</em>
             </h1>
             <p className="lede">
-              Kinledger finds the crypto a loved one left behind, recovers what can honestly be recovered, and documents
-              its value for the estate — working alongside your attorney, never around them.
+              Kinledger helps families and executors find the crypto a loved one left, recover what can honestly be
+              recovered, and document its value for the estate.
             </p>
             <div className="hero-actions">
-              <Link href="/scan" className="btn btn-solid">
-                Run a free estate scan <span className="arrow">↗</span>
+              <Link href="/scan" className="btn btn-primary">
+                Run a free estate scan <span className="arrow">→</span>
               </Link>
               <Link href="#open-a-case" className="btn">
-                Open a case <span className="arrow">→</span>
+                Talk to us
               </Link>
             </div>
-            <p className="fine" style={{ marginTop: 18 }}>
-              No upfront recovery fee · We never hold your funds · We never ask for a recovery phrase
-            </p>
+            <ul className="promise-list">
+              <li>No upfront recovery fee</li>
+              <li>We never hold your funds</li>
+              <li>We never ask for a recovery phrase</li>
+            </ul>
           </div>
-          <EstateFigure />
+          <CaseFolders />
         </div>
       </section>
 
-      <section className="section" id="instrument">
+      <section className="section tinted" id="check">
         <div className="wrap">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24, flexWrap: "wrap", marginBottom: 32 }}>
-            <div>
-              <span className="label">01 / Try the instrument</span>
-              <h2 className="serif" style={{ fontSize: "clamp(32px, 4.4vw, 52px)", lineHeight: 1.04, letterSpacing: "-0.02em", margin: "12px 0 0" }}>
-                Start with one address.
-                <br />
-                <em style={{ color: "var(--accent)" }}>Keep the record.</em>
-              </h2>
-            </div>
-            <p className="muted" style={{ maxWidth: 24 + "em", margin: 0 }}>
-              Read what an address holds today and on the date of death, with every source named.
+          <div className="section-head">
+            <span className="kicker">Free address check</span>
+            <h2>
+              Found an address? <em>Check it now.</em>
+            </h2>
+            <p className="section-intro">
+              See what it holds today and on the date of death, read live from the public ledger with every source named.
             </p>
           </div>
           <AddressInstrument />
@@ -81,7 +71,7 @@ export default async function Home() {
       <section className="section" id="problem">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 02</div>
+            <span className="kicker">The problem</span>
             <div>
               <h2>
                 Crypto doesn&rsquo;t pass on <em>by itself.</em>
@@ -94,17 +84,17 @@ export default async function Home() {
           </div>
           <div className="columns">
             <div>
-              <div className="fig">I. FINDING IT</div>
+              <div className="fig">01</div>
               <h3>Nobody knows where it is.</h3>
               <p>Which exchanges, which wallets, which coins? The clues are scattered across email, bank statements, devices and paper notes.</p>
             </div>
             <div>
-              <div className="fig">II. GETTING IN</div>
+              <div className="fig">02</div>
               <h3>The doors are locked.</h3>
               <p>Exchange accounts freeze on death. Self-custody wallets need a password or recovery phrase that may be half-remembered or partly written down.</p>
             </div>
             <div>
-              <div className="fig">III. PROVING IT</div>
+              <div className="fig">03</div>
               <h3>The estate needs numbers.</h3>
               <p>Probate, estate tax and a fair split all need the holdings valued on the date of death, with evidence an attorney can rely on.</p>
             </div>
@@ -112,10 +102,10 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="section" id="services">
+      <section className="section tinted" id="services">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 03</div>
+            <span className="kicker">Services &amp; fees</span>
             <div>
               <h2>
                 Services and <em>fees.</em>
@@ -168,7 +158,7 @@ export default async function Home() {
       <section className="section" id="process">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 04</div>
+            <span className="kicker">How it works</span>
             <div>
               <h2>
                 How a case <em>runs.</em>
@@ -201,10 +191,10 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="section" id="attorneys">
+      <section className="section tinted" id="attorneys">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 05</div>
+            <span className="kicker">For attorneys</span>
             <div>
               <h2>
                 For estate <em>attorneys.</em>
@@ -217,17 +207,17 @@ export default async function Home() {
           </div>
           <div className="columns">
             <div>
-              <div className="fig">NO COST TO REFER</div>
+              <span className="stamp stamp-found" style={{ marginBottom: 14 }}>No cost to refer</span>
               <h3>Nothing found, nothing owed.</h3>
               <p>Recovery work is contingent. Your client is never billed for a search that turns up nothing recoverable.</p>
             </div>
             <div>
-              <div className="fig">EVIDENCE YOU CAN USE</div>
+              <span className="stamp stamp-found" style={{ marginBottom: 14 }}>Evidence you can use</span>
               <h3>Sourced, dated, reproducible.</h3>
               <p>Every balance and price in our reports names its public source and the time it was read, so anyone can check it.</p>
             </div>
             <div>
-              <div className="fig">YOUR LANE STAYS YOURS</div>
+              <span className="stamp stamp-found" style={{ marginBottom: 14 }}>Your lane stays yours</span>
               <h3>No legal or tax advice.</h3>
               <p>We do not advise on law or tax and do not file returns. We work to your instructions and your client&rsquo;s authority.</p>
             </div>
@@ -238,7 +228,7 @@ export default async function Home() {
       <section className="section" id="rules">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 06</div>
+            <span className="kicker">Our promises</span>
             <div>
               <h2>
                 The rules we <em>keep.</em>
@@ -259,29 +249,29 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="section" id="scan">
+      <section className="section" id="scan" style={{ paddingTop: 0 }}>
         <div className="wrap">
-          <div className="section-head">
-            <div className="docket-no">§ 07</div>
+          <div className="banner">
             <div>
-              <h2>
+              <h2 style={{ marginBottom: 12 }}>
                 Start with a free <em>estate scan.</em>
               </h2>
-              <p className="section-intro">
-                Drop in exported emails, statements or notes. The scan runs in your browser — your documents never leave
-                your computer — and finds exchanges, wallets and addresses. Addresses it finds are then read on the public
-                ledger and valued on the date of death.
+              <p>
+                Drop in exported emails, statements or notes. They are read in your browser and never uploaded. The scan
+                finds exchanges, wallets and addresses, then reads each address live and values it on the date of death.
               </p>
             </div>
+            <Link href="/scan" className="btn">
+              Open the estate scan <span className="arrow">→</span>
+            </Link>
           </div>
-          <Link href="/scan" className="btn btn-primary">Open the estate scan</Link>
         </div>
       </section>
 
-      <section className="section faq" id="faq">
+      <section className="section tinted faq" id="faq">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 08</div>
+            <span className="kicker">Questions</span>
             <div>
               <h2>
                 Questions <em>families ask.</em>
@@ -314,7 +304,7 @@ export default async function Home() {
       <section className="section" id="open-a-case">
         <div className="wrap">
           <div className="section-head">
-            <div className="docket-no">§ 09</div>
+            <span className="kicker">Get started</span>
             <div>
               <h2>
                 Open a <em>case.</em>
@@ -325,7 +315,9 @@ export default async function Home() {
               </p>
             </div>
           </div>
-          <IntakeForm />
+          <div className="form-card">
+            <IntakeForm />
+          </div>
         </div>
       </section>
     </>

@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 export default function ScanPage() {
   return (
     <>
-      <section style={{ borderBottom: "1px solid var(--rule)", padding: "40px 0 28px" }} className="no-print">
+      <section style={{ borderBottom: "1px solid var(--line)", padding: "40px 0 28px" }} className="no-print">
         <div className="wrap">
-          <span className="label">Estate scan · free</span>
+          <span className="kicker">Free estate scan</span>
           <h1 className="serif" style={{ fontSize: "clamp(36px, 5vw, 60px)", lineHeight: 1.05, letterSpacing: "-0.02em", margin: "10px 0 12px" }}>
             Find what the documents <em style={{ color: "var(--accent)" }}>already know.</em>
           </h1>

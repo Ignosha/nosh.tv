@@ -77,19 +77,19 @@ export function AddressInstrument() {
   }
 
   const report = reply?.reports[0];
-  const stampText = state === "read" ? "Read" : state === "failed" ? "Not read" : state === "reading" ? "Reading" : "Not read";
+  const stampText = state === "read" ? "✓ Read live" : state === "failed" ? "Couldn’t read" : state === "reading" ? "Reading…" : "Waiting";
 
   return (
     <div className="instrument">
       <form onSubmit={read}>
         <div className="pane-head">
-          <span>Input / public address</span>
-          <span>Read only</span>
+          <span>Step 1 · Paste an address</span>
+          <span>Read-only</span>
         </div>
         <h3 className="pane-title">
-          Start with one address
+          Start with one
           <br />
-          you found.
+          address you found.
         </h3>
         <p className="muted" style={{ marginTop: 0 }}>
           Paste a Bitcoin, Ethereum or Solana address from a statement or note. The answer comes from the public ledger,
@@ -138,13 +138,12 @@ export function AddressInstrument() {
 
       <div aria-live="polite">
         <div className="pane-head">
-          <span>Output / holdings record</span>
+          <span>Step 2 · What the ledger says</span>
           <span>{reply ? `Read ${reply.readAt.slice(11, 19)} UTC` : state === "reading" ? "Reading" : "Awaiting an address"}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
           <div>
-            <div className="label" style={{ marginBottom: 6 }}>A record you can check</div>
-            <h3 className="pane-title" style={{ marginBottom: 8 }}>Holdings record.</h3>
+                        <h3 className="pane-title" style={{ marginBottom: 8 }}>Holdings</h3>
             <p className="muted" style={{ margin: 0, fontSize: 15 }}>
               {state === "idle" && "Press “Read the ledger” to retrieve a live reading."}
               {state === "reading" && "Asking public nodes and price sources…"}
@@ -198,7 +197,7 @@ export function AddressInstrument() {
         </div>
 
         <div className="integrity">
-          <div className="label" style={{ marginBottom: 8 }}>Sources / how to check</div>
+          <div className="label" style={{ marginBottom: 8 }}>Sources</div>
           {reply && report ? (
             <>
               <p className="fine" style={{ margin: "0 0 14px" }}>

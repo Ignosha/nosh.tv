@@ -2,7 +2,7 @@
 
 A website and working tool for a crypto inheritance business:
 
-- **`/`**: the public site. It covers services and fees, how a case runs, a page for estate attorneys, the rules you keep, an FAQ and a case intake form. The "Exhibit A" card shows a **live** reading of the public ledger: the Bitcoin block height and BTC/ETH/SOL prices.
+- **`/`**: the public site. It has a live ledger pill (Bitcoin block height, BTC and ETH prices), a clickable Find / Open / Prove folder stack, and a free address check that reads live balances. It also covers services and fees, how a case runs, a section for estate attorneys, your promises, an FAQ and a case intake form.
 - **`/scan`**: the free estate scan.
   1. Drop in PDFs, email exports (`.eml`, `.mbox`), notes or CSVs. They are **read in the browser and never uploaded**.
   2. It finds exchanges, wallet apps, hardware wallets, Bitcoin/Ethereum/Solana addresses and possible recovery phrases. A phrase is flagged by file and line but **never displayed or sent**.
@@ -10,7 +10,7 @@ A website and working tool for a crypto inheritance business:
   4. Optional **local AI** deep scan through [Ollama](https://ollama.com) on your own computer, so documents still never leave the machine.
 - **`/admin`**: the case docket (basic auth).
 
-Design: the *Estate Desk*, a sibling of the NOSHASHI Ledger Desk. It uses archival paper and walnut ink in place of graphite, Newsreader serif headings, IBM Plex Sans and Mono, hairline rules, a docket (§) structure, case-file exhibit tabs, double-rule stamps and verdigris ink. Light and dark modes follow the system setting.
+Design: **Heirloom**. It is a warm archive look: oat paper, forest ink and terracotta, with Fraunces, Hanken Grotesk and DM Mono fonts, soft folder cards and pill controls. It is light by default with a dark toggle. It takes from NOSHASHI only the principle of real data with named sources, not its visual style.
 
 ## Live data sources (all free, no keys)
 
