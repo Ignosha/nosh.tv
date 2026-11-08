@@ -43,9 +43,9 @@ export function ChatWidget() {
   return (
     <div className="chat no-print">
       {open ? (
-        <div className="chat-panel" role="dialog" aria-label="Ask Kinledger">
+        <div className="chat-panel" role="dialog" aria-label="Ask Kin Ledger">
           <div className="chat-head">
-            <b>Ask Kinledger</b>
+            <b>Ask Kin Ledger</b>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">✕</button>
           </div>
           <div className="chat-body">

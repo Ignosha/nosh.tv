@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ToolHeader } from "@/components/ToolHeader";
 
 export const metadata: Metadata = {
-  title: "Free tools — Kinledger",
+  title: "Free tools — Kin Ledger",
   description: "Free crypto estate tools: document scan, address check, hardware wallet scan, exchange letters and a legacy plan builder.",
 };
 

@@ -135,7 +135,7 @@ export function IntakeForm() {
       <label className="consent full">
         <input type="checkbox" name="consent" required />
         <span>
-          I&rsquo;m entitled to act for this estate or am asking on behalf of someone who is, and I agree Kinledger may
+          I&rsquo;m entitled to act for this estate or am asking on behalf of someone who is, and I agree Kin Ledger may
           contact me about this request. I have not included any password or recovery phrase.
         </span>
       </label>

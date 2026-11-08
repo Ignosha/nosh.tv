@@ -68,7 +68,7 @@ export function AddressInstrument() {
 
   function download() {
     if (!reply) return;
-    const blob = new Blob([JSON.stringify({ generatedBy: "Kinledger", ...reply }, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify({ generatedBy: "Kin Ledger", ...reply }, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `kinledger-record-${reply.readAt.slice(0, 10)}.json`;

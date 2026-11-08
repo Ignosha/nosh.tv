@@ -3,7 +3,7 @@ import { PlanBuilder } from "@/components/PlanBuilder";
 import { ToolHeader } from "@/components/ToolHeader";
 
 export const metadata: Metadata = {
-  title: "Legacy plan builder — Kinledger",
+  title: "Legacy plan builder — Kin Ledger",
   description: "Write a crypto letter of instruction so your family can find what you hold, without ever writing down your keys.",
 };
 

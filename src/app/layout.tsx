@@ -11,7 +11,7 @@ const sans = Hanken_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", 
 const mono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-dmmono" });
 
 export const metadata: Metadata = {
-  title: "Kinledger — Crypto estate recovery",
+  title: "Kin Ledger — Crypto estate recovery",
   description:
     "We find the crypto a loved one left behind, recover what can honestly be recovered, and document its value for the estate. No upfront fees. We never hold your funds.",
 };

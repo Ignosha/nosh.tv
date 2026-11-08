@@ -106,7 +106,7 @@ export function priceLabel(p: Package): string {
   return "$" + p.price.toLocaleString("en-US") + (p.cadence === "month" ? "/mo" : "");
 }
 
-// Live Stripe Payment Links (created in the Kinledger Stripe account). An env var overrides any of them.
+// Live Stripe Payment Links (created in the Kin Ledger Stripe account). An env var overrides any of them.
 const STRIPE_LINKS: Record<Exclude<Package["id"], "scan">, string> = {
   report: "https://buy.stripe.com/bJe6oH3WE0pl2ud7Su6Vq00",
   recovery: "https://buy.stripe.com/7sY28r0Ks9ZV8SB4Gi6Vq01",

@@ -34,13 +34,13 @@ export const STAGES: Stage[] = [
       "Call first; if no answer, leave the voicemail below and send the email",
       "Log the attempt in the case notes",
     ],
-    say: `Hi {{first}}, this is {{you}} from Kinledger. You reached out about crypto your family member may have left. First, I'm sorry for your loss.
+    say: `Hi {{first}}, this is {{you}} from Kin Ledger. You reached out about crypto your family member may have left. First, I'm sorry for your loss.
 
 I'd like to ask a few quick questions so I can tell you honestly what's possible and what isn't. Is now a good time? It takes about ten minutes.
 
-(Voicemail) Hi {{first}}, it's {{you}} from Kinledger, returning your request about the crypto. There's no rush and no cost to talk. I've also sent you an email with a private link to your case page. Please don't send any passwords or recovery phrases by email or text. Talk soon.`,
+(Voicemail) Hi {{first}}, it's {{you}} from Kin Ledger, returning your request about the crypto. There's no rush and no cost to talk. I've also sent you an email with a private link to your case page. Please don't send any passwords or recovery phrases by email or text. Talk soon.`,
     email: {
-      subject: "Your Kinledger case: next steps",
+      subject: "Your Kin Ledger case: next steps",
       body: `Hi {{first}},
 
 Thank you for reaching out, and I'm sorry for your loss.
@@ -55,7 +55,7 @@ One important thing: never send passwords or recovery phrases to anyone, includi
 
 Warmly,
 {{you}}
-Kinledger`,
+Kin Ledger`,
     },
     avoid: [
       "Promising a result before you know what exists",
@@ -83,7 +83,7 @@ For a situation like yours I'd recommend {{package}}. It's a fixed price, {{pric
 
 Does that sound right for you? I can send the engagement letter and payment link today.`,
     email: {
-      subject: "Your Kinledger recommendation: {{package}}",
+      subject: "Your Kin Ledger recommendation: {{package}}",
       body: `Hi {{first}},
 
 Thank you for talking with me today. Here's what we discussed.
@@ -99,7 +99,7 @@ Your private case page: {{portal}}
 Any questions, just reply.
 
 {{you}}
-Kinledger`,
+Kin Ledger`,
     },
     avoid: [
       "Guaranteeing recovery of self-custody wallets",
@@ -123,7 +123,7 @@ Kinledger`,
 2. I need three documents: the death certificate, the court letters naming the executor (or a letter from your attorney), and the executor's photo ID.
 3. Meanwhile, please keep any phones, computers or hardware wallets turned off and exactly as they are.`,
     email: {
-      subject: "Welcome to Kinledger: what we need from you",
+      subject: "Welcome to Kin Ledger: what we need from you",
       body: `Hi {{first}},
 
 Thank you. Your case is confirmed.
@@ -138,7 +138,7 @@ Please keep any phones, computers or hardware wallets turned off and unchanged u
 Case page: {{portal}}
 
 {{you}}
-Kinledger`,
+Kin Ledger`,
     },
     avoid: ["Starting recovery work before authority is confirmed"],
     followupDays: 4,
@@ -163,7 +163,7 @@ Thank you. The documents check out, and discovery is starting now.
 I'll update your case page as I go: {{portal}}
 
 {{you}}
-Kinledger`,
+Kin Ledger`,
     },
     avoid: ["Proceeding if names don't match. Ask for corrected documents"],
     followupDays: null,
@@ -188,7 +188,7 @@ A quick update: discovery is underway. I'll send the full findings report soon, 
 Case page: {{portal}}
 
 {{you}}
-Kinledger`,
+Kin Ledger`,
     },
     avoid: ["Sharing partial numbers as final", "Estimating values that weren't read"],
     followupDays: 5,
@@ -219,7 +219,7 @@ It lists every holding we found, the balance on the date of death and today, and
 I'd like to walk you through it. Reply with a good time for a call.
 
 {{you}}
-Kinledger`,
+Kin Ledger`,
     },
     avoid: ["Delivering bad news only by email. Call first"],
     followupDays: 3,
@@ -248,7 +248,7 @@ Nothing is needed from you right now. Exchange reviews usually take several week
 Case page: {{portal}}
 
 {{you}}
-Kinledger`,
+Kin Ledger`,
     },
     avoid: ["Contacting exchanges through anything but their official channels"],
     followupDays: 7,
@@ -272,7 +272,7 @@ Good news: the funds have been released to the estate's account. Please confirm 
 I'm preparing the final valuation file for your attorney and accountant.
 
 {{you}}
-Kinledger`,
+Kin Ledger`,
     },
     avoid: ["Ever receiving estate funds into your own account"],
     followupDays: 3,
@@ -300,7 +300,7 @@ If we helped, would you share a few sentences about your experience? Just reply 
 Thank you again.
 
 {{you}}
-Kinledger`,
+Kin Ledger`,
     },
     avoid: [],
     followupDays: null,
@@ -322,7 +322,7 @@ If anything new turns up, like a device, a notebook or a backup, please reach ou
 I'm sorry it isn't better news.
 
 {{you}}
-Kinledger`,
+Kin Ledger`,
     },
     avoid: ["Leaving them without a clear answer"],
     followupDays: null,
