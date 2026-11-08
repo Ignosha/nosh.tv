@@ -1,27 +1,23 @@
--- Run once in the Supabase SQL editor.
-create table if not exists leads (
+-- Kinledger intake requests. Run once in the Supabase SQL editor.
+create table if not exists kl_cases (
   id uuid primary key default gen_random_uuid(),
-  conversation_id uuid not null,
-  name text,
-  email text,
+  created_at timestamptz not null default now(),
+  role text not null,
+  name text not null,
+  email text not null,
   phone text,
-  need text,
-  status text not null default 'new' check (status in ('new', 'booked')),
-  appointment_start timestamptz,
-  calendar_event_id text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  unique (conversation_id)
+  region text,
+  date_of_death date,
+  known_holdings text,
+  devices text,
+  has_authority text,
+  message text,
+  package text,
+  status text not null default 'new'
 );
 
-create table if not exists conversations (
-  id uuid primary key default gen_random_uuid(),
-  contents jsonb not null default '[]'::jsonb,
-  page_url text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
+-- Only the server (service role) reads or writes this table.
+alter table kl_cases enable row level security;
 
--- Only the server (service role) touches these tables.
-alter table leads enable row level security;
-alter table conversations enable row level security;
+-- If you created the table before packages existed:
+alter table kl_cases add column if not exists package text;
