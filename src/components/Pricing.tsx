@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PACKAGES, ADDONS, priceLabel, payLink } from "@/lib/pricing";
+import { PACKAGES, ADDONS, priceLabel, payLink, COUPLE_PLAN_LINK } from "@/lib/pricing";
 
 export function Pricing() {
   return (
@@ -21,9 +21,19 @@ export function Pricing() {
               {p.includes.map((x) => <li key={x}>{x}</li>)}
             </ul>
             {pay ? (
-              <a className={`btn ${p.highlight ? "btn-primary" : ""}`} href={href} rel="noreferrer">
-                Get started <span className="arrow">→</span>
-              </a>
+              <>
+                <a className={`btn ${p.highlight ? "btn-primary" : ""}`} href={href} rel="noreferrer">
+                  {p.cadence === "month" ? "Subscribe" : "Book now"} <span className="arrow">→</span>
+                </a>
+                {p.id === "plan" ? (
+                  <a className="fine" href={COUPLE_PLAN_LINK} rel="noreferrer" style={{ marginTop: 10, textAlign: "center" }}>
+                    Booking for two? Couples plan, $1,100
+                  </a>
+                ) : null}
+                <Link className="fine" href={`/?package=${p.id}#open-a-case`} style={{ marginTop: 8, textAlign: "center" }}>
+                  Questions first? Talk to us
+                </Link>
+              </>
             ) : (
               <Link className={`btn ${p.highlight ? "btn-primary" : ""}`} href={href}>
                 {p.id === "scan" ? "Use the free tools" : "Choose this"} <span className="arrow">→</span>

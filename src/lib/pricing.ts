@@ -1,7 +1,6 @@
 // Fixed prices. Edit them here and the whole site updates.
 // No percentages of the estate are ever charged.
-// Optional: set NEXT_PUBLIC_PAY_<ID> (e.g. NEXT_PUBLIC_PAY_REPORT) to a Stripe Payment Link
-// and the package's button takes clients straight to checkout. Without it, the button opens a case.
+// Each paid package has a live Stripe Payment Link below; NEXT_PUBLIC_PAY_<ID> can override it.
 
 export type Package = {
   id: "scan" | "report" | "recovery" | "complex" | "plan" | "partner";
@@ -107,15 +106,38 @@ export function priceLabel(p: Package): string {
   return "$" + p.price.toLocaleString("en-US") + (p.cadence === "month" ? "/mo" : "");
 }
 
+// Live Stripe Payment Links (created in the Kinledger Stripe account). An env var overrides any of them.
+const STRIPE_LINKS: Record<Exclude<Package["id"], "scan">, string> = {
+  report: "https://buy.stripe.com/bJe6oH3WE0pl2ud7Su6Vq00",
+  recovery: "https://buy.stripe.com/7sY28r0Ks9ZV8SB4Gi6Vq01",
+  complex: "https://buy.stripe.com/7sYfZh64M2xt5GpegS6Vq02",
+  plan: "https://buy.stripe.com/aFa5kDfFmc830m57Su6Vq03",
+  partner: "https://buy.stripe.com/aFa8wP50I0pld8R1u66Vq05",
+};
+export const COUPLE_PLAN_LINK = "https://buy.stripe.com/9B67sL50Ic83fgZ6Oq6Vq04";
+export const ADDONS_LINK = "https://buy.stripe.com/eVqdR9dxeb3Z1q97Su6Vq06";
+
 export function payLink(id: Package["id"]): string | null {
-  const links: Record<Package["id"], string | undefined> = {
-    scan: undefined,
+  if (id === "scan") return null;
+  const env: Record<Exclude<Package["id"], "scan">, string | undefined> = {
     report: process.env.NEXT_PUBLIC_PAY_REPORT,
     recovery: process.env.NEXT_PUBLIC_PAY_RECOVERY,
     complex: process.env.NEXT_PUBLIC_PAY_COMPLEX,
     plan: process.env.NEXT_PUBLIC_PAY_PLAN,
     partner: process.env.NEXT_PUBLIC_PAY_PARTNER,
   };
-  const url = links[id];
-  return url && /^https:\/\//.test(url) ? url : null;
+  const url = env[id] || STRIPE_LINKS[id];
+  return /^https:\/\//.test(url) ? url : null;
+}
+
+/** A payment link tied to one case, so the Stripe webhook marks that case paid. */
+export function casePayLink(base: string, caseId: string, email?: string | null): string {
+  const u = new URL(base);
+  u.searchParams.set("client_reference_id", caseId);
+  if (email) u.searchParams.set("prefilled_email", email);
+  return u.toString();
+}
+
+export function packageById(id: string | null | undefined): Package | undefined {
+  return PACKAGES.find((p) => p.id === id);
 }

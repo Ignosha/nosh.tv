@@ -1,88 +1,86 @@
-import { revalidatePath } from "next/cache";
+import Link from "next/link";
 import { db } from "@/lib/db";
-import { PACKAGES } from "@/lib/pricing";
-
-const STATUSES = ["new", "contacted", "engaged", "discovery", "claims filed", "recovered", "closed", "declined"];
-
-async function setStatus(form: FormData) {
-  "use server";
-  // /admin is behind basic auth in middleware, and server actions post to this same route.
-  const client = db();
-  const id = String(form.get("id") ?? "");
-  const status = String(form.get("status") ?? "");
-  if (!client || !id || !STATUSES.includes(status)) return;
-  await client.from("kl_cases").update({ status }).eq("id", id);
-  revalidatePath("/admin");
-}
+import { STAGES, stage } from "@/lib/playbook";
+import { packageById, priceLabel } from "@/lib/pricing";
+import type { Case } from "@/lib/cases";
 
 export const dynamic = "force-dynamic";
 
-type Case = {
-  id: string;
-  created_at: string;
-  role: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  region: string | null;
-  date_of_death: string | null;
-  known_holdings: string | null;
-  devices: string | null;
-  has_authority: string | null;
-  message: string | null;
-  status: string;
-  package: string | null;
-};
+const usd = (cents: number) => "$" + (cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 });
 
 export default async function Admin() {
   const client = db();
-  if (!client) return <div className="wrap" style={{ padding: "48px 0" }}><div className="notice err">Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to see cases.</div></div>;
-  const { data, error } = await client.from("kl_cases").select("*").order("created_at", { ascending: false }).limit(200);
-  const cases = (data ?? []) as Case[];
-  return (
-    <div className="wrap" style={{ padding: "40px 0 80px" }}>
-      <span className="kicker">Case docket</span>
-      <h1 className="serif" style={{ fontSize: 44, margin: "6px 0 12px" }}>{cases.length} case{cases.length === 1 ? "" : "s"}</h1>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
-        {STATUSES.map((st) => {
-          const n = cases.filter((c) => c.status === st).length;
-          return n ? <span key={st} className="stamp stamp-pending">{st}: {n}</span> : null;
-        })}
+  if (!client) {
+    return (
+      <div className="wrap" style={{ padding: "48px 0" }}>
+        <div className="notice err">Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY, then run supabase/schema.sql, to see cases.</div>
       </div>
-      {error ? <div className="notice err">{error.message}</div> : null}
-      <div className="table-scroll">
-        <table className="clue-table">
-          <thead>
-            <tr><th>Opened</th><th>Contact</th><th>Estate</th><th>What they know</th></tr>
-          </thead>
-          <tbody>
-            {cases.map((c) => (
-              <tr key={c.id}>
-                <td className="mono" style={{ whiteSpace: "nowrap" }}>
-                  {c.created_at.slice(0, 16).replace("T", " ")}
-                  <form action={setStatus} style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                    <input type="hidden" name="id" value={c.id} />
-                    <select name="status" defaultValue={c.status} className="boxed-input" style={{ padding: "6px 8px", fontSize: 12.5 }}>
-                      {STATUSES.map((s) => <option key={s}>{s}</option>)}
-                    </select>
-                    <button className="btn btn-small" type="submit">Save</button>
-                  </form>
-                </td>
-                <td>
-                  <b style={{ fontWeight: 600 }}>{c.name}</b> <span className="faint">({c.role})</span>
-                  {c.package ? <div><span className="stamp stamp-found" style={{ marginTop: 6 }}>{PACKAGES.find((p) => p.id === c.package)?.name ?? c.package}</span></div> : null}
-                  <div className="snippet"><a href={`mailto:${c.email}`}>{c.email}</a>{c.phone ? ` · ${c.phone}` : ""}</div>
-                </td>
-                <td className="mono" style={{ fontSize: 13 }}>
-                  {c.date_of_death ?? "date unknown"}<div className="snippet">{c.region ?? ""} · letters: {c.has_authority ?? "?"}</div>
-                </td>
-                <td style={{ fontSize: 14 }}>
-                  {c.known_holdings}<div className="snippet">{c.devices}</div><div className="snippet">{c.message}</div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    );
+  }
+  const { data, error } = await client.from("kl_cases").select("*").order("created_at", { ascending: false }).limit(300);
+  const cases = (data ?? []) as Case[];
+  const now = Date.now();
+  const open = cases.filter((c) => !["closed", "declined"].includes(String(c.status)));
+  const due = open.filter((c) => c.next_followup_at && Date.parse(c.next_followup_at) <= now);
+  const paidMonth = cases
+    .filter((c) => c.paid_at && new Date(c.paid_at).getMonth() === new Date().getMonth() && new Date(c.paid_at).getFullYear() === new Date().getFullYear())
+    .reduce((s, c) => s + (c.amount_paid ?? 0), 0);
+
+  const Row = ({ c }: { c: Case }) => {
+    const p = packageById(c.package);
+    return (
+      <tr>
+        <td>
+          <Link href={`/admin/cases/${c.id}`} style={{ fontWeight: 600 }}>{c.name}</Link>
+          <div className="snippet">{c.email} · {c.role}</div>
+        </td>
+        <td><span className="stamp stamp-pending">{stage(c.status).name}</span></td>
+        <td>{p ? `${p.name} · ${priceLabel(p)}` : <span className="faint">—</span>}</td>
+        <td>{c.paid_at ? <span className="stamp stamp-found">Paid {usd(c.amount_paid ?? 0)}</span> : <span className="faint">Not paid</span>}</td>
+        <td className="mono" style={{ fontSize: 12.5, whiteSpace: "nowrap" }}>{c.next_followup_at ? c.next_followup_at.slice(0, 10) : "—"}</td>
+      </tr>
+    );
+  };
+  const Table = ({ list }: { list: Case[] }) => (
+    <div className="table-scroll">
+      <table className="clue-table">
+        <thead><tr><th>Case</th><th>Stage</th><th>Package</th><th>Payment</th><th>Follow up</th></tr></thead>
+        <tbody>{list.map((c) => <Row key={c.id} c={c} />)}</tbody>
+      </table>
+    </div>
+  );
+
+  return (
+    <div className="wrap" style={{ padding: "36px 0 96px", display: "grid", gap: 22 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
+        <div>
+          <span className="kicker">Case desk</span>
+          <h1 className="serif" style={{ fontSize: 44, margin: 0 }}>Good to see you.</h1>
+        </div>
+        <Link className="btn btn-small" href="/admin/playbook">Open the playbook</Link>
+      </div>
+      {error ? <div className="notice err">{error.message}. Did you run the latest supabase/schema.sql?</div> : null}
+
+      <div className="totals">
+        <div><div className="label">Due today</div><div className="big">{due.length}</div></div>
+        <div><div className="label">Open cases</div><div className="big">{open.length}</div></div>
+        <div><div className="label">Paid this month</div><div className="big">{usd(paidMonth)}</div></div>
+      </div>
+
+      <div className="form-card">
+        <h3>Due now</h3>
+        {due.length ? <Table list={due} /> : <p className="muted">Nothing due. Nice.</p>}
+      </div>
+
+      <div className="form-card">
+        <h3>All cases</h3>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+          {STAGES.map((s) => {
+            const n = cases.filter((c) => stage(c.status).id === s.id).length;
+            return n ? <span key={s.id} className="addon">{s.name}: {n}</span> : null;
+          })}
+        </div>
+        {cases.length ? <Table list={cases} /> : <p className="muted">No cases yet. They appear here when someone uses the form or pays.</p>}
       </div>
     </div>
   );

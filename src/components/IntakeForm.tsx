@@ -15,6 +15,7 @@ export function IntakeForm() {
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState("");
   const [pkg, setPkg] = useState("unsure");
+  const [portal, setPortal] = useState("");
   const params = useSearchParams();
 
   useEffect(() => {
@@ -32,8 +33,9 @@ export function IntakeForm() {
     setError("");
     try {
       const res = await fetch("/api/intake", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const data = (await res.json()) as { ok?: boolean; error?: string };
+      const data = (await res.json()) as { ok?: boolean; error?: string; portal?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Something went wrong.");
+      if (data.portal) setPortal(data.portal);
       setState("sent");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -52,6 +54,11 @@ export function IntakeForm() {
           We&rsquo;ll reply by email within one business day. Meanwhile, keep any devices, papers and notes exactly as
           they are, and don&rsquo;t share passwords or recovery phrases with anyone who contacts you.
         </p>
+        {portal ? (
+          <a className="btn btn-primary" href={portal} style={{ marginTop: 18 }}>
+            Open your private case page <span className="arrow">→</span>
+          </a>
+        ) : null}
       </div>
     );
   }

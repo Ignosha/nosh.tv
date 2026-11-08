@@ -168,3 +168,19 @@ export function extractClues(file: string, text: string): Clue[] {
 
   return clues;
 }
+
+/** True when the text contains 12 or more consecutive BIP39 words (a likely recovery phrase). */
+export function hasSeedPhrase(text: string): boolean {
+  let run = 0;
+  for (const m of text.matchAll(/[A-Za-z]+/g)) {
+    if (BIP39.has(m[0].toLowerCase())) {
+      if (++run >= 12) return true;
+    } else run = 0;
+  }
+  return false;
+}
+
+/** True when the text contains an extended private key or a WIF private key. */
+export function hasPrivateKey(text: string): boolean {
+  return /\b[xyz]prv[1-9A-HJ-NP-Za-km-z]{100,112}\b/.test(text) || /\b[5KL][1-9A-HJ-NP-Za-km-z]{50,51}\b/.test(text);
+}

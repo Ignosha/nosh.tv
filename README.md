@@ -12,7 +12,10 @@ A website and set of free tools for a crypto inheritance business, with fixed, f
 | `/tools/letters` | **Exchange claim letters**: a complete deceased-account request letter for any exchange, printable. Stays in the browser |
 | `/tools/plan` | **Legacy plan builder**: a crypto letter of instruction for the living. Warns and blocks printing if a recovery phrase or private key is typed in |
 | `/tools` | Hub for all free tools |
-| `/admin` | Case docket (basic auth): package, contact, what they know, and a status you can update |
+| `/case/<token>` | **Family case portal**: private link per case: progress steps, package and Stripe payment, approved findings report, and an in-browser scan that sends only findings (never documents or phrases) |
+| `/admin` | **Case desk** (basic auth): what's due today, open cases, revenue this month |
+| `/admin/cases/<id>` | **Case workspace**: the playbook for the current stage (checklist, what to say, what to avoid), the stage email (send or open in mail app), payment links tied to the case, **Run analysis** (reads every address and xpub live and drafts the report summary and exchange letters), approve & publish to the family, notes and activity log |
+| `/admin/playbook` | The full operating playbook: every stage, call scripts, emails and honest answers to hard questions |
 
 ## Pricing
 
@@ -29,6 +32,15 @@ Fixed prices live in `src/lib/pricing.ts`; edit them there and the whole site up
 | Add-ons | Extra exchange $495 · extra wallet $1,250 · rush +$1,000 |
 
 Set `NEXT_PUBLIC_PAY_<PACKAGE>` to a Stripe Payment Link to send a package straight to checkout. Without it, the button opens a case with that package preselected.
+
+## How a case flows
+
+1. A family opens a case (form or AI chat → form) or pays straight from the pricing page. Either way a case is created and they get a private case page.
+2. They run the scan on their case page; only exchange names, addresses and wallet keys are sent.
+3. You press **Run analysis**: every address is read live and valued on the date of death, and the summary and exchange letters are drafted (AI-polished if `GEMINI_API_KEY` is set).
+4. You review, edit and **Approve & publish**; the family sees the report on their page.
+5. Stripe payments (links carry the case ID) mark the case paid automatically via `/api/stripe/webhook`.
+6. Every day `/api/cron/followups` sends due reminders for early stages (if Resend is set up) and keeps everything else in your **Due now** list.
 
 ## Live data sources (all free, no keys)
 
