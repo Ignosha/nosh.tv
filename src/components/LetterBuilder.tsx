@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { buildLetter, type REQUESTS } from "@/lib/letters";
 
 // Builds a deceased-account request letter for an exchange. Everything stays in this browser.
 const EXCHANGES = [
@@ -16,11 +17,7 @@ const DOCS = [
   "Copy of the will or trust (relevant pages)",
   "Estate tax ID (EIN) letter",
 ];
-const REQUESTS = {
-  transfer: "transfer all assets held in the account to an account in the name of the estate",
-  liquidate: "liquidate the assets in the account and remit the proceeds to the estate's bank account",
-  statement: "provide a statement of the account's holdings and their value as of the date of death",
-};
+
 
 type F = {
   exchange: string;
@@ -48,39 +45,8 @@ export function LetterBuilder() {
   });
   const set = <K extends keyof F>(k: K, v: F[K]) => setF((x) => ({ ...x, [k]: v }));
   const name = f.exchange === "Other" ? f.custom || "[Exchange name]" : f.exchange;
-  const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-  const dod = f.dod ? new Date(f.dod + "T12:00:00Z").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }) : "[date of death]";
   const ready = f.decedent && f.rep && f.dod;
-
-  const letter = `${today}
-
-To: ${name} — Deceased Account / Estate Services Team
-
-Re: Request regarding the account of ${f.decedent || "[full legal name of the deceased]"}, deceased ${dod}
-${f.accountEmail ? `Account email: ${f.accountEmail}\n` : ""}${f.accountId ? `Account or user ID: ${f.accountId}\n` : ""}
-To whom it may concern,
-
-I am writing as the ${f.role.toLowerCase()} of the estate of ${f.decedent || "[name]"}, who passed away on ${dod}.${f.court ? ` My authority was granted by the ${f.court}${f.caseNo ? `, case number ${f.caseNo}` : ""}.` : ""} I believe the deceased held an account with ${name}.
-
-On behalf of the estate, I respectfully request that you:
-
-1. Confirm whether an account exists in the name of the deceased${f.accountEmail ? ` or under the email ${f.accountEmail}` : ""};
-2. Restrict the account to prevent any further access or withdrawals; and
-3. ${REQUESTS[f.request].charAt(0).toUpperCase() + REQUESTS[f.request].slice(1)}, following your deceased-account procedure.
-
-Please also provide a statement of the account's holdings as of ${dod}, which the estate needs for valuation.
-
-Enclosed are:
-${f.docs.map((d) => `  • ${d}`).join("\n") || "  • [list of enclosed documents]"}
-
-Please tell me if you require any further documents or a specific form. I can be reached at the contact details below.
-
-Sincerely,
-
-${f.rep || "[Your full name]"}
-${f.role}, Estate of ${f.decedent || "[name]"}
-${f.repEmail || "[email]"}${f.repPhone ? ` · ${f.repPhone}` : ""}
-${f.repAddress || "[mailing address]"}`;
+  const letter = buildLetter({ ...f, exchange: name });
 
   function copy() {
     navigator.clipboard?.writeText(letter).catch(() => {});

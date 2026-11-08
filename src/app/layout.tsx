@@ -3,6 +3,8 @@ import { Fraunces, Hanken_Grotesk, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { Masthead } from "@/components/Masthead";
 import { Footer } from "@/components/Footer";
+import { ChatWidget } from "@/components/ChatWidget";
+import { aiEnabled } from "@/lib/ai";
 
 const display = Fraunces({ subsets: ["latin"], style: ["normal", "italic"], axes: ["SOFT", "WONK", "opsz"], variable: "--font-fraunces" });
 const sans = Hanken_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-hanken" });
@@ -36,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Masthead />
         <main id="main">{children}</main>
         <Footer />
+        {aiEnabled() ? <ChatWidget /> : null}
       </body>
     </html>
   );

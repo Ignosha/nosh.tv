@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { extractClues, detectChain, type Clue, type Chain } from "@/lib/extract";
 import type { AddressReport, Price } from "@/lib/chains";
+import { readFile } from "@/lib/readFile";
 
 type FileEntry = { name: string; chars: number; error?: string };
 type AiClue = { type: string; name: string; evidence: string; file: string };
@@ -14,32 +15,10 @@ type Lookup = {
   skipped: number;
 };
 
-const TEXT_EXT = /\.(txt|eml|mbox|csv|tsv|json|md|log|html?|xml|rtf)$/i;
 const CHAIN_LABEL: Record<Chain, string> = { bitcoin: "Bitcoin", ethereum: "Ethereum", solana: "Solana" };
 
 const fmtUsd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtAmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 8 });
-
-async function readPdf(file: File): Promise<string> {
-  const pdfjs = await import("pdfjs-dist");
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
-  const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-  const pages: string[] = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    pages.push(content.items.map((it) => ("str" in it ? it.str : "")).join(" "));
-  }
-  return pages.join("\n");
-}
-
-async function readFile(file: File): Promise<string> {
-  if (/\.pdf$/i.test(file.name)) return readPdf(file);
-  if (!TEXT_EXT.test(file.name) && !file.type.startsWith("text/")) throw new Error("Unsupported type");
-  const text = await file.text();
-  if (/\.html?$/i.test(file.name)) return new DOMParser().parseFromString(text, "text/html").body.textContent ?? "";
-  return text;
-}
 
 export function ScanDesk() {
   const [files, setFiles] = useState<FileEntry[]>([]);

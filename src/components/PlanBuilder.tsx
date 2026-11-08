@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { hasSeedPhrase, hasPrivateKey } from "@/lib/extract";
 
 // A crypto letter of instruction for the living. It records WHERE things are, never the secrets themselves.
 // Nothing is sent anywhere; the owner prints it or saves it as a file.
 type Item = { kind: string; name: string; contents: string; where: string; backup: string };
 const KINDS = ["Exchange account", "Hardware wallet", "Phone or desktop wallet", "Paper or metal backup", "Other"];
-const SECRETISH = /\b([a-z]{3,8}\s+){11,}[a-z]{3,8}\b|\b(xprv|zprv|yprv)[1-9A-HJ-NP-Za-km-z]{20,}|\b[5KL][1-9A-HJ-NP-Za-km-z]{50,51}\b/i;
 
 export function PlanBuilder() {
   const [owner, setOwner] = useState("");
@@ -17,7 +17,7 @@ export function PlanBuilder() {
 
   const update = (i: number, k: keyof Item, v: string) => setItems((xs) => xs.map((x, j) => (j === i ? { ...x, [k]: v } : x)));
   const allText = [owner, trusted, attorney, notes, ...items.flatMap((x) => Object.values(x))].join(" ");
-  const leak = SECRETISH.test(allText);
+  const leak = hasSeedPhrase(allText) || hasPrivateKey(allText);
   const date = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
   const doc = `CRYPTO LETTER OF INSTRUCTION
