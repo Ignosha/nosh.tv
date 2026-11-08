@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { PACKAGES, priceLabel, payLink } from "@/lib/pricing";
+import { PACKAGES, ADDONS, priceLabel, payLink } from "@/lib/pricing";
 
 export function Pricing() {
   return (
+    <>
     <div className="price-grid">
       {PACKAGES.map((p) => {
         const pay = payLink(p.id);
@@ -32,5 +33,14 @@ export function Pricing() {
         );
       })}
     </div>
+    <div className="addons">
+      <span className="label">Add-ons</span>
+      {ADDONS.map((a) => (
+        <div key={a.name} className="addon">
+          <b>{a.name}</b> <span className="mono">{a.price}</span> <span className="faint">{a.note}</span>
+        </div>
+      ))}
+    </div>
+    </>
   );
 }

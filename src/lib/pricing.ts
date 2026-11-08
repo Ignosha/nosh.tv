@@ -4,7 +4,7 @@
 // and the package's button takes clients straight to checkout. Without it, the button opens a case.
 
 export type Package = {
-  id: "scan" | "report" | "recovery" | "plan" | "partner";
+  id: "scan" | "report" | "recovery" | "complex" | "plan" | "partner";
   name: string;
   price: number; // USD
   cadence: "free" | "once" | "month";
@@ -30,7 +30,7 @@ export const PACKAGES: Package[] = [
   {
     id: "report",
     name: "Estate Report",
-    price: 499,
+    price: 1250,
     cadence: "once",
     tagline: "We do the discovery and hand your attorney the numbers.",
     includes: [
@@ -43,23 +43,36 @@ export const PACKAGES: Package[] = [
   {
     id: "recovery",
     name: "Full Recovery",
-    price: 1999,
+    price: 4950,
     cadence: "once",
-    tagline: "Everything, start to finish, for one fixed price.",
+    tagline: "A standard estate, start to finish, for one fixed price.",
     includes: [
       "Everything in the Estate Report",
       "Exchange claims handled for up to 5 exchanges",
-      "Offline wallet password and partial-phrase recovery",
+      "Offline recovery for up to 2 wallets or devices",
       "Final valuation and close-out file for the estate",
     ],
     highlight: true,
   },
   {
+    id: "complex",
+    name: "Complex Recovery",
+    price: 9500,
+    cadence: "once",
+    tagline: "For larger estates with many accounts, wallets or DeFi.",
+    includes: [
+      "Everything in Full Recovery",
+      "6+ exchanges and multiple wallets or devices",
+      "DeFi positions, staking and cross-chain tracing",
+      "Dedicated case lead and weekly updates",
+    ],
+  },
+  {
     id: "plan",
     name: "Legacy Plan",
-    price: 299,
+    price: 750,
     cadence: "once",
-    tagline: "For the living: make sure your family can find it.",
+    tagline: "For the living: make sure your family can find it. Couples $1,100.",
     includes: [
       "Guided session to map your holdings without exposing keys",
       "A written letter of instruction for your executor",
@@ -70,16 +83,23 @@ export const PACKAGES: Package[] = [
   {
     id: "partner",
     name: "Attorney Partner",
-    price: 199,
+    price: 750,
     cadence: "month",
     tagline: "For firms that see crypto in estates regularly.",
     includes: [
-      "2 Estate Reports per month included",
-      "Priority turnaround for your clients",
-      "Co-branded findings reports",
+      "1 Estate Report per month included",
+      "25% off every additional case",
+      "Priority turnaround and co-branded reports",
       "Cancel any month",
     ],
   },
+];
+
+// Add-ons keep one flat price fair when a case is bigger than its package.
+export const ADDONS: { name: string; price: string; note: string }[] = [
+  { name: "Extra exchange", price: "$495", note: "each, beyond the package" },
+  { name: "Extra wallet or device", price: "$1,250", note: "each, beyond the package" },
+  { name: "Rush delivery", price: "+$1,000", note: "findings within 5 business days" },
 ];
 
 export function priceLabel(p: Package): string {
@@ -92,6 +112,7 @@ export function payLink(id: Package["id"]): string | null {
     scan: undefined,
     report: process.env.NEXT_PUBLIC_PAY_REPORT,
     recovery: process.env.NEXT_PUBLIC_PAY_RECOVERY,
+    complex: process.env.NEXT_PUBLIC_PAY_COMPLEX,
     plan: process.env.NEXT_PUBLIC_PAY_PLAN,
     partner: process.env.NEXT_PUBLIC_PAY_PARTNER,
   };

@@ -1303,7 +1303,8 @@ h3 {
 /* ---------- Pricing ---------- */
 .price-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  row-gap: 26px;
   gap: 16px;
   align-items: stretch;
 }
@@ -1392,11 +1393,6 @@ h3 {
   color: var(--ink-2);
 }
 
-@media (max-width: 1180px) {
-  .price-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
 @media (max-width: 860px) {
   .price-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1409,6 +1405,27 @@ h3 {
 }
 .price-grid .price-card {
   padding: 26px 20px;
+}
+
+.addons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 22px;
+  padding: 18px 22px;
+  border-radius: var(--r);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  font-size: 14.5px;
+}
+.addon {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--paper-2);
+}
+.addon b {
+  font-weight: 600;
 }
 
 /* ---------- Tools ---------- */

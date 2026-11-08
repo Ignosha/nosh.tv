@@ -21,10 +21,12 @@ Fixed prices live in `src/lib/pricing.ts`; edit them there and the whole site up
 | Package | Price |
 |---|---|
 | Estate Scan | Free (self-serve tools) |
-| Estate Report | $499 flat |
-| Full Recovery | $1,999 flat |
-| Legacy Plan | $299 flat |
-| Attorney Partner | $199 / month |
+| Estate Report | $1,250 flat |
+| Full Recovery | $4,950 flat (up to 5 exchanges, 2 wallets) |
+| Complex Recovery | $9,500 flat (6+ exchanges, many wallets, DeFi) |
+| Legacy Plan | $750 flat (couples $1,100) |
+| Attorney Partner | $750 / month (1 report included, 25% off more) |
+| Add-ons | Extra exchange $495 · extra wallet $1,250 · rush +$1,000 |
 
 Set `NEXT_PUBLIC_PAY_<PACKAGE>` to a Stripe Payment Link to send a package straight to checkout. Without it, the button opens a case with that package preselected.
 
