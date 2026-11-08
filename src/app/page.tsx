@@ -34,7 +34,7 @@ export default async function Home() {
               What they left behind <em>can still be found.</em>
             </h1>
             <p className="lede">
-              Kinledger helps families and executors find the crypto a loved one left, recover what can honestly be
+              Kin Ledger helps families and executors find the crypto a loved one left, recover what can honestly be
               recovered, and document its value for the estate.
             </p>
             <div className="hero-actions">

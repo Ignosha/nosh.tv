@@ -198,7 +198,7 @@ export function ScanDesk() {
 
   function exportJson() {
     if (!lookup) return;
-    const blob = new Blob([JSON.stringify({ generatedBy: "Kinledger estate scan", ...lookup }, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify({ generatedBy: "Kin Ledger estate scan", ...lookup }, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `kinledger-ledger-reading-${lookup.readAt.slice(0, 10)}.json`;
@@ -558,7 +558,7 @@ function NextSteps({ exchanges, wallets, phrases }: { exchanges: string[]; walle
           almost certainly a scammer. Legitimate help never needs your phrase sent online.
         </p>
       </section>
-      <a href="/#open-a-case" className="btn btn-primary no-print" style={{ justifySelf: "start" }}>Open a case with Kinledger</a>
+      <a href="/#open-a-case" className="btn btn-primary no-print" style={{ justifySelf: "start" }}>Open a case with Kin Ledger</a>
     </div>
   );
 }

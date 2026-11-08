@@ -1,4 +1,4 @@
-# Kinledger — crypto estate recovery
+# Kin Ledger — crypto estate recovery
 
 A website and set of free tools for a crypto inheritance business, with fixed, flat pricing.
 

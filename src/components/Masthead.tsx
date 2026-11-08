@@ -6,10 +6,10 @@ export function Masthead() {
   return (
     <header className="masthead">
       <div className="wrap masthead-inner">
-        <Link href="/" className="brand" aria-label="Kinledger home">
+        <Link href="/" className="brand" aria-label="Kin Ledger home">
           <Mark />
           <span className="brand-name">
-            Kin<em>ledger</em>
+            Kin <em>Ledger</em>
           </span>
         </Link>
         <nav className="nav" aria-label="Main">

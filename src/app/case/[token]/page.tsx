@@ -6,7 +6,7 @@ import { packageById, priceLabel, payLink, casePayLink } from "@/lib/pricing";
 import { PortalFindings } from "@/components/PortalFindings";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Your case — Kinledger", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Your case — Kin Ledger", robots: { index: false, follow: false } };
 
 const FAMILY_STEPS = ["new", "contacted", "engaged", "authority", "discovery", "findings", "claims", "recovered", "closed"];
 const usd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

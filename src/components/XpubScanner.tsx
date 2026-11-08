@@ -57,7 +57,7 @@ export function XpubScanner() {
 
   function download() {
     if (!reply) return;
-    const blob = new Blob([JSON.stringify({ generatedBy: "Kinledger wallet key scan", ...reply }, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify({ generatedBy: "Kin Ledger wallet key scan", ...reply }, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `kinledger-wallet-scan-${reply.readAt.slice(0, 10)}.json`;
