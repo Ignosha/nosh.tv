@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
 import { getCase, updateCase, logEvent, isUuid } from "@/lib/cases";
+import { startWatching } from "@/lib/watch";
 
 export const dynamic = "force-dynamic";
 
@@ -55,10 +56,11 @@ export async function POST(req: Request) {
       paid_at: new Date().toISOString(),
       amount_paid: (existing.amount_paid ?? 0) + amount,
       stripe_session: s.id,
-      ...(pkg && pkg !== "addons" ? { package: pkg } : {}),
+      ...(pkg && pkg !== "addons" && pkg !== "alerts" ? { package: pkg } : {}),
       ...(EARLY.includes(String(existing.status)) ? { status: "engaged", next_followup_at: new Date().toISOString() } : {}),
     });
-    await logEvent(existing.id, "payment", `Paid $${(amount / 100).toFixed(2)} via Stripe (${pkg ?? "payment link"}).`);
+    await logEvent(existing.id, "payment", `Paid $${(amount / 100).toFixed(2)} via Stripe (${s.metadata?.tracesworn_addon ?? pkg ?? "payment link"}).`);
+    if (pkg === "alerts") await startWatching((await getCase(existing.id)) ?? existing);
     return NextResponse.json({ received: true });
   }
 
@@ -74,7 +76,7 @@ export async function POST(req: Request) {
       name: s.customer_details?.name || email,
       email,
       phone: s.customer_details?.phone ?? null,
-      package: pkg && pkg !== "addons" ? pkg : null,
+      package: pkg && pkg !== "addons" && pkg !== "alerts" ? pkg : null,
       status: "engaged",
       paid_at: new Date().toISOString(),
       amount_paid: amount,

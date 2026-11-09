@@ -43,6 +43,7 @@ export function Pricing() {
       {ADDONS.map((a) => (
         <div key={a.name} className="addon">
           <b>{a.name}</b> <span className="mono">{a.price}</span> <span className="faint">{a.note}</span>
+          {a.link ? <> <a href={a.link} rel="noreferrer" className="fine">Add →</a></> : null}
         </div>
       ))}
     </div>

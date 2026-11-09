@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ledgerReading } from "@/lib/chains";
 import { IntakeForm } from "@/components/IntakeForm";
-import { CaseFolders } from "@/components/CaseFolders";
+import { HeroFigure } from "@/components/HeroFigure";
+import { DeskBand } from "@/components/DeskBand";
 import { Pricing } from "@/components/Pricing";
 import { AddressInstrument } from "@/components/AddressInstrument";
 
@@ -16,19 +17,11 @@ export default async function Home() {
 
   return (
     <>
+      <DeskBand height={r.height} btc={r.btc} />
       <section className="hero">
         <div className="wrap hero-grid">
           <div>
-            <span className="live-pill" aria-label="Live ledger reading">
-              <span className={`dot${r.height === null ? " off" : ""}`} />
-              {r.height === null ? (
-                "Live ledger reading unavailable"
-              ) : (
-                <>
-                  <b>Live</b> Bitcoin block {r.height.toLocaleString("en-US")} · BTC {usd(r.btc)} · ETH {usd(r.eth)}
-                </>
-              )}
-            </span>
+            <span className="kicker">Crypto discovery for estates, divorce &amp; bankruptcy</span>
             <h1>
               Crypto leaves a trail. <em>We swear to it.</em>
             </h1>
@@ -38,19 +31,22 @@ export default async function Home() {
             </p>
             <div className="hero-actions">
               <Link href="#open-a-case" className="btn btn-primary">
-                Open a matter <span className="arrow">→</span>
+                Open a matter <span className="arrow">↗</span>
               </Link>
               <Link href="/tools" className="btn">
                 Try the free tools
               </Link>
             </div>
+            <p className="fine" style={{ margin: "18px 0 0" }}>
+              {r.height === null ? "Live prices unavailable" : <>Read live · BTC {usd(r.btc)} · ETH {usd(r.eth)}</>}
+            </p>
             <ul className="promise-list">
               <li>Fixed fees, never a percentage</li>
               <li>Every figure sealed and verifiable</li>
               <li>We never hold assets or keys</li>
             </ul>
           </div>
-          <CaseFolders />
+          <HeroFigure />
         </div>
       </section>
 
@@ -125,12 +121,12 @@ export default async function Home() {
             <div>
               <div className="fig">02</div>
               <h3>Whole wallets, not guesses.</h3>
-              <p>From one hardware-wallet public key we read every address it used, across Bitcoin, Ethereum, Base, Arbitrum, Optimism, Polygon and Solana.</p>
+              <p>From one hardware-wallet public key we read every address it used, across seven networks, then follow the money hop by hop to where it landed.</p>
             </div>
             <div>
               <div className="fig">03</div>
               <h3>Sealed and checkable.</h3>
-              <p>Every record carries a SHA-256 fingerprint. Anyone can confirm at /verify, or with any standard tool, that no figure was changed.</p>
+              <p>Every record carries a SHA-256 fingerprint and ships as numbered court exhibits. Anyone can confirm at /verify, or with any standard tool, that no figure was changed.</p>
             </div>
           </div>
         </div>
@@ -246,6 +242,14 @@ export default async function Home() {
           <details>
             <summary>Why a fixed fee instead of a percentage?</summary>
             <p>So no one can argue we had a stake in the number. The fee is the same whether we find $5,000 or $5 million.</p>
+          </details>
+          <details>
+            <summary>Can you show where hidden crypto went?</summary>
+            <p>Yes, on Bitcoin. The tracing map follows funds transaction by transaction, groups wallets that were spent together, and marks where funds reached an exchange, which tells counsel whom to subpoena. Try one hop free at <Link href="/tools/trace">/tools/trace</Link>.</p>
+          </details>
+          <details>
+            <summary>Can you tell us if assets move while the matter is open?</summary>
+            <p>Asset-movement alerts watch every address in the matter daily. If anything moves, you get a sealed alert record the same day, ready to bring to the court. $750 a month per matter, cancel any month.</p>
           </details>
           <details>
             <summary>Do you need private keys or recovery phrases?</summary>

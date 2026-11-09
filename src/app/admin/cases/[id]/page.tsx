@@ -3,12 +3,17 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getCase, updateCase, logEvent, events, daysFromNow, valuationLabel } from "@/lib/cases";
 import { STAGES, STAGE_IDS, stage, fill } from "@/lib/playbook";
-import { packageById, priceLabel, payLink, casePayLink, PACKAGES, ADDONS_LINK } from "@/lib/pricing";
+import { packageById, priceLabel, payLink, casePayLink, PACKAGES, ADDONS_LINK, ALERTS_LINK, COST_BASIS_LINK, DISSIPATION_LINK } from "@/lib/pricing";
 import { buildReport, buildDrafts } from "@/lib/analyze";
 import { sendEmail, emailEnabled, mailto } from "@/lib/email";
 import { aiEnabled } from "@/lib/ai";
 import { SITE_URL, OPERATOR_NAME } from "@/lib/site";
 import { CopyButton } from "@/components/CopyButton";
+import { TraceMap } from "@/components/TraceMap";
+import { traceBitcoin } from "@/lib/trace";
+import { costBasis, dissipation } from "@/lib/schedules";
+import { extrasOf, btcAddresses } from "@/lib/record";
+import { startWatching, stopWatching, watchesFor } from "@/lib/watch";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -102,6 +107,38 @@ async function emailNow(form: FormData) {
   revalidatePath(`/admin/cases/${id}`);
 }
 
+async function runExtra(form: FormData) {
+  "use server";
+  const id = String(form.get("id"));
+  const kind = String(form.get("kind"));
+  const c = await getCase(id);
+  if (!c) return;
+  const btc = btcAddresses(c);
+  const extras = extrasOf(c);
+  if (kind === "trace") {
+    const since = String(form.get("since") ?? "") || null;
+    const trace = await traceBitcoin(btc.slice(0, 8), { hops: 3, since, maxNodes: 48, fanout: 4 });
+    await updateCase(id, { extras: { ...extras, trace } });
+    await logEvent(id, "trace", `Tracing map: ${trace.nodes.length} addresses, ${trace.edges.length} transfers.`);
+  } else if (kind === "basis") {
+    const cb = await costBasis(btc.slice(0, 20));
+    await updateCase(id, { extras: { ...extras, costBasis: cb } });
+    await logEvent(id, "cost-basis", `Cost-basis schedule: ${cb.lots.length} lots, ${cb.disposals.length} transfers out.`);
+  } else if (kind === "dissipation") {
+    const date = String(form.get("date") ?? "") || c.date_of_death;
+    if (!date) return;
+    const months = Math.min(60, Math.max(1, Number(form.get("months")) || 24));
+    const d = await dissipation(btc.slice(0, 20), date, months);
+    await updateCase(id, { extras: { ...extras, dissipation: d } });
+    await logEvent(id, "dissipation", `Dissipation analysis: ${d.outflows.length} transfers out since ${d.lookbackFrom}.`);
+  } else if (kind === "watch-on") {
+    await startWatching(c);
+  } else if (kind === "watch-off") {
+    await stopWatching(id);
+  }
+  revalidatePath(`/admin/cases/${id}`);
+}
+
 // ---------- page ----------
 export default async function CasePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -127,6 +164,10 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
   const r = c.report;
   const nextIdx = STAGE_IDS.indexOf(st.id) + 1;
   const next = STAGES[nextIdx] && st.id !== "closed" && st.id !== "declined" ? STAGES[nextIdx] : null;
+  const x = extrasOf(c);
+  const btcCount = btcAddresses(c).length;
+  const watches = await watchesFor(c.id);
+  const watching = watches.filter((w) => w.active);
 
   return (
     <div className="wrap" style={{ padding: "32px 0 96px", display: "grid", gap: 18 }}>
@@ -224,6 +265,9 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {base ? <CopyButton text={pay} label="Copy payment link" /> : null}
             <CopyButton text={casePayLink(ADDONS_LINK, c.id, c.email)} label="Copy add-ons link" />
+            <CopyButton text={casePayLink(ALERTS_LINK, c.id, c.email)} label="Copy alerts link ($750/mo)" />
+            <CopyButton text={casePayLink(COST_BASIS_LINK, c.id, c.email)} label="Copy cost-basis link" />
+            <CopyButton text={casePayLink(DISSIPATION_LINK, c.id, c.email)} label="Copy dissipation link" />
             <CopyButton text={portal} label="Copy matter page link" />
           </div>
         </div>
@@ -292,6 +336,53 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
             <p className="fine">{r.sources.join(" · ")}</p>
           </>
         ) : null}
+      </div>
+
+      {/* Premium work */}
+      <div className="form-card" style={{ display: "grid", gap: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
+          <h3 style={{ margin: 0 }}>Premium work</h3>
+          <Link className="btn btn-small btn-primary" href={`/admin/cases/${c.id}/exhibits`}>Open court exhibit pack →</Link>
+        </div>
+        <p className="fine" style={{ margin: 0 }}>{btcCount} Bitcoin address(es) on this matter. Tracing, cost basis and dissipation read Bitcoin history from the public ledger; results are saved to the matter and sealed into the exhibit pack.</p>
+        <div className="instrument">
+          <form action={runExtra}>
+            <input type="hidden" name="id" value={c.id} />
+            <input type="hidden" name="kind" value="trace" />
+            <div className="pane-head"><span>Follow-the-money map</span><span>Complex Matter</span></div>
+            <div className="field"><label>Only transfers on or after</label><input type="date" name="since" defaultValue={x.trace?.since ?? ""} /></div>
+            <button className="btn btn-small" type="submit" disabled={!btcCount} style={{ marginTop: 10 }}>{x.trace ? "Re-run trace" : "Run trace (3 hops)"}</button>
+            {x.trace ? <p className="fine">{x.trace.nodes.length} addresses · {x.trace.edges.length} transfers · read {x.trace.readAt.slice(0, 10)}</p> : null}
+          </form>
+          <div style={{ display: "grid", gap: 14 }}>
+            <form action={runExtra}>
+              <input type="hidden" name="id" value={c.id} />
+              <input type="hidden" name="kind" value="basis" />
+              <div className="pane-head"><span>Tax cost-basis schedule</span><span>Add-on $1,950</span></div>
+              <button className="btn btn-small" type="submit" disabled={!btcCount}>{x.costBasis ? "Re-run" : "Build schedule"}</button>
+              {x.costBasis ? <span className="fine"> {x.costBasis.lots.length} lots · basis held {x.costBasis.heldBasis !== null ? usd(x.costBasis.heldBasis) : "—"}</span> : null}
+            </form>
+            <form action={runExtra}>
+              <input type="hidden" name="id" value={c.id} />
+              <input type="hidden" name="kind" value="dissipation" />
+              <div className="pane-head"><span>Dissipation analysis</span><span>Add-on $1,500</span></div>
+              <div className="form-grid">
+                <div className="field"><label>Key date</label><input type="date" name="date" defaultValue={c.date_of_death ?? ""} /></div>
+                <div className="field"><label>Look-back (months)</label><input type="number" name="months" min={1} max={60} defaultValue={c.matter_type === "bankruptcy" ? 24 : 12} /></div>
+              </div>
+              <button className="btn btn-small" type="submit" disabled={!btcCount} style={{ marginTop: 10 }}>{x.dissipation ? "Re-run" : "Run analysis"}</button>
+              {x.dissipation ? <span className="fine"> {x.dissipation.outflows.length} transfers out · {usd(x.dissipation.totalAfterUsd)} after the date</span> : null}
+            </form>
+            <form action={runExtra}>
+              <input type="hidden" name="id" value={c.id} />
+              <input type="hidden" name="kind" value={watching.length ? "watch-off" : "watch-on"} />
+              <div className="pane-head"><span>Asset-movement alerts</span><span>$750/month</span></div>
+              <button className="btn btn-small" type="submit" disabled={!r && !c.findings}>{watching.length ? `Stop watching ${watching.length} address(es)` : "Start watching every address"}</button>
+              {watching.length ? <span className="fine"> Checked daily; last change {watching.map((w) => w.last_change_at).filter(Boolean).sort().pop()?.slice(0, 10) ?? "none yet"}.</span> : null}
+            </form>
+          </div>
+        </div>
+        {x.trace ? <TraceMap trace={x.trace} /> : null}
       </div>
 
       {c.drafts?.letters.length ? (

@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Hanken_Grotesk, DM_Mono } from "next/font/google";
+import { Instrument_Serif, Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Masthead } from "@/components/Masthead";
 import { Footer } from "@/components/Footer";
 import { ChatWidget } from "@/components/ChatWidget";
 import { aiEnabled } from "@/lib/ai";
 
-const display = Fraunces({ subsets: ["latin"], style: ["normal", "italic"], axes: ["SOFT", "WONK", "opsz"], variable: "--font-fraunces" });
-const sans = Hanken_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-hanken" });
-const mono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-dmmono" });
+const display = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-instrument" });
+const sans = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex" });
 
 export const metadata: Metadata = {
   title: "TraceSworn — Crypto asset discovery and sealed valuation",
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f1ebdf" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1d19" },
+    { media: "(prefers-color-scheme: light)", color: "#0b0a08" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0a08" },
   ],
 };
 
@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem("kl-theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}`,
+            __html: `try{if(localStorage.getItem("ts-theme")==="light")document.documentElement.dataset.theme="light"}catch(e){}`,
           }}
         />
       </head>

@@ -4,7 +4,7 @@
 
 import type { Chain } from "./extract";
 
-const UA = { "User-Agent": "kinledger/0.1", Accept: "application/json" };
+const UA = { "User-Agent": "tracesworn/1.0", Accept: "application/json" };
 const ESPLORA = "https://blockstream.info/api";
 const ETH_RPC = "https://ethereum-rpc.publicnode.com";
 const SOL_RPC = "https://api.mainnet-beta.solana.com";
