@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 const TOOLS = [
   { href: "/tools/statements", name: "Statement scan", body: "Find every payment to or from a crypto exchange, app or Bitcoin ATM in bank and card statements, with dates and totals.", tag: "Trace" },
   { href: "/scan", name: "Document scan", body: "Drop in emails, statements and notes. Finds exchanges, wallets, addresses and possible recovery phrases, privately in your browser.", tag: "Trace" },
+  { href: "/tools/trace", name: "Tracing map", body: "Follow Bitcoin from an address to where it went, group wallets spent together, and see which transfers reached an exchange.", tag: "Trace" },
   { href: "/tools/wallet-key", name: "Hardware wallet scan", body: "Paste a Ledger, Trezor or Sparrow extended public key and see every address the wallet used, with live balances.", tag: "Trace" },
   { href: "/#check", name: "Address check", body: "Read one address's balance today and on any valuation date across Bitcoin, Ethereum, Base, Arbitrum, Optimism, Polygon and Solana.", tag: "Value" },
   { href: "/verify", name: "Verify a record", body: "Confirm any TraceSworn record is unchanged by recomputing its SHA-256 fingerprint. For courts, opposing counsel and auditors.", tag: "Seal" },

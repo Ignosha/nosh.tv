@@ -26,10 +26,23 @@ Fixed fees in `src/lib/pricing.ts`, never a percentage. Live Stripe Payment Link
 |---|---|
 | Free tools | Free (statement scan, document scan, wallet-key scan, address check, verify, request letters) |
 | Discovery Report | $2,500 |
-| Evidence Package | $4,950 (up to 5 exchanges and 2 wallets, methodology appendix) |
-| Complex Matter | $7,500 |
+| Evidence Package | $6,500 (court exhibit pack, up to 5 exchanges and 2 wallets) |
+| Complex Matter | $12,500 (follow-the-money tracing map, multiple dates, 6+ exchanges) |
 | Firm Plan | $1,500 / month (2 reports included, 25% off more) |
-| Add-ons | Valuation date $350 · exchange $495 · wallet $1,250 · rush +$1,500 |
+| Add-ons | Asset-movement alerts $750/mo · tax cost-basis schedule $1,950 · dissipation analysis $1,500 · valuation date $350 · exchange $495 · wallet $1,250 · rush +$1,500 |
+
+## Premium work (case desk → matter → Premium work)
+
+- **Follow-the-money map** (`src/lib/trace.ts`): follows Bitcoin three hops from the matter's addresses, groups addresses spent together (common-input heuristic, skipping batches over 20 inputs), and stops at high-volume services (400+ transactions), where records must be requested. Public preview, one hop: `/tools/trace`.
+- **Court exhibit pack** (`/admin/cases/<id>/exhibits`): numbered exhibits (summary, balance-history charts, tracing map, schedules, alerts), methodology and a declaration template, all tied to one SHA-256 fingerprint. Print to PDF; the sealed `.json` is at `/admin/cases/<id>/record`.
+- **Cost-basis schedule** and **dissipation analysis** (`src/lib/schedules.ts`): every lot and every transfer out, valued at the daily close.
+- **Asset-movement alerts** (`src/lib/watch.ts`, `/api/cron/watch` daily): re-reads every watched address and emails a sealed alert when anything moves. Paying the alerts link turns watching on automatically.
+
+## Client finder & outreach (`/admin/leads`)
+
+1. **Find**: law offices in any city from OpenStreetMap (Overpass), counsel named in court opinions involving crypto in estate, divorce or bankruptcy matters (CourtListener, free token), or your own list. Each firm's own website is read for a public email and practice areas, and every lead is scored for fit (0–100) with its source kept.
+2. **Review**: you approve leads before anything is sent.
+3. **Send**: a three-email sequence (day 0, 4, 10), weekdays, up to `OUTREACH_DAILY_LIMIT` a day, through Resend. Every email has your postal address and a one-click unsubscribe (`/u/<token>`, plus `List-Unsubscribe` headers). Replies, bookings and unsubscribes stop the sequence. Without Resend, each email opens in your own mail app.
 
 ## Sealed records
 

@@ -42,28 +42,30 @@ export const PACKAGES: Package[] = [
   {
     id: "recovery",
     name: "Evidence Package",
-    price: 4950,
+    price: 6500,
     cadence: "once",
-    tagline: "Court-ready, with the paperwork done.",
+    tagline: "Court-ready, with the exhibits done.",
     includes: [
       "Everything in the Discovery Report",
+      "Numbered court exhibit pack with balance-history charts",
+      "Methodology appendix and declaration template",
       "Records or claim requests for up to 5 exchanges",
-      "Analysis of up to 2 wallets or devices",
-      "Written methodology appendix and one revision",
+      "Up to 2 wallets or devices, and one revision",
     ],
     highlight: true,
   },
   {
     id: "complex",
     name: "Complex Matter",
-    price: 7500,
+    price: 12500,
     cadence: "once",
-    tagline: "Contested, multi-party or DeFi-heavy matters.",
+    tagline: "Hidden, contested or multi-party matters.",
     includes: [
       "Everything in the Evidence Package",
+      "Follow-the-money tracing map: three hops, same-owner wallets, exchange landing points",
       "Multiple parties or valuation dates",
       "6+ exchanges, DeFi and staking positions",
-      "Wallet-to-wallet tracing and a dedicated case lead",
+      "A dedicated case lead",
     ],
   },
   {
@@ -82,7 +84,10 @@ export const PACKAGES: Package[] = [
 ];
 
 // Add-ons keep one flat price fair when a matter is bigger than its package.
-export const ADDONS: { name: string; price: string; note: string }[] = [
+export const ADDONS: { name: string; price: string; note: string; link?: string }[] = [
+  { name: "Asset-movement alerts", price: "$750/mo", note: "every address watched daily; a sealed alert the day anything moves", link: "https://buy.stripe.com/8x26oH3WE8VR9WF2ya6Vq0e" },
+  { name: "Tax cost-basis schedule", price: "$1,950", note: "every lot valued on the day received, FIFO, for the estate return or division", link: "https://buy.stripe.com/28E14nal2fkfecV8Wy6Vq0f" },
+  { name: "Dissipation analysis", price: "$1,500", note: "every transfer out in the look-back and after the key date, valued", link: "https://buy.stripe.com/aFacN50Ksb3Zb0J2ya6Vq0g" },
   { name: "Additional valuation date", price: "$350", note: "each, e.g. separation and trial dates" },
   { name: "Additional exchange", price: "$495", note: "each, beyond the package" },
   { name: "Additional wallet or device", price: "$1,250", note: "each, beyond the package" },
@@ -97,11 +102,14 @@ export function priceLabel(p: Package): string {
 // Live Stripe Payment Links (TraceSworn Stripe account). An env var overrides any of them.
 const STRIPE_LINKS: Record<Exclude<Package["id"], "scan">, string> = {
   report: "https://buy.stripe.com/eVq00j2SA0pl0m5egS6Vq07",
-  recovery: "https://buy.stripe.com/00weVd3WE9ZV7Oxb4G6Vq08",
-  complex: "https://buy.stripe.com/6oU14nctaegb1q9a0C6Vq09",
+  recovery: "https://buy.stripe.com/8x28wPeBi1tp0m52ya6Vq0c",
+  complex: "https://buy.stripe.com/9B6bJ164M8VR0m5gp06Vq0d",
   partner: "https://buy.stripe.com/eVq7sLbp64FBd8Rgp06Vq0a",
 };
 export const ADDONS_LINK = "https://buy.stripe.com/aFa28ral2egbfgZ5Km6Vq0b";
+export const ALERTS_LINK = "https://buy.stripe.com/8x26oH3WE8VR9WF2ya6Vq0e";
+export const COST_BASIS_LINK = "https://buy.stripe.com/28E14nal2fkfecV8Wy6Vq0f";
+export const DISSIPATION_LINK = "https://buy.stripe.com/aFacN50Ksb3Zb0J2ya6Vq0g";
 
 export function payLink(id: Package["id"]): string | null {
   if (id === "scan") return null;

@@ -66,6 +66,7 @@ export type Case = {
   report: Report | null;
   report_approved: boolean;
   drafts: Drafts | null;
+  extras: Record<string, unknown> | null;
   notes: string | null;
   last_contact_at: string | null;
   next_followup_at: string | null;

@@ -57,7 +57,10 @@ export default async function Admin() {
           <span className="kicker">Case desk</span>
           <h1 className="serif" style={{ fontSize: 44, margin: 0 }}>Good to see you.</h1>
         </div>
-        <Link className="btn btn-small" href="/admin/playbook">Open the playbook</Link>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Link className="btn btn-small btn-primary" href="/admin/leads">Client finder &amp; outreach</Link>
+          <Link className="btn btn-small" href="/admin/playbook">Open the playbook</Link>
+        </div>
       </div>
       {error ? <div className="notice err">{error.message}. Did you run the latest supabase/schema.sql?</div> : null}
 
