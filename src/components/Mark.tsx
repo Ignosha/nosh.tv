@@ -4,7 +4,7 @@ export function Mark({ size = 34 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
       <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="40" y2="40">
           <stop offset="0" stopColor="#a8823f" />
           <stop offset="0.45" stopColor="#f1dfae" />
           <stop offset="1" stopColor="#93702f" />

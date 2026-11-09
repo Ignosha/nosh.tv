@@ -2,57 +2,24 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ledgerReading } from "@/lib/chains";
 import { IntakeForm } from "@/components/IntakeForm";
-import { HeroFigure } from "@/components/HeroFigure";
-import { DeskBand } from "@/components/DeskBand";
+import { HeroCertificate } from "@/components/HeroCertificate";
+import { ChainOfCustody } from "@/components/ChainOfCustody";
 import { Pricing } from "@/components/Pricing";
 import { AddressInstrument } from "@/components/AddressInstrument";
 
 export const revalidate = 60;
-
-const usd = (n: number | null) =>
-  n === null ? "unavailable" : "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default async function Home() {
   const r = await ledgerReading();
 
   return (
     <>
-      <DeskBand height={r.height} btc={r.btc} />
-      <section className="hero">
-        <div className="wrap hero-grid">
-          <div>
-            <span className="kicker">Crypto discovery for estates, divorce &amp; bankruptcy</span>
-            <h1>
-              Crypto leaves a trail. <em>We swear to it.</em>
-            </h1>
-            <p className="lede">
-              TraceSworn finds the crypto in an estate, a divorce or a bankruptcy, values it on the date that matters, and
-              seals every figure in a record that opposing counsel can verify for themselves.
-            </p>
-            <div className="hero-actions">
-              <Link href="#open-a-case" className="btn btn-primary">
-                Open a matter <span className="arrow">↗</span>
-              </Link>
-              <Link href="/tools" className="btn">
-                Try the free tools
-              </Link>
-            </div>
-            <p className="fine" style={{ margin: "18px 0 0" }}>
-              {r.height === null ? "Live prices unavailable" : <>Read live · BTC {usd(r.btc)} · ETH {usd(r.eth)}</>}
-            </p>
-            <ul className="promise-list">
-              <li>Fixed fees, never a percentage</li>
-              <li>Every figure sealed and verifiable</li>
-              <li>We never hold assets or keys</li>
-            </ul>
-          </div>
-          <HeroFigure />
-        </div>
-      </section>
+      <HeroCertificate height={r.height} hash={r.hash} btc={r.btc} eth={r.eth} readAt={r.readAt} />
+      <ChainOfCustody />
 
       <section className="section tinted" id="check">
         <div className="wrap">
-          <div className="section-head">
+          <div className="section-head split">
             <span className="kicker">Free address check</span>
             <h2>
               Have an address? <em>Read it now.</em>
@@ -68,7 +35,7 @@ export default async function Home() {
 
       <section className="section" id="matters">
         <div className="wrap">
-          <div className="section-head">
+          <div className="section-head split">
             <span className="kicker">Who we work for</span>
             <h2>
               Two kinds of matter. <em>One method.</em>
@@ -102,7 +69,7 @@ export default async function Home() {
 
       <section className="section tinted" id="method">
         <div className="wrap">
-          <div className="section-head">
+          <div className="section-head split">
             <span className="kicker">What makes it different</span>
             <h2>
               Not an estimate. <em>A reproducible reading.</em>
@@ -114,17 +81,17 @@ export default async function Home() {
           </div>
           <div className="columns">
             <div>
-              <div className="fig">01</div>
+              <div className="fig">i.</div>
               <h3>Statements first.</h3>
               <p>Money reaches crypto through a bank. We scan statements for 24 exchanges, apps and ATM operators, including the legal names they bill under.</p>
             </div>
             <div>
-              <div className="fig">02</div>
+              <div className="fig">ii.</div>
               <h3>Whole wallets, not guesses.</h3>
               <p>From one hardware-wallet public key we read every address it used, across seven networks, then follow the money hop by hop to where it landed.</p>
             </div>
             <div>
-              <div className="fig">03</div>
+              <div className="fig">iii.</div>
               <h3>Sealed and checkable.</h3>
               <p>Every record carries a SHA-256 fingerprint and ships as numbered court exhibits. Anyone can confirm at /verify, or with any standard tool, that no figure was changed.</p>
             </div>
@@ -134,7 +101,7 @@ export default async function Home() {
 
       <section className="section" id="services">
         <div className="wrap">
-          <div className="section-head">
+          <div className="section-head split">
             <span className="kicker">Services &amp; fees</span>
             <h2>
               One fixed fee. <em>No percentages.</em>
@@ -150,7 +117,7 @@ export default async function Home() {
 
       <section className="section tinted" id="process">
         <div className="wrap">
-          <div className="section-head">
+          <div className="section-head split">
             <span className="kicker">How a matter runs</span>
             <h2>
               From suspicion <em>to sealed evidence.</em>
@@ -183,7 +150,7 @@ export default async function Home() {
 
       <section className="section" id="rules">
         <div className="wrap">
-          <div className="section-head">
+          <div className="section-head split">
             <span className="kicker">Our standards</span>
             <h2>
               Evidence you can <em>stand behind.</em>
@@ -221,7 +188,7 @@ export default async function Home() {
 
       <section className="section tinted faq" id="faq">
         <div className="wrap">
-          <div className="section-head">
+          <div className="section-head split">
             <span className="kicker">Questions</span>
             <h2>
               What counsel <em>asks us.</em>
@@ -264,7 +231,7 @@ export default async function Home() {
 
       <section className="section" id="open-a-case">
         <div className="wrap">
-          <div className="section-head">
+          <div className="section-head split">
             <span className="kicker">Get started</span>
             <h2>
               Open a <em>matter.</em>

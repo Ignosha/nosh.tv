@@ -28,7 +28,7 @@ Fixed fees in `src/lib/pricing.ts`, never a percentage. Live Stripe Payment Link
 | Discovery Report | $2,500 |
 | Evidence Package | $6,500 (court exhibit pack, up to 5 exchanges and 2 wallets) |
 | Complex Matter | $12,500 (follow-the-money tracing map, multiple dates, 6+ exchanges) |
-| Firm Plan | $1,500 / month (2 reports included, 25% off more) |
+| Firm Plan | $4,500 / month (2 reports and alerts on one matter included, 25% off more) |
 | Add-ons | Asset-movement alerts $750/mo · tax cost-basis schedule $1,950 · dissipation analysis $1,500 · valuation date $350 · exchange $495 · wallet $1,250 · rush +$1,500 |
 
 ## Premium work (case desk → matter → Premium work)

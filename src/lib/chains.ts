@@ -305,11 +305,16 @@ export async function priceOnDate(asset: Asset, date: string): Promise<Price> {
 // ---------- Live reading for the homepage ----------
 
 export async function ledgerReading() {
-  const [height, btc, eth, sol] = await Promise.all([
-    getJson<number>(`${ESPLORA}/blocks/tip/height`).catch(() => null),
-    priceNow("BTC"),
-    priceNow("ETH"),
-    priceNow("SOL"),
-  ]);
-  return { height, btc: btc.usd, eth: eth.usd, sol: sol.usd, readAt: new Date().toISOString() };
+  // One request gives both the height and the hash of the latest block; mempool.space is the free fallback.
+  const tip = async () => {
+    for (const base of [ESPLORA, "https://mempool.space/api"]) {
+      const blocks = await getJson<{ id: string; height: number }[]>(`${base}/blocks`).catch(() => null);
+      if (blocks?.length) return blocks[0];
+    }
+    return null;
+  };
+  const [block, btc, eth, sol] = await Promise.all([tip(), priceNow("BTC"), priceNow("ETH"), priceNow("SOL")]);
+  const height = block?.height ?? null;
+  const hash = block?.id ?? null;
+  return { height, hash, btc: btc.usd, eth: eth.usd, sol: sol.usd, readAt: new Date().toISOString() };
 }
