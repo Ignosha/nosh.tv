@@ -3,7 +3,7 @@ import { XpubScanner } from "@/components/XpubScanner";
 import { ToolHeader } from "@/components/ToolHeader";
 
 export const metadata: Metadata = {
-  title: "Hardware wallet scan — Kin Ledger",
+  title: "Hardware wallet scan — TraceSworn",
   description: "Find every address a Bitcoin hardware wallet used, from its extended public key, with live balances.",
 };
 

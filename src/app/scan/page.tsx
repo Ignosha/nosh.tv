@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ScanDesk } from "@/components/ScanDesk";
 
 export const metadata: Metadata = {
-  title: "Estate scan — Kin Ledger",
+  title: "Estate scan — TraceSworn",
   description: "Find exchanges, wallets and addresses in an estate's documents, privately in your browser, then read them on the public ledger.",
 };
 

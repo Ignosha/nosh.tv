@@ -1,9 +1,9 @@
-// Fixed prices. Edit them here and the whole site updates.
-// No percentages of the estate are ever charged.
+// Fixed prices for professional clients (attorneys, fiduciaries, trustees). Edit them here and the site updates.
+// No percentage of the estate, settlement or recovery is ever charged.
 // Each paid package has a live Stripe Payment Link below; NEXT_PUBLIC_PAY_<ID> can override it.
 
 export type Package = {
-  id: "scan" | "report" | "recovery" | "complex" | "plan" | "partner";
+  id: "scan" | "report" | "recovery" | "complex" | "partner";
   name: string;
   price: number; // USD
   cadence: "free" | "once" | "month";
@@ -15,90 +15,78 @@ export type Package = {
 export const PACKAGES: Package[] = [
   {
     id: "scan",
-    name: "Estate Scan",
+    name: "Free tools",
     price: 0,
     cadence: "free",
-    tagline: "Do it yourself, privately, in your browser.",
+    tagline: "Run the first pass yourself, privately.",
     includes: [
-      "Find exchanges, wallets and addresses in documents",
-      "Live balances on Bitcoin, Ethereum, Base, Arbitrum, Optimism, Polygon and Solana",
-      "Hardware-wallet master key (xpub/zpub) scan",
-      "Exchange claim letters and legacy plan builder",
+      "Bank and card statement scan for exchange payments",
+      "Document scan for exchanges, wallets and addresses",
+      "Live balances on 7 networks plus hardware-wallet key scan",
+      "Seal and verify any record with a SHA-256 fingerprint",
     ],
   },
   {
     id: "report",
-    name: "Estate Report",
-    price: 1250,
+    name: "Discovery Report",
+    price: 2500,
     cadence: "once",
-    tagline: "We do the discovery and hand your attorney the numbers.",
+    tagline: "Find it and value it, for one matter.",
     includes: [
-      "Discovery across documents and devices you provide",
-      "Every address read on the public ledger",
-      "Date-of-death valuation with named sources",
-      "Findings call with the family or executor",
+      "Statement, document and device tracing for one person",
+      "Every address and wallet key read on the public ledger",
+      "Valuation on one date: death, separation or petition",
+      "Sealed evidence record anyone can verify",
     ],
   },
   {
     id: "recovery",
-    name: "Full Recovery",
+    name: "Evidence Package",
     price: 4950,
     cadence: "once",
-    tagline: "A standard estate, start to finish, for one fixed price.",
+    tagline: "Court-ready, with the paperwork done.",
     includes: [
-      "Everything in the Estate Report",
-      "Exchange claims handled for up to 5 exchanges",
-      "Offline recovery for up to 2 wallets or devices",
-      "Final valuation and close-out file for the estate",
+      "Everything in the Discovery Report",
+      "Records or claim requests for up to 5 exchanges",
+      "Analysis of up to 2 wallets or devices",
+      "Written methodology appendix and one revision",
     ],
     highlight: true,
   },
   {
     id: "complex",
-    name: "Complex Recovery",
-    price: 9500,
+    name: "Complex Matter",
+    price: 7500,
     cadence: "once",
-    tagline: "For larger estates with many accounts, wallets or DeFi.",
+    tagline: "Contested, multi-party or DeFi-heavy matters.",
     includes: [
-      "Everything in Full Recovery",
-      "6+ exchanges and multiple wallets or devices",
-      "DeFi positions, staking and cross-chain tracing",
-      "Dedicated case lead and weekly updates",
-    ],
-  },
-  {
-    id: "plan",
-    name: "Legacy Plan",
-    price: 750,
-    cadence: "once",
-    tagline: "For the living: make sure your family can find it. Couples $1,100.",
-    includes: [
-      "Guided session to map your holdings without exposing keys",
-      "A written letter of instruction for your executor",
-      "Safe storage recommendations for backups",
-      "One free update within 12 months",
+      "Everything in the Evidence Package",
+      "Multiple parties or valuation dates",
+      "6+ exchanges, DeFi and staking positions",
+      "Wallet-to-wallet tracing and a dedicated case lead",
     ],
   },
   {
     id: "partner",
-    name: "Attorney Partner",
-    price: 750,
+    name: "Firm Plan",
+    price: 1500,
     cadence: "month",
-    tagline: "For firms that see crypto in estates regularly.",
+    tagline: "For firms with crypto in their caseload.",
     includes: [
-      "1 Estate Report per month included",
-      "25% off every additional case",
+      "2 Discovery Reports per month included",
+      "25% off every additional matter",
       "Priority turnaround and co-branded reports",
       "Cancel any month",
     ],
   },
 ];
 
-// Add-ons keep one flat price fair when a case is bigger than its package.
+// Add-ons keep one flat price fair when a matter is bigger than its package.
 export const ADDONS: { name: string; price: string; note: string }[] = [
-  { name: "Extra exchange", price: "$495", note: "each, beyond the package" },
-  { name: "Extra wallet or device", price: "$1,250", note: "each, beyond the package" },
-  { name: "Rush delivery", price: "+$1,000", note: "findings within 5 business days" },
+  { name: "Additional valuation date", price: "$350", note: "each, e.g. separation and trial dates" },
+  { name: "Additional exchange", price: "$495", note: "each, beyond the package" },
+  { name: "Additional wallet or device", price: "$1,250", note: "each, beyond the package" },
+  { name: "Rush delivery", price: "+$1,500", note: "findings within 5 business days" },
 ];
 
 export function priceLabel(p: Package): string {
@@ -106,16 +94,14 @@ export function priceLabel(p: Package): string {
   return "$" + p.price.toLocaleString("en-US") + (p.cadence === "month" ? "/mo" : "");
 }
 
-// Live Stripe Payment Links (created in the Kin Ledger Stripe account). An env var overrides any of them.
+// Live Stripe Payment Links (TraceSworn Stripe account). An env var overrides any of them.
 const STRIPE_LINKS: Record<Exclude<Package["id"], "scan">, string> = {
-  report: "https://buy.stripe.com/bJe6oH3WE0pl2ud7Su6Vq00",
-  recovery: "https://buy.stripe.com/7sY28r0Ks9ZV8SB4Gi6Vq01",
-  complex: "https://buy.stripe.com/7sYfZh64M2xt5GpegS6Vq02",
-  plan: "https://buy.stripe.com/aFa5kDfFmc830m57Su6Vq03",
-  partner: "https://buy.stripe.com/aFa8wP50I0pld8R1u66Vq05",
+  report: "https://buy.stripe.com/eVq00j2SA0pl0m5egS6Vq07",
+  recovery: "https://buy.stripe.com/00weVd3WE9ZV7Oxb4G6Vq08",
+  complex: "https://buy.stripe.com/6oU14nctaegb1q9a0C6Vq09",
+  partner: "https://buy.stripe.com/eVq7sLbp64FBd8Rgp06Vq0a",
 };
-export const COUPLE_PLAN_LINK = "https://buy.stripe.com/9B67sL50Ic83fgZ6Oq6Vq04";
-export const ADDONS_LINK = "https://buy.stripe.com/eVqdR9dxeb3Z1q97Su6Vq06";
+export const ADDONS_LINK = "https://buy.stripe.com/aFa28ral2egbfgZ5Km6Vq0b";
 
 export function payLink(id: Package["id"]): string | null {
   if (id === "scan") return null;
@@ -123,14 +109,13 @@ export function payLink(id: Package["id"]): string | null {
     report: process.env.NEXT_PUBLIC_PAY_REPORT,
     recovery: process.env.NEXT_PUBLIC_PAY_RECOVERY,
     complex: process.env.NEXT_PUBLIC_PAY_COMPLEX,
-    plan: process.env.NEXT_PUBLIC_PAY_PLAN,
     partner: process.env.NEXT_PUBLIC_PAY_PARTNER,
   };
   const url = env[id] || STRIPE_LINKS[id];
   return /^https:\/\//.test(url) ? url : null;
 }
 
-/** A payment link tied to one case, so the Stripe webhook marks that case paid. */
+/** A payment link tied to one matter, so the Stripe webhook marks that matter paid. */
 export function casePayLink(base: string, caseId: string, email?: string | null): string {
   const u = new URL(base);
   u.searchParams.set("client_reference_id", caseId);

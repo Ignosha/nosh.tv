@@ -1,5 +1,7 @@
 "use client";
 
+import { downloadSealed } from "@/lib/download";
+
 import { useRef, useState } from "react";
 import { detectChain } from "@/lib/extract";
 import type { AddressReport, Price } from "@/lib/chains";
@@ -16,6 +18,7 @@ const usd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigi
 const amt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 8 });
 
 export function AddressInstrument() {
+  const [fingerprint, setFingerprint] = useState("");
   const [address, setAddress] = useState("");
   const [date, setDate] = useState("");
   const [state, setState] = useState<"idle" | "reading" | "read" | "failed">("idle");
@@ -66,14 +69,10 @@ export function AddressInstrument() {
     }
   }
 
-  function download() {
+  async function download() {
     if (!reply) return;
-    const blob = new Blob([JSON.stringify({ generatedBy: "Kin Ledger", ...reply }, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `kinledger-record-${reply.readAt.slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    const fp = await downloadSealed({ generatedBy: "TraceSworn address check", ...reply }, `tracesworn-record-${reply.readAt.slice(0, 10)}.json`);
+    setFingerprint(fp);
   }
 
   const report = reply?.reports[0];
@@ -210,12 +209,13 @@ export function AddressInstrument() {
               </p>
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                 <button type="button" className="btn btn-small" onClick={download}>
-                  Download the record <span className="arrow">↓</span>
+                  Download sealed record <span className="arrow">↓</span>
                 </button>
                 <a className="btn btn-small" href={report.explorer} target="_blank" rel="noreferrer">
                   Open in explorer <span className="arrow">↗</span>
                 </a>
               </div>
+              {fingerprint ? <p className="fine" style={{ marginTop: 10, wordBreak: "break-all" }}>Sealed. Fingerprint (SHA-256): <span className="mono">{fingerprint}</span>. Anyone can check it at <a href="/verify">/verify</a>.</p> : null}
             </>
           ) : (
             <p className="fine" style={{ margin: 0 }}>

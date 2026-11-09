@@ -11,9 +11,9 @@ const sans = Hanken_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", 
 const mono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-dmmono" });
 
 export const metadata: Metadata = {
-  title: "Kin Ledger — Crypto estate recovery",
+  title: "TraceSworn — Crypto asset discovery and sealed valuation",
   description:
-    "We find the crypto a loved one left behind, recover what can honestly be recovered, and document its value for the estate. No upfront fees. We never hold your funds.",
+    "TraceSworn finds crypto in estates, divorces and bankruptcies, values it on the date that matters, and seals every figure in a verifiable record. Fixed fees.",
 };
 
 export const viewport: Viewport = {

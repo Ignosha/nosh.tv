@@ -1,6 +1,6 @@
 import { STAGES, OBJECTIONS } from "@/lib/playbook";
 
-export const metadata = { title: "Playbook — Kin Ledger" };
+export const metadata = { title: "Playbook — TraceSworn" };
 
 export default function Playbook() {
   return (

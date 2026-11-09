@@ -3,7 +3,7 @@ import { LetterBuilder } from "@/components/LetterBuilder";
 import { ToolHeader } from "@/components/ToolHeader";
 
 export const metadata: Metadata = {
-  title: "Exchange claim letters — Kin Ledger",
+  title: "Exchange claim letters — TraceSworn",
   description: "Write a deceased-account request letter to any crypto exchange, ready to print. Free, and nothing leaves your browser.",
 };
 

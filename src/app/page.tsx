@@ -13,7 +13,6 @@ const usd = (n: number | null) =>
 
 export default async function Home() {
   const r = await ledgerReading();
-  const readAt = new Date(r.readAt);
 
   return (
     <>
@@ -31,24 +30,24 @@ export default async function Home() {
               )}
             </span>
             <h1>
-              What they left behind <em>can still be found.</em>
+              Crypto leaves a trail. <em>We swear to it.</em>
             </h1>
             <p className="lede">
-              Kin Ledger helps families and executors find the crypto a loved one left, recover what can honestly be
-              recovered, and document its value for the estate.
+              TraceSworn finds the crypto in an estate, a divorce or a bankruptcy, values it on the date that matters, and
+              seals every figure in a record that opposing counsel can verify for themselves.
             </p>
             <div className="hero-actions">
-              <Link href="/scan" className="btn btn-primary">
-                Run a free estate scan <span className="arrow">→</span>
+              <Link href="#open-a-case" className="btn btn-primary">
+                Open a matter <span className="arrow">→</span>
               </Link>
-              <Link href="#open-a-case" className="btn">
-                Talk to us
+              <Link href="/tools" className="btn">
+                Try the free tools
               </Link>
             </div>
             <ul className="promise-list">
-              <li>Fixed prices, no percentages</li>
-              <li>We never hold your funds</li>
-              <li>We never ask for a recovery phrase</li>
+              <li>Fixed fees, never a percentage</li>
+              <li>Every figure sealed and verifiable</li>
+              <li>We never hold assets or keys</li>
             </ul>
           </div>
           <CaseFolders />
@@ -60,159 +59,147 @@ export default async function Home() {
           <div className="section-head">
             <span className="kicker">Free address check</span>
             <h2>
-              Found an address? <em>Check it now.</em>
+              Have an address? <em>Read it now.</em>
             </h2>
             <p className="section-intro">
-              See what it holds today and on the date of death, read live from the public ledger with every source named.
+              Its balance today and on any valuation date, read live from the public ledger, with every source named and the
+              record sealed.
             </p>
           </div>
           <AddressInstrument />
         </div>
       </section>
 
-      <section className="section" id="problem">
+      <section className="section" id="matters">
         <div className="wrap">
           <div className="section-head">
-            <span className="kicker">The problem</span>
+            <span className="kicker">Who we work for</span>
+            <h2>
+              Two kinds of matter. <em>One method.</em>
+            </h2>
+            <p className="section-intro">
+              Whether the crypto was forgotten or hidden, the work is the same: trace it, value it on the right date, and prove
+              it.
+            </p>
+          </div>
+          <div className="columns" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
             <div>
-              <h2>
-                Crypto doesn&rsquo;t pass on <em>by itself.</em>
-              </h2>
-              <p className="section-intro">
-                There is no bank to call and no statement in the mail. When someone dies holding crypto, the family runs
-                into three walls.
+              <div className="fig">Estates</div>
+              <h3>Probate attorneys, executors and fiduciaries.</h3>
+              <p>
+                Find what the deceased held, value it on the date of death for the inventory and the estate tax return, and get
+                exchange accounts released to the estate. The report holds up when a beneficiary or the IRS asks how the number
+                was reached.
               </p>
             </div>
-          </div>
-          <div className="columns">
             <div>
-              <div className="fig">01</div>
-              <h3>Nobody knows where it is.</h3>
-              <p>Which exchanges, which wallets, which coins? The clues are scattered across email, bank statements, devices and paper notes.</p>
-            </div>
-            <div>
-              <div className="fig">02</div>
-              <h3>The doors are locked.</h3>
-              <p>Exchange accounts freeze on death. Self-custody wallets need a password or recovery phrase that may be half-remembered or partly written down.</p>
-            </div>
-            <div>
-              <div className="fig">03</div>
-              <h3>The estate needs numbers.</h3>
-              <p>Probate, estate tax and a fair split all need the holdings valued on the date of death, with evidence an attorney can rely on.</p>
+              <div className="fig">Divorce &amp; bankruptcy</div>
+              <h3>Family law attorneys and trustees.</h3>
+              <p>
+                Bank statements show money going to exchanges. We follow it, read the wallets, and value everything on the date
+                of separation or the petition date, so hidden crypto is disclosed on evidence, not suspicion.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="section tinted" id="services">
+      <section className="section tinted" id="method">
+        <div className="wrap">
+          <div className="section-head">
+            <span className="kicker">What makes it different</span>
+            <h2>
+              Not an estimate. <em>A reproducible reading.</em>
+            </h2>
+            <p className="section-intro">
+              Forensic accountants charge tens of thousands and take weeks. TraceSworn does the tracing in software, at a fixed
+              price, and shows its work.
+            </p>
+          </div>
+          <div className="columns">
+            <div>
+              <div className="fig">01</div>
+              <h3>Statements first.</h3>
+              <p>Money reaches crypto through a bank. We scan statements for 24 exchanges, apps and ATM operators, including the legal names they bill under.</p>
+            </div>
+            <div>
+              <div className="fig">02</div>
+              <h3>Whole wallets, not guesses.</h3>
+              <p>From one hardware-wallet public key we read every address it used, across Bitcoin, Ethereum, Base, Arbitrum, Optimism, Polygon and Solana.</p>
+            </div>
+            <div>
+              <div className="fig">03</div>
+              <h3>Sealed and checkable.</h3>
+              <p>Every record carries a SHA-256 fingerprint. Anyone can confirm at /verify, or with any standard tool, that no figure was changed.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section" id="services">
         <div className="wrap">
           <div className="section-head">
             <span className="kicker">Services &amp; fees</span>
-            <div>
-              <h2>
-                One fixed price. <em>No percentages.</em>
-              </h2>
-              <p className="section-intro" id="fees">
-                One fixed price per package, agreed in writing before work starts. We never take a percentage of the
-                estate, however much we find. Every case
-                starts with a written engagement letter.
-              </p>
-            </div>
+            <h2>
+              One fixed fee. <em>No percentages.</em>
+            </h2>
+            <p className="section-intro" id="fees">
+              Agreed in writing before work starts. The fee never depends on how much we find, so nobody can say we had a stake
+              in the number.
+            </p>
           </div>
           <Pricing />
         </div>
       </section>
 
-      <section className="section" id="process">
+      <section className="section tinted" id="process">
         <div className="wrap">
           <div className="section-head">
-            <span className="kicker">How it works</span>
-            <div>
-              <h2>
-                How a case <em>runs.</em>
-              </h2>
-              <p className="section-intro">Every step is written down. You always know what we are doing and why.</p>
-            </div>
+            <span className="kicker">How a matter runs</span>
+            <h2>
+              From suspicion <em>to sealed evidence.</em>
+            </h2>
           </div>
           <ol className="procedure">
             <li>
-              <h3>Authority first</h3>
-              <p>We confirm who may act for the estate: death certificate and letters testamentary or administration, or a letter from the estate&rsquo;s attorney.</p>
+              <h3>Engagement</h3>
+              <p>Fixed fee, scope and valuation date agreed in writing. We confirm who we act for and the authority to act.</p>
             </li>
             <li>
-              <h3>Discovery</h3>
-              <p>We gather clues from documents and devices and read every address we find on the public ledger.</p>
+              <h3>Trace</h3>
+              <p>Statements, documents and devices are scanned. Exchange names, addresses and wallet keys are collected.</p>
             </li>
             <li>
-              <h3>Findings report</h3>
-              <p>You receive a plain account of what exists, what can be reached, what cannot, and what it is worth.</p>
+              <h3>Read &amp; value</h3>
+              <p>Every address is read on the public ledger and valued on each agreed date, with sources named.</p>
             </li>
             <li>
-              <h3>Recovery</h3>
-              <p>We run the exchange claims and wallet work. Recovered assets go straight to an account or wallet the estate controls.</p>
+              <h3>Seal</h3>
+              <p>The findings report and its evidence record are sealed with a SHA-256 fingerprint and delivered.</p>
             </li>
             <li>
-              <h3>Close-out</h3>
-              <p>A final valuation and evidence file for the attorney and accountant, and secure disposal of anything we were given.</p>
+              <h3>Recover</h3>
+              <p>Exchange records or claim requests are drafted for counsel to send, and followed up until resolved.</p>
             </li>
           </ol>
-        </div>
-      </section>
-
-      <section className="section tinted" id="attorneys">
-        <div className="wrap">
-          <div className="section-head">
-            <span className="kicker">For attorneys</span>
-            <div>
-              <h2>
-                For estate <em>attorneys.</em>
-              </h2>
-              <p className="section-intro">
-                When a file mentions crypto, refer it to us. You stay counsel; we handle the technical work and hand you
-                evidence you can file.
-              </p>
-            </div>
-          </div>
-          <div className="columns">
-            <div>
-              <span className="stamp stamp-found" style={{ marginBottom: 14 }}>Fixed pricing</span>
-              <h3>A price you can quote today.</h3>
-              <p>Flat package prices and no percentage of the estate, so your client knows the cost up front. Partner firms get a monthly plan.</p>
-            </div>
-            <div>
-              <span className="stamp stamp-found" style={{ marginBottom: 14 }}>Evidence you can use</span>
-              <h3>Sourced, dated, reproducible.</h3>
-              <p>Every balance and price in our reports names its public source and the time it was read, so anyone can check it.</p>
-            </div>
-            <div>
-              <span className="stamp stamp-found" style={{ marginBottom: 14 }}>Your lane stays yours</span>
-              <h3>No legal or tax advice.</h3>
-              <p>We do not advise on law or tax and do not file returns. We work to your instructions and your client&rsquo;s authority.</p>
-            </div>
-          </div>
         </div>
       </section>
 
       <section className="section" id="rules">
         <div className="wrap">
           <div className="section-head">
-            <span className="kicker">Our promises</span>
-            <div>
-              <h2>
-                The rules we <em>keep.</em>
-              </h2>
-              <p className="section-intro">
-                Recovery attracts scammers who prey on grieving families. These rules are how you can tell us apart.
-              </p>
-            </div>
+            <span className="kicker">Our standards</span>
+            <h2>
+              Evidence you can <em>stand behind.</em>
+            </h2>
           </div>
           <div className="pledges">
-            <div><b>Fixed prices, never a percentage.</b><span>The price is agreed in writing before work starts and does not grow with the size of the estate.</span></div>
-            <div><b>We never hold the assets.</b><span>Recovered funds go directly to the estate&rsquo;s own account or wallet.</span></div>
-            <div><b>We never ask for a phrase online.</b><span>Recovery phrases are handled offline, in person or on the estate&rsquo;s device. Never by form, email or chat.</span></div>
-            <div><b>Proof of authority, always.</b><span>We only act for someone legally entitled to act for the estate.</span></div>
-            <div><b>Honest refusals.</b><span>A fully lost phrase or stolen funds usually cannot be recovered. We will say so and not take your money.</span></div>
-            <div><b>Real data, named sources.</b><span>No estimates passed off as readings. If a figure is unavailable, the report says so.</span></div>
+            <div><b>Read-only, always.</b><span>We never ask for private keys or recovery phrases and never move or hold assets.</span></div>
+            <div><b>Fixed fees.</b><span>Agreed before work starts and never tied to the amount found or recovered.</span></div>
+            <div><b>Named sources.</b><span>Every balance and price says where and when it was read. Nothing is estimated.</span></div>
+            <div><b>Verifiable records.</b><span>Each record is sealed with a SHA-256 fingerprint anyone can recompute.</span></div>
+            <div><b>Counsel stays counsel.</b><span>We don&rsquo;t give legal or tax advice; we work to the instructions of the attorney or fiduciary.</span></div>
+            <div><b>Honest limits.</b><span>Where public data can&rsquo;t show something, such as an exchange balance or a historical Ethereum balance, the report says so.</span></div>
           </div>
         </div>
       </section>
@@ -222,15 +209,15 @@ export default async function Home() {
           <div className="banner">
             <div>
               <h2 style={{ marginBottom: 12 }}>
-                Start with a free <em>estate scan.</em>
+                Start with the <em>bank statements.</em>
               </h2>
               <p>
-                Drop in exported emails, statements or notes. They are read in your browser and never uploaded. The scan
-                finds exchanges, wallets and addresses, then reads each address live and values it on the date of death.
+                Drop in statement exports. They are read in your browser and never uploaded, and every payment to or from a
+                crypto exchange is flagged with its date and amount.
               </p>
             </div>
-            <Link href="/scan" className="btn">
-              Open the estate scan <span className="arrow">→</span>
+            <Link href="/tools/statements" className="btn">
+              Open the statement scan <span className="arrow">→</span>
             </Link>
           </div>
         </div>
@@ -240,35 +227,33 @@ export default async function Home() {
         <div className="wrap">
           <div className="section-head">
             <span className="kicker">Questions</span>
-            <div>
-              <h2>
-                Questions <em>families ask.</em>
-              </h2>
-            </div>
+            <h2>
+              What counsel <em>asks us.</em>
+            </h2>
           </div>
           <details>
-            <summary>Can you recover crypto if the recovery phrase is completely lost?</summary>
-            <p>Usually not. Without the phrase or a wallet file and its password, a self-custody wallet cannot be opened by anyone. If you have part of the phrase, a wallet file, or the device, the odds improve a great deal. Exchange accounts are different: the exchange holds the assets and has a process for estates.</p>
+            <summary>Can you see what&rsquo;s inside an exchange account?</summary>
+            <p>Not from public data. Exchange balances are private. We find which exchanges were used, from statements, emails and transfers, and draft the records request, subpoena support or deceased-account claim so the exchange produces them.</p>
           </details>
           <details>
-            <summary>What if the crypto was stolen?</summary>
-            <p>Stolen funds are rarely recoverable, and anyone promising otherwise for an upfront fee is likely running a scam. We can document what happened for police and the exchanges involved, but we will not sell you a recovery we cannot deliver.</p>
+            <summary>How do I prove the report wasn&rsquo;t altered?</summary>
+            <p>Every record carries a SHA-256 fingerprint of its exact contents. Anyone can upload it at /verify, or recompute the hash with any standard tool. If a single figure changed, the fingerprint won&rsquo;t match.</p>
           </details>
           <details>
-            <summary>Do I need an attorney?</summary>
-            <p>Exchanges require proof that you are entitled to act for the estate, usually court-issued letters. Most families work with an estate attorney; we are happy to work with yours or explain what the exchanges ask for.</p>
+            <summary>What valuation date do you use?</summary>
+            <p>Whatever the matter requires: date of death, date of separation, trial date or petition date. Additional dates are a fixed add-on. Prices are daily closing prices from named public sources.</p>
           </details>
           <details>
-            <summary>Will you ever hold the estate&rsquo;s crypto?</summary>
-            <p>No. Recovered funds go to an account or wallet the estate controls. We never take custody.</p>
+            <summary>Why a fixed fee instead of a percentage?</summary>
+            <p>So no one can argue we had a stake in the number. The fee is the same whether we find $5,000 or $5 million.</p>
           </details>
           <details>
-            <summary>Why fixed prices instead of a percentage?</summary>
-            <p>Because the work is the same whether a wallet holds $5,000 or $500,000. A fixed price means you know the cost before we start, and nobody profits from the size of your loss.</p>
+            <summary>Do you need private keys or recovery phrases?</summary>
+            <p>Never online. Public addresses and hardware-wallet public keys (xpub/zpub) are enough to trace and value. Any device or phrase work is done offline, on the owner&rsquo;s own device, with authority.</p>
           </details>
           <details>
-            <summary>How long does it take?</summary>
-            <p>Discovery and valuation typically take one to three weeks. Exchange claims depend on the exchange and on court paperwork, and commonly take several weeks to a few months.</p>
+            <summary>Do you testify?</summary>
+            <p>We provide a written methodology appendix with the Evidence Package. Testimony arrangements are agreed separately, case by case.</p>
           </details>
         </div>
       </section>
@@ -277,15 +262,13 @@ export default async function Home() {
         <div className="wrap">
           <div className="section-head">
             <span className="kicker">Get started</span>
-            <div>
-              <h2>
-                Open a <em>case.</em>
-              </h2>
-              <p className="section-intro">
-                Tell us what you know. A person, not a bot, replies within one business day. Please do not include
-                passwords or recovery phrases.
-              </p>
-            </div>
+            <h2>
+              Open a <em>matter.</em>
+            </h2>
+            <p className="section-intro">
+              Tell us about the matter. A person replies within one business day. Please don&rsquo;t include passwords, keys or
+              recovery phrases.
+            </p>
           </div>
           <div className="form-card">
             <Suspense fallback={null}>

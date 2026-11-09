@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getCase, updateCase, logEvent, events, daysFromNow } from "@/lib/cases";
 import { STAGES, STAGE_IDS, stage, fill } from "@/lib/playbook";
-import { packageById, priceLabel, payLink, casePayLink, PACKAGES, ADDONS_LINK, COUPLE_PLAN_LINK } from "@/lib/pricing";
+import { packageById, priceLabel, payLink, casePayLink, PACKAGES, ADDONS_LINK } from "@/lib/pricing";
 import { buildReport, buildDrafts } from "@/lib/analyze";
 import { sendEmail, emailEnabled, mailto } from "@/lib/email";
 import { aiEnabled } from "@/lib/ai";
@@ -224,7 +224,6 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {base ? <CopyButton text={pay} label="Copy payment link" /> : null}
             <CopyButton text={casePayLink(ADDONS_LINK, c.id, c.email)} label="Copy add-ons link" />
-            {c.package === "plan" ? <CopyButton text={casePayLink(COUPLE_PLAN_LINK, c.id, c.email)} label="Copy couples link" /> : null}
             <CopyButton text={portal} label="Copy family page link" />
           </div>
         </div>

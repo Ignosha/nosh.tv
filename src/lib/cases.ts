@@ -56,6 +56,7 @@ export type Case = {
   has_authority: string | null;
   message: string | null;
   package: string | null;
+  matter_type: string | null;
   status: StageId | string;
   token: string;
   paid_at: string | null;
@@ -107,6 +108,10 @@ export async function events(caseId: string): Promise<CaseEvent[]> {
   if (!client) return [];
   const { data } = await client.from("kl_events").select("*").eq("case_id", caseId).order("at", { ascending: false }).limit(100);
   return (data as CaseEvent[]) ?? [];
+}
+
+export function valuationLabel(matter: string | null | undefined): string {
+  return matter === "divorce" ? "date of separation" : matter === "bankruptcy" ? "petition date" : matter === "other" ? "valuation date" : "date of death";
 }
 
 export function daysFromNow(days: number): string {

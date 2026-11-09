@@ -1,4 +1,4 @@
-// The Kin Ledger mark: an archive folder with a keyhole.
+// The TraceSworn mark: an archive folder with a keyhole.
 export function Mark({ size = 32 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">

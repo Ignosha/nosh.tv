@@ -31,6 +31,8 @@ alter table kl_cases add column if not exists findings jsonb;
 alter table kl_cases add column if not exists report jsonb;
 alter table kl_cases add column if not exists report_approved boolean not null default false;
 alter table kl_cases add column if not exists drafts jsonb;
+-- Estate, divorce, bankruptcy or other. date_of_death holds the matter's valuation date.
+alter table kl_cases add column if not exists matter_type text not null default 'estate';
 -- Working notes and follow-up scheduling.
 alter table kl_cases add column if not exists notes text;
 alter table kl_cases add column if not exists last_contact_at timestamptz;
