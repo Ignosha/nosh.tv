@@ -1,5 +1,7 @@
 # Kin Ledger — crypto estate recovery
 
+Live at **https://kinledger.org** (www.kinledger.org redirects there).
+
 A website and set of free tools for a crypto inheritance business, with fixed, flat pricing.
 
 ## Pages
