@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ledgerReading } from "@/lib/chains";
 import { IntakeForm } from "@/components/IntakeForm";
-import { CaseFolders } from "@/components/CaseFolders";
+import { HeroFigure } from "@/components/HeroFigure";
+import { DeskBand } from "@/components/DeskBand";
 import { Pricing } from "@/components/Pricing";
 import { AddressInstrument } from "@/components/AddressInstrument";
 
@@ -16,19 +17,11 @@ export default async function Home() {
 
   return (
     <>
+      <DeskBand height={r.height} btc={r.btc} />
       <section className="hero">
         <div className="wrap hero-grid">
           <div>
-            <span className="live-pill" aria-label="Live ledger reading">
-              <span className={`dot${r.height === null ? " off" : ""}`} />
-              {r.height === null ? (
-                "Live ledger reading unavailable"
-              ) : (
-                <>
-                  <b>Live</b> Bitcoin block {r.height.toLocaleString("en-US")} · BTC {usd(r.btc)} · ETH {usd(r.eth)}
-                </>
-              )}
-            </span>
+            <span className="kicker">Crypto discovery for estates, divorce &amp; bankruptcy</span>
             <h1>
               Crypto leaves a trail. <em>We swear to it.</em>
             </h1>
@@ -38,19 +31,22 @@ export default async function Home() {
             </p>
             <div className="hero-actions">
               <Link href="#open-a-case" className="btn btn-primary">
-                Open a matter <span className="arrow">→</span>
+                Open a matter <span className="arrow">↗</span>
               </Link>
               <Link href="/tools" className="btn">
                 Try the free tools
               </Link>
             </div>
+            <p className="fine" style={{ margin: "18px 0 0" }}>
+              {r.height === null ? "Live prices unavailable" : <>Read live · BTC {usd(r.btc)} · ETH {usd(r.eth)}</>}
+            </p>
             <ul className="promise-list">
               <li>Fixed fees, never a percentage</li>
               <li>Every figure sealed and verifiable</li>
               <li>We never hold assets or keys</li>
             </ul>
           </div>
-          <CaseFolders />
+          <HeroFigure />
         </div>
       </section>
 
