@@ -2,7 +2,6 @@
 
 Finds crypto in estates, divorces and bankruptcies, values it on the date that matters (death, separation or petition), and seals every figure in a record anyone can verify. Built for attorneys, fiduciaries and trustees.
 
-A website and set of free tools for a crypto inheritance business, with fixed, flat pricing.
 
 ## Pages
 
