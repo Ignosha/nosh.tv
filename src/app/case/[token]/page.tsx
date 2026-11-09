@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCaseByToken } from "@/lib/cases";
+import { getCaseByToken, valuationLabel } from "@/lib/cases";
 import { STAGES, stage } from "@/lib/playbook";
 import { packageById, priceLabel, payLink, casePayLink } from "@/lib/pricing";
 import { PortalFindings } from "@/components/PortalFindings";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Your case — Kin Ledger", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Your case — TraceSworn", robots: { index: false, follow: false } };
 
 const FAMILY_STEPS = ["new", "contacted", "engaged", "authority", "discovery", "findings", "claims", "recovered", "closed"];
 const usd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -25,7 +25,7 @@ export default async function CasePortal({ params }: { params: Promise<{ token: 
   return (
     <section className="wrap" style={{ padding: "40px 0 96px", display: "grid", gap: 22 }}>
       <div>
-        <span className="kicker">Your private case page</span>
+        <span className="kicker">Your secure matter page</span>
         <h1 className="serif" style={{ fontSize: "clamp(34px, 5vw, 56px)", lineHeight: 1.05, letterSpacing: "-0.03em", margin: "0 0 10px" }}>
           Hello, {c.name.split(" ")[0]}.
         </h1>
@@ -38,7 +38,7 @@ export default async function CasePortal({ params }: { params: Promise<{ token: 
       <div className="form-card">
         <h3>Where things stand</h3>
         {st.id === "declined" ? (
-          <p className="muted">We&rsquo;ve looked carefully and don&rsquo;t believe we can recover these assets. We&rsquo;ve explained why by email.</p>
+          <p className="muted">We&rsquo;ve reviewed the records and don&rsquo;t believe they support a reliable finding. We&rsquo;ve explained why by email.</p>
         ) : (
           <div className="steps4" style={{ marginTop: 6 }}>
             {FAMILY_STEPS.map((id, i) => (
@@ -59,7 +59,7 @@ export default async function CasePortal({ params }: { params: Promise<{ token: 
               {p.name} · {priceLabel(p)}
               {p.cadence === "once" ? " flat" : ""}
             </h3>
-            <p className="fine" style={{ margin: "4px 0 0" }}>Fixed price, agreed in writing. Never a percentage of the estate.</p>
+            <p className="fine" style={{ margin: "4px 0 0" }}>Fixed fee, agreed in writing. Never a percentage.</p>
           </div>
           {c.paid_at ? (
             <span className="stamp stamp-found">Paid {new Date(c.paid_at).toLocaleDateString("en-US")}</span>
@@ -75,13 +75,13 @@ export default async function CasePortal({ params }: { params: Promise<{ token: 
           <p className="fine" style={{ marginTop: 0 }}>Read {r.readAt.slice(0, 16).replace("T", " ")} UTC from public sources.</p>
           <div className="totals">
             <div><div className="label">Value today</div><div className="big">{usd(r.totalNow)}</div></div>
-            <div><div className="label">On the date of death</div><div className="big">{r.totalAtDate !== null ? usd(r.totalAtDate) : "—"}</div>{r.totalAtDate !== null && !r.atDateComplete ? <div className="fine">Partial</div> : null}</div>
+            <div><div className="label">On the {valuationLabel(c.matter_type)}</div><div className="big">{r.totalAtDate !== null ? usd(r.totalAtDate) : "—"}</div>{r.totalAtDate !== null && !r.atDateComplete ? <div className="fine">Partial</div> : null}</div>
             <div><div className="label">Holdings</div><div className="big">{r.rows.filter((x) => x.balanceNow > 0 || (x.balanceAtDate ?? 0) > 0).length}</div></div>
           </div>
           {c.drafts?.summary ? <p style={{ whiteSpace: "pre-wrap" }}>{c.drafts.summary}</p> : null}
           <div className="table-scroll">
             <table className="clue-table">
-              <thead><tr><th>Holding</th><th style={{ textAlign: "right" }}>Today</th><th style={{ textAlign: "right" }}>Date of death</th></tr></thead>
+              <thead><tr><th>Holding</th><th style={{ textAlign: "right" }}>Today</th><th style={{ textAlign: "right" }}>On {valuationLabel(c.matter_type)}</th></tr></thead>
               <tbody>
                 {r.rows.filter((x) => x.balanceNow > 0 || (x.balanceAtDate ?? 0) > 0).map((x, i) => (
                   <tr key={i}>

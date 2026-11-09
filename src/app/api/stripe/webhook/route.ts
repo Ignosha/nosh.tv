@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       paid_at: new Date().toISOString(),
       amount_paid: (existing.amount_paid ?? 0) + amount,
       stripe_session: s.id,
-      ...(pkg && pkg !== "addons" ? { package: pkg === "plan_couple" ? "plan" : pkg } : {}),
+      ...(pkg && pkg !== "addons" ? { package: pkg } : {}),
       ...(EARLY.includes(String(existing.status)) ? { status: "engaged", next_followup_at: new Date().toISOString() } : {}),
     });
     await logEvent(existing.id, "payment", `Paid $${(amount / 100).toFixed(2)} via Stripe (${pkg ?? "payment link"}).`);
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       name: s.customer_details?.name || email,
       email,
       phone: s.customer_details?.phone ?? null,
-      package: pkg === "plan_couple" ? "plan" : pkg && pkg !== "addons" ? pkg : null,
+      package: pkg && pkg !== "addons" ? pkg : null,
       status: "engaged",
       paid_at: new Date().toISOString(),
       amount_paid: amount,

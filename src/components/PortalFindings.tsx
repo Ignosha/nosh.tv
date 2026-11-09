@@ -3,8 +3,9 @@
 import { useRef, useState } from "react";
 import { extractClues, detectChain, type Clue } from "@/lib/extract";
 import { readFile, ACCEPT } from "@/lib/readFile";
+import { scanStatement } from "@/lib/statements";
 
-// Runs the estate scan on the family's device, then sends ONLY the findings (no documents, no phrases).
+// Runs the document scan on the client's device, then sends ONLY the findings (no documents, no phrases).
 export function PortalFindings({ token }: { token: string }) {
   const [clues, setClues] = useState<Clue[]>([]);
   const [files, setFiles] = useState<string[]>([]);
@@ -22,7 +23,10 @@ export function PortalFindings({ token }: { token: string }) {
     const names: string[] = [];
     for (const f of Array.from(list)) {
       try {
-        found.push(...extractClues(f.name, await readFile(f)));
+        const text = await readFile(f);
+        found.push(...extractClues(f.name, text));
+        // Statement lines that pay or receive money from an exchange are exchange clues too.
+        for (const h of scanStatement(f.name, text)) found.push({ kind: "exchange", name: h.venue, file: f.name, line: h.line, snippet: h.text });
         names.push(f.name);
       } catch {
         names.push(`${f.name} (could not read)`);
@@ -69,9 +73,9 @@ export function PortalFindings({ token }: { token: string }) {
 
   return (
     <div className="form-card">
-      <h3>Send us what the documents show</h3>
+      <h3>Send us what the records show</h3>
       <p className="muted" style={{ marginTop: 0 }}>
-        Add exported emails, statements or notes. They are read <b>on this device</b> and never uploaded. Only the exchange
+        Add bank or card statements, exported emails or notes. They are read <b>on this device</b> and never uploaded. Only the exchange
         names and wallet addresses found are sent to your case.
       </p>
       <div className="dropzone" role="button" tabIndex={0} onClick={() => input.current?.click()} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && input.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); add(e.dataTransfer.files); }}>

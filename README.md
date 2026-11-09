@@ -1,8 +1,7 @@
-# Kin Ledger — crypto estate recovery
+# TraceSworn — crypto asset discovery and sealed valuation
 
-Live at **https://kinledger.org** (www.kinledger.org redirects there).
+Finds crypto in estates, divorces and bankruptcies, values it on the date that matters (death, separation or petition), and seals every figure in a record anyone can verify. Built for attorneys, fiduciaries and trustees.
 
-A website and set of free tools for a crypto inheritance business, with fixed, flat pricing.
 
 ## Pages
 
@@ -21,19 +20,24 @@ A website and set of free tools for a crypto inheritance business, with fixed, f
 
 ## Pricing
 
-Fixed prices live in `src/lib/pricing.ts`; edit them there and the whole site updates. No percentages of the estate.
+Fixed fees in `src/lib/pricing.ts`, never a percentage. Live Stripe Payment Links are built in.
 
-| Package | Price |
+| Package | Fee |
 |---|---|
-| Estate Scan | Free (self-serve tools) |
-| Estate Report | $1,250 flat |
-| Full Recovery | $4,950 flat (up to 5 exchanges, 2 wallets) |
-| Complex Recovery | $9,500 flat (6+ exchanges, many wallets, DeFi) |
-| Legacy Plan | $750 flat (couples $1,100) |
-| Attorney Partner | $750 / month (1 report included, 25% off more) |
-| Add-ons | Extra exchange $495 · extra wallet $1,250 · rush +$1,000 |
+| Free tools | Free (statement scan, document scan, wallet-key scan, address check, verify, request letters) |
+| Discovery Report | $2,500 |
+| Evidence Package | $4,950 (up to 5 exchanges and 2 wallets, methodology appendix) |
+| Complex Matter | $7,500 |
+| Firm Plan | $1,500 / month (2 reports included, 25% off more) |
+| Add-ons | Valuation date $350 · exchange $495 · wallet $1,250 · rush +$1,500 |
 
-Set `NEXT_PUBLIC_PAY_<PACKAGE>` to a Stripe Payment Link to send a package straight to checkout. Without it, the button opens a case with that package preselected.
+## Sealed records
+
+Every downloadable record is wrapped as `{ record, fingerprint }`, where `fingerprint.value` is the SHA-256 of `record` serialised as JSON with keys sorted at every level and no whitespace (`src/lib/fingerprint.ts`). `/verify` recomputes it in the browser; any standard SHA-256 tool gives the same result.
+
+## Statement scan
+
+`src/lib/statements.ts` flags bank and card statement lines that pay or receive money from 24 exchanges, apps and Bitcoin ATM operators, including the legal names they bill under (Payward for Kraken, BAM Trading for Binance.US, Foris DAX for Crypto.com), with date, amount and direction.
 
 ## How a case flows
 

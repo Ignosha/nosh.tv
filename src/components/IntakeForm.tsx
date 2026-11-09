@@ -5,10 +5,18 @@ import { useSearchParams } from "next/navigation";
 import { PACKAGES, priceLabel } from "@/lib/pricing";
 
 const ROLES = [
-  ["family", "Family member"],
-  ["executor", "Executor"],
   ["attorney", "Attorney"],
-  ["advisor", "Advisor / CPA"],
+  ["executor", "Executor / fiduciary"],
+  ["trustee", "Trustee"],
+  ["advisor", "CPA / advisor"],
+  ["family", "Individual"],
+] as const;
+
+const MATTERS = [
+  ["estate", "Estate / probate", "Date of death"],
+  ["divorce", "Divorce", "Date of separation"],
+  ["bankruptcy", "Bankruptcy", "Petition date"],
+  ["other", "Other dispute", "Valuation date"],
 ] as const;
 
 export function IntakeForm() {
@@ -16,6 +24,8 @@ export function IntakeForm() {
   const [error, setError] = useState("");
   const [pkg, setPkg] = useState("unsure");
   const [portal, setPortal] = useState("");
+  const [matter, setMatter] = useState<(typeof MATTERS)[number][0]>("estate");
+  const dateLabel = MATTERS.find((m) => m[0] === matter)![2];
   const params = useSearchParams();
 
   useEffect(() => {
@@ -47,16 +57,16 @@ export function IntakeForm() {
     return (
       <div className="exhibit" data-tab="Received">
         <div className="exhibit-head">
-          <span className="serif" style={{ fontSize: 24 }}>Your case is open.</span>
+          <span className="serif" style={{ fontSize: 24 }}>Your matter is open.</span>
           <span className="stamp stamp-found">Filed</span>
         </div>
         <p className="muted" style={{ margin: 0 }}>
-          We&rsquo;ll reply by email within one business day. Meanwhile, keep any devices, papers and notes exactly as
-          they are, and don&rsquo;t share passwords or recovery phrases with anyone who contacts you.
+          We&rsquo;ll reply by email within one business day with the engagement letter. Meanwhile, keep any devices
+          exactly as they are, and never share passwords, keys or recovery phrases with anyone.
         </p>
         {portal ? (
           <a className="btn btn-primary" href={portal} style={{ marginTop: 18 }}>
-            Open your private case page <span className="arrow">→</span>
+            Open the matter page <span className="arrow">→</span>
           </a>
         ) : null}
       </div>
@@ -103,12 +113,22 @@ export function IntakeForm() {
         <label htmlFor="region">State / country</label>
         <input id="region" name="region" autoComplete="address-level1" />
       </div>
+      <fieldset className="field full choice-row" style={{ display: "block" }}>
+        <legend>Type of matter</legend>
+        <div className="choice-row">
+          {MATTERS.map(([value, label]) => (
+            <label key={value}>
+              <input type="radio" name="matterType" value={value} checked={matter === value} onChange={() => setMatter(value)} /> {label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <div className="field">
-        <label htmlFor="dateOfDeath">Date of death</label>
+        <label htmlFor="dateOfDeath">{dateLabel}</label>
         <input id="dateOfDeath" name="dateOfDeath" type="date" max={new Date().toISOString().slice(0, 10)} />
       </div>
       <div className="field">
-        <label htmlFor="hasAuthority">Court letters issued?</label>
+        <label htmlFor="hasAuthority">{matter === "estate" ? "Court letters issued?" : "Case filed?"}</label>
         <select id="hasAuthority" name="hasAuthority" defaultValue="unknown">
           <option value="yes">Yes</option>
           <option value="in-progress">In progress</option>
@@ -117,12 +137,12 @@ export function IntakeForm() {
         </select>
       </div>
       <div className="field full">
-        <label htmlFor="knownHoldings">What do you know about their crypto?</label>
-        <textarea id="knownHoldings" name="knownHoldings" placeholder="Exchanges they mentioned, coins, rough amounts, anything at all." />
+        <label htmlFor="knownHoldings">What is known or suspected about the crypto?</label>
+        <textarea id="knownHoldings" name="knownHoldings" placeholder="Exchanges mentioned, transfers seen on statements, coins, rough amounts, anything at all." />
       </div>
       <div className="field full">
-        <label htmlFor="devices">Devices and papers you have</label>
-        <textarea id="devices" name="devices" placeholder="Phone, laptop, a hardware wallet, a notebook… Do not include passwords or recovery phrases." />
+        <label htmlFor="devices">Records and devices available</label>
+        <textarea id="devices" name="devices" placeholder="Bank statements, tax returns, emails, a phone, a hardware wallet… Do not include passwords, keys or recovery phrases." />
       </div>
       <div className="field full">
         <label htmlFor="message">Anything else</label>
@@ -135,14 +155,14 @@ export function IntakeForm() {
       <label className="consent full">
         <input type="checkbox" name="consent" required />
         <span>
-          I&rsquo;m entitled to act for this estate or am asking on behalf of someone who is, and I agree Kin Ledger may
-          contact me about this request. I have not included any password or recovery phrase.
+          I act for, or am authorised by, a party to this matter, and I agree TraceSworn may contact me about this
+          request. I have not included any password, private key or recovery phrase.
         </span>
       </label>
       {state === "error" ? <div className="notice err full" role="alert">{error}</div> : null}
       <div className="full">
         <button className="btn btn-primary" type="submit" disabled={state === "sending"}>
-          {state === "sending" ? "Sending…" : "Open my case"}
+          {state === "sending" ? "Sending…" : "Open the matter"}
         </button>
       </div>
     </form>

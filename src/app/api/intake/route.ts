@@ -8,7 +8,8 @@ import { SITE_URL, OPERATOR_NAME } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
-const ROLES = ["family", "executor", "attorney", "advisor", "other"];
+const ROLES = ["family", "executor", "attorney", "trustee", "advisor", "other"];
+const MATTERS = ["estate", "divorce", "bankruptcy", "other"];
 const clip = (v: unknown, n: number) => (typeof v === "string" ? v.trim().slice(0, n) : "");
 
 export async function POST(req: Request) {
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
     has_authority: clip(f.hasAuthority, 40) || null,
     message: clip(f.message, 4000) || null,
     package: PACKAGES.some((p) => p.id === f.package) ? String(f.package) : null,
+    matter_type: MATTERS.includes(String(f.matterType)) ? String(f.matterType) : "estate",
   };
 
   const client = db();

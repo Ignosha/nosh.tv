@@ -4,7 +4,7 @@ import { readAddress, priceNow, priceOnDate, type Asset, type Price } from "./ch
 import { scanXpub } from "./xpub";
 import { buildLetter } from "./letters";
 import { generate, aiEnabled } from "./ai";
-import type { Case, Report, ReportRow, Drafts } from "./cases";
+import { valuationLabel, type Case, type Report, type ReportRow, type Drafts } from "./cases";
 import type { Chain } from "./extract";
 
 const usd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -82,22 +82,22 @@ function templateSummary(c: Case, r: Report): string {
   const wallets = (c.findings?.sources ?? []).filter((s) => s.kind === "wallet").map((s) => s.name);
   const funded = r.rows.filter((x) => x.balanceNow > 0);
   const lines = [
-    `Findings for ${c.name}'s case (read ${r.readAt.slice(0, 16).replace("T", " ")} UTC).`,
+    `Findings for matter ${c.id.slice(0, 8)} (${c.matter_type ?? "estate"}), read ${r.readAt.slice(0, 16).replace("T", " ")} UTC.`,
     "",
     `Addresses read on the public ledger: ${new Set(r.rows.map((x) => x.address)).size}${r.failed.length ? ` (${r.failed.length} could not be read and are listed separately)` : ""}.`,
     `Value today: ${usd(r.totalNow)} across ${funded.length} holding${funded.length === 1 ? "" : "s"} with a balance.`,
     r.dateOfDeath
       ? r.totalAtDate !== null
-        ? `Value on the date of death (${r.dateOfDeath}): ${usd(r.totalAtDate)}${r.atDateComplete ? "" : " (partial: some holdings have no historical reading; see notes)"}.`
-        : `Value on the date of death (${r.dateOfDeath}): not available from free public sources for these holdings.`
-      : "No date of death was given, so only today's values are shown.",
+        ? `Value on the ${valuationLabel(c.matter_type)} (${r.dateOfDeath}): ${usd(r.totalAtDate)}${r.atDateComplete ? "" : " (partial: some holdings have no historical reading; see notes)"}.`
+        : `Value on the ${valuationLabel(c.matter_type)} (${r.dateOfDeath}): not available from free public sources for these holdings.`
+      : "No valuation date was given, so only today's values are shown.",
     "",
     exchanges.length
-      ? `Exchange accounts mentioned in the documents: ${exchanges.join(", ")}. These are claimed through each exchange's deceased-account process; their balances are not visible on the public ledger.`
+      ? `Exchange accounts mentioned in the documents: ${exchanges.join(", ")}. Their balances are not visible on the public ledger; they are obtained through a records request, subpoena or deceased-account claim.`
       : "No exchange accounts were mentioned in the documents sent.",
-    wallets.length ? `Wallet apps or devices mentioned: ${wallets.join(", ")}. Any device should be kept powered off and unchanged.` : "",
+    wallets.length ? `Wallet apps or devices mentioned: ${wallets.join(", ")}. Any device should be preserved, powered off and unchanged.` : "",
     c.findings?.phraseFlags
-      ? `The scan flagged ${c.findings.phraseFlags} possible recovery phrase location${c.findings.phraseFlags === 1 ? "" : "s"} in the family's documents. These were not sent to us and must be handled offline.`
+      ? `The scan flagged ${c.findings.phraseFlags} possible recovery phrase location${c.findings.phraseFlags === 1 ? "" : "s"} in the client's documents. These were not sent to us and must be handled offline.`
       : "",
     "",
     "Every figure above was read live from a named public source. This is a factual reading, not a legal or tax valuation.",
@@ -112,7 +112,7 @@ export async function buildDrafts(c: Case, r: Report): Promise<Drafts> {
   if (aiEnabled()) {
     // Only the already-written factual summary is sent: no documents, addresses or phrases.
     const polished = await generate(
-      "You rewrite a crypto estate findings summary for a grieving family. Keep every number, date, name and fact exactly as given. Do not add facts, estimates or promises. Plain, warm, clear English, short paragraphs, no markdown headings. Keep the final sentence about sources.",
+      "You rewrite a crypto asset findings summary for an attorney or fiduciary. Keep every number, date, name and fact exactly as given. Do not add facts, estimates or promises. Plain, precise, professional English, short paragraphs, no markdown headings. Keep the final sentence about sources.",
       [{ role: "user", text: base }],
       600,
     );

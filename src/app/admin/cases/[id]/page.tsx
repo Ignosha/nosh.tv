@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { getCase, updateCase, logEvent, events, daysFromNow } from "@/lib/cases";
+import { getCase, updateCase, logEvent, events, daysFromNow, valuationLabel } from "@/lib/cases";
 import { STAGES, STAGE_IDS, stage, fill } from "@/lib/playbook";
-import { packageById, priceLabel, payLink, casePayLink, PACKAGES, ADDONS_LINK, COUPLE_PLAN_LINK } from "@/lib/pricing";
+import { packageById, priceLabel, payLink, casePayLink, PACKAGES, ADDONS_LINK } from "@/lib/pricing";
 import { buildReport, buildDrafts } from "@/lib/analyze";
 import { sendEmail, emailEnabled, mailto } from "@/lib/email";
 import { aiEnabled } from "@/lib/ai";
@@ -59,7 +59,7 @@ async function approveReport(form: FormData) {
     report_approved: approve,
     ...(typeof summary === "string" && c.drafts ? { drafts: { ...c.drafts, summary: summary.slice(0, 8000) } } : {}),
   });
-  await logEvent(id, "report", approve ? "Report approved and published to the family's page." : "Report hidden from the family's page.");
+  await logEvent(id, "report", approve ? "Report approved and published to the matter page." : "Report hidden from the matter page.");
   revalidatePath(`/admin/cases/${id}`);
 }
 
@@ -139,12 +139,12 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
             <p className="muted" style={{ margin: 0 }}>
               {c.role} · <a href={`mailto:${c.email}`}>{c.email}</a>
               {c.phone ? <> · <a href={`tel:${c.phone}`}>{c.phone}</a></> : null}
-              {c.region ? ` · ${c.region}` : ""} · date of death {c.date_of_death ?? "unknown"} · court letters: {c.has_authority ?? "?"}
+              {c.region ? ` · ${c.region}` : ""} · {c.matter_type ?? "estate"} · {valuationLabel(c.matter_type)} {c.date_of_death ?? "unknown"} · filed/letters: {c.has_authority ?? "?"}
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {c.paid_at ? <span className="stamp stamp-found">Paid {usd((c.amount_paid ?? 0) / 100)}</span> : <span className="stamp stamp-pending">Not paid</span>}
-            <a className="btn btn-small" href={portal} target="_blank" rel="noreferrer">Family&rsquo;s page ↗</a>
+            <a className="btn btn-small" href={portal} target="_blank" rel="noreferrer">Matter page ↗</a>
           </div>
         </div>
       </div>
@@ -224,8 +224,7 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {base ? <CopyButton text={pay} label="Copy payment link" /> : null}
             <CopyButton text={casePayLink(ADDONS_LINK, c.id, c.email)} label="Copy add-ons link" />
-            {c.package === "plan" ? <CopyButton text={casePayLink(COUPLE_PLAN_LINK, c.id, c.email)} label="Copy couples link" /> : null}
-            <CopyButton text={portal} label="Copy family page link" />
+            <CopyButton text={portal} label="Copy matter page link" />
           </div>
         </div>
         <p className="fine" style={{ margin: "10px 0 0" }}>Payment links carry this case&rsquo;s ID, so Stripe marks it paid here automatically.</p>
@@ -242,23 +241,23 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
         </div>
         {c.findings ? (
           <p className="muted">
-            Family sent {c.findings.addresses.length} address(es){c.findings.xpubs?.length ? `, ${c.findings.xpubs.length} wallet key(s)` : ""}
+            Client sent {c.findings.addresses.length} address(es){c.findings.xpubs?.length ? `, ${c.findings.xpubs.length} wallet key(s)` : ""}
             {c.findings.sources.length ? `; clues: ${c.findings.sources.map((s) => s.name).join(", ")}` : ""}
             {c.findings.phraseFlags ? `; ⚠ ${c.findings.phraseFlags} possible recovery phrase location(s) in their documents (not sent; handle offline)` : ""}.
           </p>
         ) : (
-          <p className="muted">No findings yet. Ask the family to run the scan on their case page, or run <Link href="/scan">the estate scan</Link> yourself and send findings from their page.</p>
+          <p className="muted">No findings yet. Ask the client to run the scans on their matter page, or run <Link href="/tools/statements">the statement scan</Link> and <Link href="/scan">document scan</Link> yourself and send findings from that page.</p>
         )}
         {r ? (
           <>
             <div className="totals">
               <div><div className="label">Value today</div><div className="big">{usd(r.totalNow)}</div></div>
-              <div><div className="label">Date of death</div><div className="big">{r.totalAtDate !== null ? usd(r.totalAtDate) : "—"}</div>{r.totalAtDate !== null && !r.atDateComplete ? <div className="fine">Partial</div> : null}</div>
+              <div><div className="label">On {valuationLabel(c.matter_type)}</div><div className="big">{r.totalAtDate !== null ? usd(r.totalAtDate) : "—"}</div>{r.totalAtDate !== null && !r.atDateComplete ? <div className="fine">Partial</div> : null}</div>
               <div><div className="label">Read</div><div className="big" style={{ fontSize: 22 }}>{r.readAt.slice(0, 16).replace("T", " ")} UTC</div></div>
             </div>
             <div className="table-scroll">
               <table className="clue-table">
-                <thead><tr><th>Address</th><th>Asset</th><th style={{ textAlign: "right" }}>Now</th><th style={{ textAlign: "right" }}>Date of death</th></tr></thead>
+                <thead><tr><th>Address</th><th>Asset</th><th style={{ textAlign: "right" }}>Now</th><th style={{ textAlign: "right" }}>On {valuationLabel(c.matter_type)}</th></tr></thead>
                 <tbody>
                   {r.rows.map((x, i) => (
                     <tr key={i}>
@@ -274,18 +273,18 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
             {r.failed.length ? <div className="notice warn" style={{ marginTop: 12 }}>Could not read: {r.failed.map((f) => `${f.address} (${f.error})`).join("; ")}. Re-run later.</div> : null}
             <form action={approveReport} style={{ marginTop: 16 }}>
               <input type="hidden" name="id" value={c.id} />
-              <div className="field"><label>Summary for the family {c.drafts?.ai ? "(AI-polished; check every number)" : "(from template)"}</label><textarea name="summary" defaultValue={c.drafts?.summary ?? ""} style={{ minHeight: 200 }} /></div>
+              <div className="field"><label>Summary for the client {c.drafts?.ai ? "(AI-polished; check every number)" : "(from template)"}</label><textarea name="summary" defaultValue={c.drafts?.summary ?? ""} style={{ minHeight: 200 }} /></div>
               <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
                 {c.report_approved ? (
                   <>
-                    <span className="stamp stamp-found">Published to family</span>
+                    <span className="stamp stamp-found">Published to matter page</span>
                     <input type="hidden" name="approve" value="0" />
-                    <button className="btn btn-small" type="submit">Hide from family</button>
+                    <button className="btn btn-small" type="submit">Hide from matter page</button>
                   </>
                 ) : (
                   <>
                     <input type="hidden" name="approve" value="1" />
-                    <button className="btn btn-small btn-primary" type="submit">Approve &amp; publish to family</button>
+                    <button className="btn btn-small btn-primary" type="submit">Approve &amp; publish to matter page</button>
                   </>
                 )}
               </div>
@@ -314,7 +313,7 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
         <form action={saveNotes}>
           <input type="hidden" name="id" value={c.id} />
           <div className="pane-head"><span>Notes</span><span>Private</span></div>
-          <textarea name="notes" defaultValue={c.notes ?? ""} className="boxed-input" style={{ minHeight: 200, fontFamily: "var(--font-sans)" }} placeholder="Exchange ticket numbers, what the family said, next steps…" />
+          <textarea name="notes" defaultValue={c.notes ?? ""} className="boxed-input" style={{ minHeight: 200, fontFamily: "var(--font-sans)" }} placeholder="Exchange ticket numbers, what counsel said, next steps…" />
           <div className="field" style={{ marginTop: 10 }}>
             <label>Next follow-up</label>
             <input type="date" name="followup" defaultValue={c.next_followup_at ? c.next_followup_at.slice(0, 10) : ""} />

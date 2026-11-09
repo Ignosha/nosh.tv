@@ -1,5 +1,6 @@
-// The operating playbook: every stage of a case, what to do, and exactly what to say.
-// Placeholders in scripts and emails: {{name}}, {{first}}, {{package}}, {{price}}, {{portal}}, {{pay}}, {{you}}.
+// The operating playbook: every stage of a matter, what to do, and exactly what to say.
+// Written for professional clients (attorneys, fiduciaries, trustees) in estate, divorce and bankruptcy matters.
+// Placeholders: {{name}}, {{first}}, {{package}}, {{price}}, {{portal}}, {{pay}}, {{you}}.
 
 export type StageId =
   | "new"
@@ -21,286 +22,256 @@ export type Stage = {
   say: string; // call script
   email: { subject: string; body: string };
   avoid: string[];
-  followupDays: number | null; // automatic reminder cadence while a case sits in this stage
+  followupDays: number | null;
 };
 
 export const STAGES: Stage[] = [
   {
     id: "new",
-    name: "New request",
-    goal: "Reach the family within one business day, by phone if they gave a number.",
+    name: "New matter",
+    goal: "Respond within one business day and book a 15-minute scoping call.",
     checklist: [
-      "Read what they wrote: date of death, what they know, devices, court letters",
-      "Call first; if no answer, leave the voicemail below and send the email",
-      "Log the attempt in the case notes",
+      "Read the intake: matter type, valuation date, what's known or suspected, records available",
+      "Call if a number was given; otherwise send the email below",
+      "Log the attempt in the notes",
     ],
-    say: `Hi {{first}}, this is {{you}} from Kin Ledger. You reached out about crypto your family member may have left. First, I'm sorry for your loss.
+    say: `Hi {{first}}, this is {{you}} from TraceSworn, following up on the matter you opened.
 
-I'd like to ask a few quick questions so I can tell you honestly what's possible and what isn't. Is now a good time? It takes about ten minutes.
+I'd like 15 minutes to scope it: what's known or suspected about the crypto, which records you have (bank statements, tax returns, emails, devices), the valuation date, and who we'd be acting for. Then I can give you a fixed fee in writing. Is now a good time?
 
-(Voicemail) Hi {{first}}, it's {{you}} from Kin Ledger, returning your request about the crypto. There's no rush and no cost to talk. I've also sent you an email with a private link to your case page. Please don't send any passwords or recovery phrases by email or text. Talk soon.`,
+(Voicemail) Hi {{first}}, {{you}} from TraceSworn returning your request. I've emailed a secure link for the matter and some times for a short scoping call. Talk soon.`,
     email: {
-      subject: "Your Kin Ledger case: next steps",
+      subject: "Your TraceSworn matter: scoping call",
       body: `Hi {{first}},
 
-Thank you for reaching out, and I'm sorry for your loss.
+Thank you for opening a matter with TraceSworn.
 
-I've opened a private page for your case: {{portal}}
+A 15-minute scoping call lets me confirm the valuation date, the records available and who we act for, and then quote a fixed fee in writing. Reply with a good time, or call me.
 
-When you have a moment, you can run the free estate scan there. It reads emails, statements and notes on your own computer (nothing is uploaded) and sends us only the exchanges and wallet addresses it finds.
+Secure matter page: {{portal}}
+Your client can run the statement and document scans there. Files are read on their own device and only the findings (exchange names and addresses) are sent.
 
-I'd also like to have a short call to understand the situation. Just reply with a good time, or call me back.
+Please don't send passwords, private keys or recovery phrases by email.
 
-One important thing: never send passwords or recovery phrases to anyone, including us. Legitimate help never needs them by email or text.
-
-Warmly,
 {{you}}
-Kin Ledger`,
+TraceSworn`,
     },
-    avoid: [
-      "Promising a result before you know what exists",
-      "Asking for a recovery phrase, password or private key",
-      "Quoting a price before you understand the case",
-    ],
+    avoid: ["Quoting before scoping", "Promising what an exchange will produce", "Asking for keys or recovery phrases"],
     followupDays: 2,
   },
   {
     id: "contacted",
-    name: "First call done",
-    goal: "Understand the situation, explain honestly what's possible, and recommend one package.",
+    name: "Scoped",
+    goal: "Confirm scope, valuation date(s) and client, and recommend one fixed-fee package.",
     checklist: [
-      "Ask: who has legal authority (executor), and are court letters issued?",
-      "Ask: which exchanges, apps or devices do they know about?",
-      "Ask: is there a hardware wallet, a notebook, or a written phrase anywhere?",
-      "Explain the realistic outcome (see the honest-answers list)",
+      "Matter type and valuation date(s): death, separation, trial or petition",
+      "Who we act for, and any opposing party or counsel",
+      "Records available: statements (which banks, which years), tax returns, emails, devices, wallet keys",
+      "Deadline: inventory due date, disclosure deadline, hearing date",
       "Recommend one package and send the payment link",
     ],
-    say: `Here's what I'm hearing: (summarize what they told you).
+    say: `To confirm scope: (matter type), valued as of (date), acting for (client). Records: (list).
 
-The honest picture: exchange accounts can almost always be claimed by the executor, it just takes paperwork and patience. A self-custody wallet depends on whether we can find the device, a backup, or part of the recovery phrase. If the phrase is completely gone and there's no device, nobody can open it, and I won't take your money for that.
+What TraceSworn will deliver: every exchange and wallet we can trace from those records, every address read on the public ledger and valued on (date), and a sealed record with a SHA-256 fingerprint so the other side can verify nothing was changed.
 
-For a situation like yours I'd recommend {{package}}. It's a fixed price, {{price}}, agreed in writing before we start. We never take a percentage of the estate. That covers (list what's included).
+What it won't show: balances inside exchange accounts are private, so for each exchange we find we'll draft the records request or claim for you to send.
 
-Does that sound right for you? I can send the engagement letter and payment link today.`,
+For this I'd recommend {{package}} at {{price}}, a fixed fee and never a percentage. I can send the engagement letter and payment link today.`,
     email: {
-      subject: "Your Kin Ledger recommendation: {{package}}",
+      subject: "TraceSworn scope and fixed fee: {{package}}",
       body: `Hi {{first}},
 
-Thank you for talking with me today. Here's what we discussed.
+Thank you for the call. To confirm:
 
-Recommended: {{package}}, {{price}} fixed. No percentage of the estate, ever.
-
+Package: {{package}}, {{price}} (fixed fee, never a percentage of the estate, settlement or recovery)
 Payment link: {{pay}}
 
-Once that's done, I'll send the engagement letter and the short list of documents we need (death certificate and court letters, or a letter from your attorney).
+On payment I'll send the engagement letter confirming scope, valuation date and turnaround.
 
-Your private case page: {{portal}}
-
-Any questions, just reply.
+Matter page: {{portal}}
 
 {{you}}
-Kin Ledger`,
+TraceSworn`,
     },
-    avoid: [
-      "Guaranteeing recovery of self-custody wallets",
-      "Giving legal or tax advice (say: 'that's a question for your attorney')",
-      "Pressuring them to decide on the call",
-    ],
+    avoid: ["Giving legal or tax advice. Defer to counsel", "Estimating values before discovery", "Fees tied to amounts found"],
     followupDays: 3,
   },
   {
     id: "engaged",
     name: "Engaged and paid",
-    goal: "Engagement letter signed, payment received, documents requested.",
+    goal: "Engagement letter signed, payment received, records requested.",
     checklist: [
-      "Confirm payment shows in /admin (the Stripe webhook marks it paid)",
-      "Send the engagement letter: scope, fixed price, no custody, no phrase online",
-      "Request documents: death certificate, court letters or attorney letter, executor ID",
+      "Confirm payment in /admin (the Stripe webhook marks it paid)",
+      "Send the engagement letter: scope, fee, valuation date(s), read-only and no-custody terms",
+      "Request records: statements for the agreed period, tax returns, wallet public keys, device access arrangements",
     ],
-    say: `Thank you, {{first}}. You're all set. Here's what happens next:
-
-1. I'll email the engagement letter. It confirms the fixed price and that we never hold the estate's funds.
-2. I need three documents: the death certificate, the court letters naming the executor (or a letter from your attorney), and the executor's photo ID.
-3. Meanwhile, please keep any phones, computers or hardware wallets turned off and exactly as they are.`,
+    say: `Thanks, {{first}}. Next steps: I'll send the engagement letter today. Please send the bank and card statements for (period), any tax returns showing crypto, and any wallet public keys. For devices, we'll agree how they're preserved and examined; nothing gets reset or updated in the meantime.`,
     email: {
-      subject: "Welcome to Kin Ledger: what we need from you",
+      subject: "TraceSworn engagement and records request",
       body: `Hi {{first}},
 
-Thank you. Your case is confirmed.
+Your matter is confirmed. To begin discovery, please provide through the matter page or by reply:
 
-To get started, please send these through your case page or reply to this email:
-1. A copy of the death certificate
-2. The court letters naming the executor (or a letter from the estate's attorney)
-3. A photo ID for the executor
+1. Bank and card statements for the agreed period (CSV exports are best; PDFs are fine)
+2. Any tax returns or exchange 1099s mentioning digital assets
+3. Any wallet public keys (xpub/zpub) or addresses known
+4. Proof of authority where relevant (court letters, order or engagement by counsel)
 
-Please keep any phones, computers or hardware wallets turned off and unchanged until we speak. Don't reset or update them.
+Devices should be preserved, powered off and unchanged.
 
-Case page: {{portal}}
+Matter page: {{portal}}
 
 {{you}}
-Kin Ledger`,
+TraceSworn`,
     },
-    avoid: ["Starting recovery work before authority is confirmed"],
+    avoid: ["Starting work before authority and scope are in writing"],
     followupDays: 4,
   },
   {
     id: "authority",
-    name: "Authority verified",
-    goal: "Confirm the person you're helping is legally entitled to act for the estate.",
+    name: "Authority confirmed",
+    goal: "Confirm who we act for and that they may instruct us on these assets.",
     checklist: [
-      "Death certificate received",
-      "Court letters (or attorney letter / small-estate affidavit) received and names match",
-      "Executor ID matches the letters",
-      "Note any limits in the letters",
+      "Estate: letters testamentary/administration or attorney engagement",
+      "Divorce/bankruptcy: engagement by counsel or trustee; note any protective order",
+      "Record any limits on scope or confidentiality",
     ],
-    say: `Thank you for the documents, {{first}}. Everything matches, so we can act on behalf of the estate now. Next I'll start the discovery: going through what you've sent and reading every address on the public ledger.`,
+    say: `Thanks, {{first}}. The documents are in order, so discovery starts now. I'll update the matter page as findings come in.`,
     email: {
-      subject: "Documents received: discovery is starting",
+      subject: "Authority confirmed: discovery under way",
       body: `Hi {{first}},
 
-Thank you. The documents check out, and discovery is starting now.
-
-I'll update your case page as I go: {{portal}}
+Thank you. Authority is confirmed and discovery is under way. Progress will be on the matter page: {{portal}}
 
 {{you}}
-Kin Ledger`,
+TraceSworn`,
     },
-    avoid: ["Proceeding if names don't match. Ask for corrected documents"],
+    avoid: ["Acting where authority or a protective order is unclear. Ask counsel first"],
     followupDays: null,
   },
   {
     id: "discovery",
     name: "Discovery",
-    goal: "Find every exchange, wallet and address, and read them on the ledger.",
+    goal: "Trace every exchange, wallet and address, then read and value them.",
     checklist: [
-      "Run the estate scan on documents (or check the family's portal findings)",
-      "Scan any hardware wallet xpub/zpub with the wallet-key tool",
-      "Press 'Run analysis' on the case page to read every address and value it",
-      "Draft exchange letters for every exchange found",
+      "Run the statement scan on every statement provided",
+      "Run the document scan; scan any wallet keys",
+      "Press 'Run analysis' to read every address and value it on the agreed date(s)",
+      "Draft exchange records requests or claims for each exchange found",
     ],
-    say: `Quick update, {{first}}: I'm partway through. So far I've found (exchanges / wallets). I'll have the full findings report to you by (date).`,
+    say: `Update for {{first}}: so far the statements show transfers to (exchanges), and we've read (n) addresses. The full sealed report will be with you by (date).`,
     email: {
-      subject: "Discovery update on your case",
+      subject: "Discovery update",
       body: `Hi {{first}},
 
-A quick update: discovery is underway. I'll send the full findings report soon, with every balance and the value on the date of death, each with its public source.
+A short update: discovery is under way. The sealed findings report will follow with every holding, its value on the agreed date and the source of every figure.
 
-Case page: {{portal}}
+Matter page: {{portal}}
 
 {{you}}
-Kin Ledger`,
+TraceSworn`,
     },
-    avoid: ["Sharing partial numbers as final", "Estimating values that weren't read"],
+    avoid: ["Sharing partial numbers as final", "Filling gaps with estimates"],
     followupDays: 5,
   },
   {
     id: "findings",
     name: "Findings delivered",
-    goal: "Walk the family through what exists, what can be reached, and what it was worth.",
+    goal: "Deliver the sealed report and walk counsel through it.",
     checklist: [
-      "Approve the report on the case page so it appears in their portal",
-      "Schedule a findings call (include the attorney if they want)",
-      "Explain each item: reachable, needs a claim, or not recoverable",
+      "Review every row; edit the summary; approve and publish to the matter page",
+      "Download the sealed record and keep the fingerprint in the notes",
+      "Walk counsel through what's proven, what needs exchange records, and the limits",
     ],
-    say: `I've finished the findings, {{first}}. Here's the summary: (total found, where it is).
+    say: `The sealed report is on the matter page. In short: (total) across (n) holdings as of (date). (Exchanges) need records requests; the drafts are ready for you to send.
 
-Some of this we can reach: (exchange accounts, wallets with devices).
-(If any) Some of it, honestly, we can't: (reason). I'm sorry. I'd rather tell you straight than give false hope.
-
-The full report with sources is on your case page now. Your attorney can use it for the estate. Next, I'll file the exchange claims.`,
+The record's SHA-256 fingerprint is (first 8 characters). If anyone challenges a figure, they can verify the record themselves at tracesworn.com/verify.`,
     email: {
-      subject: "Your findings report is ready",
+      subject: "Sealed findings report",
       body: `Hi {{first}},
 
-Your findings report is ready on your case page: {{portal}}
+The findings report is on the matter page: {{portal}}
 
-It lists every holding we found, the balance on the date of death and today, and the public source for every figure. Your attorney and accountant can rely on it.
+It lists every holding traced, its balance and value on the agreed date, and the public source of each figure. The downloadable record is sealed with a SHA-256 fingerprint that anyone, including opposing counsel or the court, can verify at /verify.
 
-I'd like to walk you through it. Reply with a good time for a call.
+Draft exchange requests are ready for your review. Happy to walk you through it on a call.
 
 {{you}}
-Kin Ledger`,
+TraceSworn`,
     },
-    avoid: ["Delivering bad news only by email. Call first"],
+    avoid: ["Characterising intent (e.g. 'hidden') in the report; state facts and sources only"],
     followupDays: 3,
   },
   {
     id: "claims",
-    name: "Claims filed",
-    goal: "File every exchange claim and keep them moving until resolved.",
+    name: "Exchange requests out",
+    goal: "Get every exchange to produce records or release assets.",
     checklist: [
-      "Send each exchange letter through the exchange's official help center",
-      "Record each exchange's ticket or case number in the notes",
+      "Counsel sends each request or subpoena; record reference numbers in the notes",
       "Follow up with each exchange every 7 days",
-      "Update the family weekly, even if nothing changed",
+      "Add produced statements to the matter and re-run the analysis",
     ],
-    say: `Weekly update, {{first}}: (exchange A) has acknowledged the claim and is reviewing. (Exchange B) asked for (document). Nothing is needed from you this week. These usually take several weeks, so no news is normal.`,
+    say: `Weekly update, {{first}}: (exchange A) acknowledged and is processing; (exchange B) asked for (item). Nothing needed from you this week.`,
     email: {
-      subject: "Weekly update on your exchange claims",
+      subject: "Weekly update on exchange requests",
       body: `Hi {{first}},
 
-Here's this week's update on the exchange claims:
+This week's status on the exchange requests:
 
 (status for each exchange)
 
-Nothing is needed from you right now. Exchange reviews usually take several weeks, so a quiet week is normal.
-
-Case page: {{portal}}
+Nothing is needed from you right now.
 
 {{you}}
-Kin Ledger`,
+TraceSworn`,
     },
-    avoid: ["Contacting exchanges through anything but their official channels"],
+    avoid: ["Contacting an exchange other than through its official channels or as counsel directs"],
     followupDays: 7,
   },
   {
     id: "recovered",
-    name: "Recovered",
-    goal: "Confirm assets reached the estate's own account or wallet, never yours.",
+    name: "Records produced",
+    goal: "Fold produced exchange records into a final sealed report.",
     checklist: [
-      "Confirm with the executor that funds arrived in the estate's account",
-      "Read final balances and prepare the close-out valuation",
-      "Securely return or destroy anything you were given",
+      "Confirm with counsel which records were produced and where assets were transferred",
+      "Re-run analysis and issue the final sealed report",
+      "Return or securely destroy materials as agreed",
     ],
-    say: `Good news, {{first}}: (exchange) has released the funds to the estate's account. Please confirm you can see them. I'll prepare the final valuation file for your attorney.`,
+    say: `{{first}}, (exchange) has produced its records. I'll issue the final sealed report including them by (date).`,
     email: {
-      subject: "Funds released to the estate",
+      subject: "Exchange records received: final report next",
       body: `Hi {{first}},
 
-Good news: the funds have been released to the estate's account. Please confirm you can see them.
-
-I'm preparing the final valuation file for your attorney and accountant.
+The exchange records have been produced. I'm preparing the final sealed report now and will send it shortly.
 
 {{you}}
-Kin Ledger`,
+TraceSworn`,
     },
-    avoid: ["Ever receiving estate funds into your own account"],
+    avoid: ["Ever receiving client assets into our own accounts"],
     followupDays: 3,
   },
   {
     id: "closed",
     name: "Closed",
-    goal: "Deliver the close-out file and ask for a testimonial and referral.",
+    goal: "Deliver the final record, close cleanly, and ask for a referral.",
     checklist: [
-      "Send the final valuation and evidence file",
-      "Confirm disposal of any copies or devices",
-      "Ask for a short testimonial and if they know an attorney who'd benefit",
+      "Final sealed report delivered; fingerprint recorded",
+      "Materials returned or destroyed as agreed",
+      "Ask whether colleagues handle matters with crypto, and mention the Firm Plan",
     ],
-    say: `Thank you for trusting us, {{first}}. Everything is wrapped up and the final file is on your case page.
-
-If we helped, a few sentences about your experience would mean a lot. It helps other families trust us. And if your attorney found this useful, I'd be grateful for an introduction.`,
+    say: `Thank you, {{first}}. Everything is delivered and the final record is sealed. If colleagues in your firm see crypto in their matters, I'd be grateful for an introduction. The Firm Plan includes two reports a month.`,
     email: {
-      subject: "Your case is complete. Thank you",
+      subject: "Matter closed: final sealed record",
       body: `Hi {{first}},
 
-Your case is complete. The final valuation and evidence file is on your case page: {{portal}}
+The matter is complete. The final sealed record is on the matter page: {{portal}}
 
-If we helped, would you share a few sentences about your experience? Just reply to this email. It helps other families trust us.
+If colleagues see crypto in their matters, I'd be grateful for an introduction. The Firm Plan covers two reports a month at a fixed fee.
 
-Thank you again.
+Thank you.
 
 {{you}}
-Kin Ledger`,
+TraceSworn`,
     },
     avoid: [],
     followupDays: null,
@@ -308,23 +279,21 @@ Kin Ledger`,
   {
     id: "declined",
     name: "Declined",
-    goal: "Close kindly when there's nothing recoverable or it isn't a fit.",
-    checklist: ["Explain why, kindly and plainly", "Point them to the free tools", "Refund anything owed"],
-    say: `{{first}}, I've looked carefully, and I don't think we can recover this. (Reason: e.g. the phrase is fully lost and there's no device.) I'm not going to charge you for work that can't succeed. If anything new turns up, a device or a note, please come back to me.`,
+    goal: "Close clearly when the records can't support a finding or it isn't a fit.",
+    checklist: ["Explain why plainly", "Point to the free tools", "Refund anything owed"],
+    say: `{{first}}, having looked at the records, I don't think we can trace anything reliable here. (Reason.) I won't charge for work that can't produce evidence. If new records turn up, statements, a device or a wallet key, I'm glad to look again.`,
     email: {
-      subject: "About your case",
+      subject: "About your matter",
       body: `Hi {{first}},
 
-Thank you for trusting us with this. After looking carefully, I don't believe we can recover these assets, and I won't charge you for work that can't succeed.
+Thank you for the opportunity. Having reviewed the records, I don't believe they can support a reliable finding, and I won't charge for work that can't produce evidence.
 
-If anything new turns up, like a device, a notebook or a backup, please reach out again. The free tools on our site are always available.
-
-I'm sorry it isn't better news.
+If further records become available, please get in touch. The free tools on our site remain available.
 
 {{you}}
-Kin Ledger`,
+TraceSworn`,
     },
-    avoid: ["Leaving them without a clear answer"],
+    avoid: ["Leaving the client without a clear answer"],
     followupDays: null,
   },
 ];
@@ -335,31 +304,31 @@ export function stage(id: string | null | undefined): Stage {
   return STAGES.find((s) => s.id === id) ?? STAGES[0];
 }
 
-/** Honest answers to the questions families and attorneys ask most. */
+/** Straight answers to the questions attorneys and fiduciaries ask most. */
 export const OBJECTIONS: { q: string; a: string }[] = [
   {
-    q: "Why should I trust you?",
-    a: "That's the right question. We never ask for recovery phrases online, we never hold the estate's money, and every price is agreed in writing before we start. You can check every number in our report yourself; each one names its public source.",
+    q: "Will this hold up if it's challenged?",
+    a: "Every figure names its public source and the time it was read, and the record is sealed with a SHA-256 fingerprint. The other side can re-read the same addresses and recompute the fingerprint themselves. Testimony arrangements are agreed separately.",
   },
   {
-    q: "That's expensive.",
-    a: "I understand. It's a fixed price because the work is the same whether a wallet holds $5,000 or $500,000, and we never take a percentage. If the estate is small, the free tools may be enough, and I'll tell you honestly if that's the case.",
+    q: "Can you see what's in the exchange account?",
+    a: "No one can from public data. We identify which exchanges were used and draft the records request or claim for you to send; the exchange produces the balance.",
   },
   {
-    q: "Can you guarantee you'll recover it?",
-    a: "No one honest can. Exchange accounts are very likely to be claimable with the right paperwork. Self-custody wallets depend on finding a device, a backup or part of the phrase. I'll tell you where you stand after discovery, before any recovery work.",
+    q: "A forensic accountant quoted us far more. What's the catch?",
+    a: "No catch: the tracing and reading are done in software, so the work is faster and the fee is fixed. Where a matter needs more, such as contested tracing or many parties, the Complex Matter package covers it.",
   },
   {
-    q: "Can I just send you the recovery phrase?",
-    a: "Please don't send it to anyone by email, text or form, including us. If a phrase is needed, we handle it offline, in person or on the estate's own device.",
+    q: "Why not a percentage?",
+    a: "So no one can say we had a stake in the number. The fee is the same whatever we find.",
   },
   {
-    q: "Do I need a lawyer?",
-    a: "Exchanges need proof you can act for the estate, usually court letters. Most families work with an estate attorney. We're happy to work alongside yours. We don't give legal advice ourselves.",
+    q: "Do you need the private keys?",
+    a: "Never. Public addresses and hardware-wallet public keys are enough to trace and value. Any device work happens offline with proper authority.",
   },
   {
-    q: "How long will it take?",
-    a: "Discovery and the findings report usually take one to three weeks. Exchange claims depend on the exchange and commonly take several weeks to a few months.",
+    q: "How fast?",
+    a: "Usually 5-10 business days for a Discovery Report once records are in; rush delivery in 5 business days is available.",
   },
 ];
 

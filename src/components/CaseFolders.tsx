@@ -5,11 +5,11 @@ import { useState } from "react";
 // A stack of case folders: the three stages of an estate case. Illustrative, no data.
 const FOLDERS = [
   {
-    tab: "Find",
-    title: "Where is it?",
-    copy: "We trace exchanges, wallets and addresses through the emails, statements and notes they left behind.",
-    href: "/scan",
-    cta: "Run the free scan",
+    tab: "Trace",
+    title: "Where did it go?",
+    copy: "Bank statements, emails and devices show which exchanges and wallets were used. We follow every lead.",
+    href: "/tools/statements",
+    cta: "Scan statements free",
     icon: (
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
         <circle cx="10.5" cy="10.5" r="6" />
@@ -18,11 +18,11 @@ const FOLDERS = [
     ),
   },
   {
-    tab: "Open",
-    title: "Who can open it?",
-    copy: "Exchange claims for the executor, and offline recovery of forgotten passwords or partial phrases.",
-    href: "#services",
-    cta: "See recovery services",
+    tab: "Value",
+    title: "What was it worth?",
+    copy: "Every address read on the public ledger and valued on the date that matters: death, separation or petition.",
+    href: "#check",
+    cta: "Read an address",
     icon: (
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
         <circle cx="8" cy="12" r="4" />
@@ -31,11 +31,11 @@ const FOLDERS = [
     ),
   },
   {
-    tab: "Prove",
-    title: "What was it worth?",
-    copy: "Balances and prices on the date of death, every figure with its public source, ready for the attorney.",
-    href: "#check",
-    cta: "Check an address",
+    tab: "Seal",
+    title: "Can they check it?",
+    copy: "Each record is sealed with a SHA-256 fingerprint, so opposing counsel or a court can confirm nothing was changed.",
+    href: "/verify",
+    cta: "Verify a record",
     icon: (
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" />
@@ -48,7 +48,7 @@ const FOLDERS = [
 export function CaseFolders() {
   const [active, setActive] = useState(0);
   return (
-    <div className="folders" role="tablist" aria-label="Stages of an estate case">
+    <div className="folders" role="tablist" aria-label="How TraceSworn works">
       {FOLDERS.map((f, i) => {
         // The active folder comes to the front; the others step back behind it.
         const depth = (i - active + FOLDERS.length) % FOLDERS.length;

@@ -1,5 +1,7 @@
 "use client";
 
+import { downloadSealed } from "@/lib/download";
+
 import { useRef, useState } from "react";
 import type { XpubScan } from "@/lib/xpub";
 import type { Price } from "@/lib/chains";
@@ -23,6 +25,7 @@ const usd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigi
 const btcAmt = (sats: number) => (sats / 1e8).toLocaleString("en-US", { maximumFractionDigits: 8 });
 
 export function XpubScanner() {
+  const [fingerprint, setFingerprint] = useState("");
   const [key, setKey] = useState("");
   const [date, setDate] = useState("");
   const [busy, setBusy] = useState(false);
@@ -55,14 +58,10 @@ export function XpubScanner() {
     }
   }
 
-  function download() {
+  async function download() {
     if (!reply) return;
-    const blob = new Blob([JSON.stringify({ generatedBy: "Kin Ledger wallet key scan", ...reply }, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `kinledger-wallet-scan-${reply.readAt.slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    const fp = await downloadSealed({ generatedBy: "TraceSworn wallet key scan", ...reply }, `tracesworn-wallet-scan-${reply.readAt.slice(0, 10)}.json`);
+    setFingerprint(fp);
   }
 
   const s = reply?.scan;
@@ -86,7 +85,7 @@ export function XpubScanner() {
           <textarea id="xpub" className="boxed-input" style={{ minHeight: 90 }} value={key} onChange={(e) => { setKey(e.target.value); setReply(null); }} placeholder="xpub6… / ypub6… / zpub6…" spellCheck={false} />
         </div>
         <div className="field" style={{ marginTop: 14 }}>
-          <label htmlFor="xdod">Date of death (optional)</label>
+          <label htmlFor="xdod">Valuation date (optional)</label>
           <input id="xdod" type="date" value={date} max={new Date().toISOString().slice(0, 10)} onChange={(e) => { setDate(e.target.value); setReply(null); }} />
         </div>
         <button className="btn btn-primary" type="submit" style={{ marginTop: 18 }} disabled={busy || !key.trim()}>
@@ -147,7 +146,8 @@ export function XpubScanner() {
                 Balances: Blockstream Esplora. Prices: {reply!.price.now.source}
                 {reply!.price.atDate ? `; ${reply!.price.atDate.source}` : ""}.
               </p>
-              <button type="button" className="btn btn-small" onClick={download}>Download the record <span className="arrow">↓</span></button>
+              <button type="button" className="btn btn-small" onClick={download}>Download sealed record <span className="arrow">↓</span></button>
+              {fingerprint ? <p className="fine" style={{ marginTop: 10, wordBreak: "break-all" }}>Sealed. Fingerprint (SHA-256): <span className="mono">{fingerprint}</span>. Anyone can check it at <a href="/verify">/verify</a>.</p> : null}
             </div>
           </>
         ) : null}

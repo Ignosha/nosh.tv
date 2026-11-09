@@ -1,5 +1,7 @@
 "use client";
 
+import { downloadSealed } from "@/lib/download";
+
 import { useMemo, useRef, useState } from "react";
 import { extractClues, detectChain, type Clue, type Chain } from "@/lib/extract";
 import type { AddressReport, Price } from "@/lib/chains";
@@ -21,6 +23,7 @@ const fmtUsd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionD
 const fmtAmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 8 });
 
 export function ScanDesk() {
+  const [fingerprint, setFingerprint] = useState("");
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [clues, setClues] = useState<Clue[]>([]);
   const [aiClues, setAiClues] = useState<AiClue[]>([]);
@@ -196,14 +199,10 @@ export function ScanDesk() {
   const dodComplete = rows.length > 0 && rows.every((r) => r.valueAtDate !== null || (r.holding.balanceNow === 0 && r.holding.balanceAtDate === 0));
   const failed = lookup?.reports.filter((r) => !r.ok) ?? [];
 
-  function exportJson() {
+  async function exportJson() {
     if (!lookup) return;
-    const blob = new Blob([JSON.stringify({ generatedBy: "Kin Ledger estate scan", ...lookup }, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `kinledger-ledger-reading-${lookup.readAt.slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    const fp = await downloadSealed({ generatedBy: "TraceSworn document scan", ...lookup }, `tracesworn-ledger-reading-${lookup.readAt.slice(0, 10)}.json`);
+    setFingerprint(fp);
   }
 
   return (
@@ -266,7 +265,7 @@ export function ScanDesk() {
             <textarea id="manual" value={manual} onChange={(e) => setManual(e.target.value)} placeholder="Bitcoin, Ethereum or Solana addresses, one per line" style={{ minHeight: 72 }} />
           </div>
           <div className="field" style={{ marginTop: 14 }}>
-            <label htmlFor="dod">Date of death</label>
+            <label htmlFor="dod">Valuation date (death, separation or petition)</label>
             <input id="dod" type="date" value={date} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setDate(e.target.value)} />
           </div>
           <button className="btn btn-primary" style={{ width: "100%", marginTop: 16 }} onClick={runLookup} disabled={addresses.length === 0 || !!busy}>
@@ -326,7 +325,7 @@ export function ScanDesk() {
                   <h2 className="serif" style={{ fontSize: 32, margin: "4px 0 0" }}>Estate holdings report</h2>
                 </div>
                 <div className="no-print" style={{ display: "flex", gap: 8 }}>
-                  <button className="btn btn-small" onClick={exportJson}>Export JSON</button>
+                  <button className="btn btn-small" onClick={exportJson}>Download sealed record</button>
                   <button className="btn btn-small" onClick={() => window.print()}>Print / PDF</button>
                 </div>
               </div>
@@ -337,7 +336,7 @@ export function ScanDesk() {
                   <div className="big">{fmtUsd(totalNow)}</div>
                 </div>
                 <div>
-                  <div className="label">Value on date of death</div>
+                  <div className="label">Value on valuation date</div>
                   <div className="big">{lookup.dateOfDeath ? (rows.some((r) => r.valueAtDate !== null) ? fmtUsd(totalDod) : "—") : "—"}</div>
                   {lookup.dateOfDeath && rows.length > 0 && !dodComplete ? (
                     <div className="faint" style={{ fontSize: 12 }}>Partial — some holdings have no historical reading (see notes)</div>
@@ -414,6 +413,7 @@ export function ScanDesk() {
                   ))}
                 </ul>
               </div>
+              {fingerprint ? <p className="fine" style={{ marginTop: 10, wordBreak: "break-all" }}>Sealed. Fingerprint (SHA-256): <span className="mono">{fingerprint}</span>. Anyone can check it at <a href="/verify">/verify</a>.</p> : null}
               <p className="faint" style={{ fontSize: 12.5, marginTop: 16 }}>
                 Read {lookup.readAt.replace("T", " ").slice(0, 19)} UTC from Blockstream (Bitcoin), PublicNode (Ethereum),
                 Solana mainnet RPC, Coinbase Exchange and CoinGecko. Balances shown are what each address holds on the
@@ -558,7 +558,7 @@ function NextSteps({ exchanges, wallets, phrases }: { exchanges: string[]; walle
           almost certainly a scammer. Legitimate help never needs your phrase sent online.
         </p>
       </section>
-      <a href="/#open-a-case" className="btn btn-primary no-print" style={{ justifySelf: "start" }}>Open a case with Kin Ledger</a>
+      <a href="/#open-a-case" className="btn btn-primary no-print" style={{ justifySelf: "start" }}>Open a matter with TraceSworn</a>
     </div>
   );
 }

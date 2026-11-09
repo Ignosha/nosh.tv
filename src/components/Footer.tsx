@@ -8,17 +8,17 @@ export function Footer() {
         <div className="footer-grid">
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <Mark size={24} />
-            <span className="serif" style={{ fontSize: 20 }}>Kin Ledger</span>
-            <span className="label" style={{ marginLeft: 8 }}>Crypto estate recovery</span>
+            <span className="serif" style={{ fontSize: 20 }}>TraceSworn</span>
+            <span className="label" style={{ marginLeft: 8 }}>Crypto asset discovery</span>
           </div>
           <div className="mono" style={{ fontSize: 13 }}>
             {email ? <a href={`mailto:${email}`}>{email}</a> : null}
           </div>
         </div>
         <small>
-          Kin Ledger locates and documents digital assets and assists authorized estate representatives with exchange
-          and wallet access. We are not a law firm or accounting firm and do not give legal or tax advice. We never take
-          custody of estate assets. Recovery is not always possible; we will tell you plainly when it is not.
+          TraceSworn locates, values and documents digital assets for attorneys, fiduciaries, trustees and the parties
+          they represent. We are not a law firm or accounting firm and do not give legal or tax advice. We are read-only:
+          we never take custody of assets or keys. Where public data cannot show something, our reports say so.
         </small>
       </div>
     </footer>
