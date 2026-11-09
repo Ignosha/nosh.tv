@@ -71,11 +71,12 @@ export const PACKAGES: Package[] = [
   {
     id: "partner",
     name: "Firm Plan",
-    price: 1500,
+    price: 4500,
     cadence: "month",
     tagline: "For firms with crypto in their caseload.",
     includes: [
       "2 Discovery Reports per month included",
+      "Asset-movement alerts on one matter included",
       "25% off every additional matter",
       "Priority turnaround and co-branded reports",
       "Cancel any month",
@@ -104,7 +105,7 @@ const STRIPE_LINKS: Record<Exclude<Package["id"], "scan">, string> = {
   report: "https://buy.stripe.com/eVq00j2SA0pl0m5egS6Vq07",
   recovery: "https://buy.stripe.com/8x28wPeBi1tp0m52ya6Vq0c",
   complex: "https://buy.stripe.com/9B6bJ164M8VR0m5gp06Vq0d",
-  partner: "https://buy.stripe.com/eVq7sLbp64FBd8Rgp06Vq0a",
+  partner: "https://buy.stripe.com/9B68wP64Mc83gl32ya6Vq0h",
 };
 export const ADDONS_LINK = "https://buy.stripe.com/aFa28ral2egbfgZ5Km6Vq0b";
 export const ALERTS_LINK = "https://buy.stripe.com/8x26oH3WE8VR9WF2ya6Vq0e";
