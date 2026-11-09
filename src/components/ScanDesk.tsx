@@ -201,7 +201,7 @@ export function ScanDesk() {
 
   async function exportJson() {
     if (!lookup) return;
-    const fp = await downloadSealed({ generatedBy: "TraceSworn estate scan", ...lookup }, `tracesworn-ledger-reading-${lookup.readAt.slice(0, 10)}.json`);
+    const fp = await downloadSealed({ generatedBy: "TraceSworn document scan", ...lookup }, `tracesworn-ledger-reading-${lookup.readAt.slice(0, 10)}.json`);
     setFingerprint(fp);
   }
 
@@ -265,7 +265,7 @@ export function ScanDesk() {
             <textarea id="manual" value={manual} onChange={(e) => setManual(e.target.value)} placeholder="Bitcoin, Ethereum or Solana addresses, one per line" style={{ minHeight: 72 }} />
           </div>
           <div className="field" style={{ marginTop: 14 }}>
-            <label htmlFor="dod">Date of death</label>
+            <label htmlFor="dod">Valuation date (death, separation or petition)</label>
             <input id="dod" type="date" value={date} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setDate(e.target.value)} />
           </div>
           <button className="btn btn-primary" style={{ width: "100%", marginTop: 16 }} onClick={runLookup} disabled={addresses.length === 0 || !!busy}>
@@ -336,7 +336,7 @@ export function ScanDesk() {
                   <div className="big">{fmtUsd(totalNow)}</div>
                 </div>
                 <div>
-                  <div className="label">Value on date of death</div>
+                  <div className="label">Value on valuation date</div>
                   <div className="big">{lookup.dateOfDeath ? (rows.some((r) => r.valueAtDate !== null) ? fmtUsd(totalDod) : "—") : "—"}</div>
                   {lookup.dateOfDeath && rows.length > 0 && !dodComplete ? (
                     <div className="faint" style={{ fontSize: 12 }}>Partial — some holdings have no historical reading (see notes)</div>
@@ -558,7 +558,7 @@ function NextSteps({ exchanges, wallets, phrases }: { exchanges: string[]; walle
           almost certainly a scammer. Legitimate help never needs your phrase sent online.
         </p>
       </section>
-      <a href="/#open-a-case" className="btn btn-primary no-print" style={{ justifySelf: "start" }}>Open a case with TraceSworn</a>
+      <a href="/#open-a-case" className="btn btn-primary no-print" style={{ justifySelf: "start" }}>Open a matter with TraceSworn</a>
     </div>
   );
 }

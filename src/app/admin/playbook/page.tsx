@@ -7,15 +7,15 @@ export default function Playbook() {
     <div className="wrap" style={{ padding: "36px 0 96px", display: "grid", gap: 18 }}>
       <div>
         <span className="kicker">Playbook</span>
-        <h1 className="serif" style={{ fontSize: 44, margin: "0 0 8px" }}>How to run every case.</h1>
+        <h1 className="serif" style={{ fontSize: 44, margin: "0 0 8px" }}>How to run every matter.</h1>
         <p className="muted" style={{ margin: 0, maxWidth: "44em" }}>
           Each stage: the goal, what to check, exactly what to say, and what never to do. The same guidance appears on
-          every case page with the family&rsquo;s details filled in.
+          every matter page with the client&rsquo;s details filled in.
         </p>
       </div>
 
       <div className="form-card">
-        <h3>Five rules that protect you and the family</h3>
+        <h3>Five rules that protect you and your client</h3>
         <ol style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 6 }}>
           <li>Never ask for, accept or store a recovery phrase, password or private key online.</li>
           <li>Never receive estate funds. Recovered assets go to the estate&rsquo;s own account.</li>

@@ -13,8 +13,8 @@ export function Pricing() {
             {p.highlight ? <span className="price-flag">Most chosen</span> : null}
             <h3>{p.name}</h3>
             <div className="price">
-              {priceLabel(p)}
-              {p.cadence === "once" ? <span> flat</span> : null}
+              {p.cadence === "month" ? "$" + p.price.toLocaleString("en-US") : priceLabel(p)}
+              {p.cadence === "once" ? <span> flat</span> : p.cadence === "month" ? <span>/mo</span> : null}
             </div>
             <p className="muted" style={{ margin: "0 0 16px" }}>{p.tagline}</p>
             <ul>

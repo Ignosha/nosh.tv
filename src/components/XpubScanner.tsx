@@ -85,7 +85,7 @@ export function XpubScanner() {
           <textarea id="xpub" className="boxed-input" style={{ minHeight: 90 }} value={key} onChange={(e) => { setKey(e.target.value); setReply(null); }} placeholder="xpub6… / ypub6… / zpub6…" spellCheck={false} />
         </div>
         <div className="field" style={{ marginTop: 14 }}>
-          <label htmlFor="xdod">Date of death (optional)</label>
+          <label htmlFor="xdod">Valuation date (optional)</label>
           <input id="xdod" type="date" value={date} max={new Date().toISOString().slice(0, 10)} onChange={(e) => { setDate(e.target.value); setReply(null); }} />
         </div>
         <button className="btn btn-primary" type="submit" style={{ marginTop: 18 }} disabled={busy || !key.trim()}>

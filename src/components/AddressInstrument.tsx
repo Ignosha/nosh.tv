@@ -107,7 +107,7 @@ export function AddressInstrument() {
           autoComplete="off"
         />
         <label htmlFor="inst-date" style={{ display: "block", margin: "16px 0 8px", fontSize: 14, color: "var(--ink-2)" }}>
-          Date of death <span className="faint">(optional)</span>
+          Valuation date <span className="faint">(optional: death, separation or petition)</span>
         </label>
         <input
           id="inst-date"
@@ -190,7 +190,7 @@ export function AddressInstrument() {
             <>
               <div><span>Network</span><span>—</span></div>
               <div><span>Balance now</span><span>Not read</span></div>
-              <div><span>Value on date of death</span><span>Not read</span></div>
+              <div><span>Value on valuation date</span><span>Not read</span></div>
             </>
           )}
         </div>

@@ -15,9 +15,10 @@ export function Masthead() {
         <nav className="nav" aria-label="Main">
           <Link href="/tools" className="nav-hide-sm">Free tools</Link>
           <Link href="/#services" className="nav-hide">Pricing</Link>
-          <Link href="/#attorneys" className="nav-hide">For attorneys</Link>
+          <Link href="/#matters" className="nav-hide">Who we serve</Link>
+          <Link href="/verify" className="nav-hide">Verify</Link>
           <ThemeToggle />
-          <Link href="/#open-a-case" className="btn btn-small btn-primary">Open a case</Link>
+          <Link href="/#open-a-case" className="btn btn-small btn-primary">Open a matter</Link>
         </nav>
       </div>
     </header>

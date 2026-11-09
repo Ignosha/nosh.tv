@@ -82,7 +82,7 @@ export default async function Home() {
               it.
             </p>
           </div>
-          <div className="columns" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+          <div className="columns two">
             <div>
               <div className="fig">Estates</div>
               <h3>Probate attorneys, executors and fiduciaries.</h3>
