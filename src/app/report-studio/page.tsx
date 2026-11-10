@@ -62,10 +62,11 @@ export default function Plans() {
           </article>
         ))}
         <p>
-          Company Assurance preview supports up to 200 risks, 200 evidence
-          references and 500 action instances in one workspace. Hosted programs
-          are managed by the existing administrator, not separate company
-          logins. Proposals require a written scope and deployment acceptance.
+          Company Assurance supports up to 200 risks, 200 evidence references
+          and 500 action instances per workspace. The company deployment path
+          adds individual sign-in, mandatory MFA, organization roles and
+          authenticated independent review. Deployment configuration and
+          acceptance are required before customer access.
         </p>
         <Link className="btn" href="/assurance">
           Try the assurance workspace
@@ -74,16 +75,22 @@ export default function Plans() {
           Compare issued reports
         </Link>
         <p>
-          These are proposed pilot prices, not active subscriptions. The browser
-          preview is free and unmetered. Hosted archives require database setup.
-          Enterprise SSO, separate user accounts, seat billing, authenticated
-          reviewer signatures, organization isolation and automatic client
-          delivery are not included in this preview. There is no advertised
-          uptime SLA, backup recovery commitment, regulatory certification or
-          automatic external evidence verification.
+          These are proposed pilot prices, not active self-service
+          subscriptions. Local previews remain free and unmetered. Company
+          access is provisioned under a signed contract with enforced seats,
+          programs and expiry. SSO requires a configured identity provider. No
+          uptime SLA, compliance certification, automated client delivery or
+          verified production backup recovery is claimed by this preview.
         </p>
-        <Link className="btn" href="/#open-a-case">
-          Request a software pilot
+        <Link
+          className="btn"
+          href={
+            process.env.ENTERPRISE_MODE === "1"
+              ? "/auth/sign-in"
+              : "/#open-a-case"
+          }
+        >
+          Discuss access with your account team
         </Link>
         <p className="fine">
           Mention “Report Studio” in your message. This is software, separate

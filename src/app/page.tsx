@@ -1,3 +1,4 @@
+import { CompanyLanding } from "@/components/CompanyLanding";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ledgerReading } from "@/lib/chains";
@@ -13,6 +14,7 @@ const usd = (n: number | null) =>
   n === null ? "unavailable" : "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default async function Home() {
+  if(process.env.ENTERPRISE_MODE === "1") return <CompanyLanding/>;
   const r = await ledgerReading();
 
   return (

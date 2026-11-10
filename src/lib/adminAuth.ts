@@ -16,6 +16,7 @@ export function adminAuthorized(
   );
 }
 export async function requireAdmin(): Promise<void> {
+  if(process.env.ENTERPRISE_MODE === "1") throw new Error("Legacy administrator access is disabled in enterprise mode");
   if (
     !adminAuthorized(
       (await headers()).get("authorization"),

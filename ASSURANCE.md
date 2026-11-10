@@ -36,11 +36,13 @@ Admin server actions now check credentials directly in addition to middleware, i
 - Recurrence uses fixed calendar days, not business days, months or jurisdictional holiday calendars. Late follow-ups can remain overdue; that is deliberate, visible backlog.
 - Capacity per workspace: 200 risks, 200 evidence entries and 500 action instances, subject to payload limits. Split programs or archive/export before reaching these limits. Starter packs are operational examples, not exhaustive compliance frameworks.
 
-## What is not sold as implemented
+## Enterprise deployment path
 
-The company pilot is not a production multi-tenant enterprise SaaS. Separate company accounts, tenant isolation, workforce RBAC/SSO, authenticated dual approval, subscription entitlements, automatic owner emails/escalations, third-party integrations, continuous source verification, regulatory certification, and a contracted uptime/backup-recovery SLA remain unimplemented. Do not onboard independent companies into a shared administrator environment as though it isolates their data. Production company deployment needs those controls and end-to-end acceptance before paid rollout.
+The local `/assurance` preview and legacy `/admin/assurance` pilot retain declared identities. Company access is now implemented separately at `/workspace`, with individual Supabase sessions, mandatory MFA, organization RLS, role permissions, verified membership invitations, authenticated independent action/report review and contract entitlements. Enterprise mode disables the legacy administrator and bearer portals. See [RELEASE.md](RELEASE.md) for migration order and live acceptance gates.
 
-Software should earn repeat use through useful workflows and portable history. Exports intentionally support migration; there is no artificial data lock-in.
+Production deployment is not yet verified. Identity-provider configuration, staging browser tests with real users, backup restoration on the production database stack, operational alerting and compliance/contractual review remain outstanding. Company subscription billing is contract-administered; no automated Stripe subscriptions, automatic owner notifications or compliance certification is claimed. Company roles are enforced by the database; names in local report files remain declarations.
+
+Data remains portable through exports; there is no artificial lock-in.
 
 ## Validation and deployment checklist
 

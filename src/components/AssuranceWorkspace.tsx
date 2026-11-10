@@ -1,5 +1,11 @@
 "use client";
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import {
+  useRef,
+  useState,
+  useEffect,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   newAssurance,
@@ -34,8 +40,66 @@ function LazySection({
     </details>
   );
 }
+type Identity = { id: string; label: string; active: boolean };
+function OwnerField({
+  identities,
+  name,
+  value,
+  initial,
+  onChange,
+  disabled = false,
+}: {
+  identities?: Identity[];
+  name?: string;
+  value?: string;
+  initial?: string;
+  onChange?: (value: string) => void;
+  disabled?: boolean;
+}) {
+  const binding =
+    value === undefined ? { defaultValue: initial ?? "" } : { value };
+  if (!identities)
+    return (
+      <input
+        name={name}
+        {...binding}
+        onChange={(e) => onChange?.(e.target.value)}
+        required
+        disabled={disabled}
+        maxLength={120}
+      />
+    );
+  const current = value ?? initial ?? "";
+  return (
+    <select
+      name={name}
+      {...binding}
+      required
+      disabled={disabled}
+      onChange={(e) => onChange?.(e.target.value)}
+    >
+      <option value="">Choose an active member</option>
+      {current && !identities.some((i) => i.id === current && i.active) ? (
+        <option value={current} disabled>
+          Reassign inactive / unrecognized owner
+        </option>
+      ) : null}
+      {identities
+        .filter((i) => i.active)
+        .map((i) => (
+          <option key={i.id} value={i.id}>
+            {i.label}
+          </option>
+        ))}
+    </select>
+  );
+}
 type Props = {
   initial?: Assurance;
+  identities?: Identity[];
+  verifiedActor?: string;
+  allowLocalCompletion?: boolean;
+  workspaceBase?: string;
   initialRevision?: number;
   programId?: string;
   readOnly?: boolean;
@@ -60,6 +124,10 @@ const value = (f: FormData, key: string) => String(f.get(key) ?? "").trim();
 const selected = (f: FormData, key: string) => f.getAll(key).map(String);
 export function AssuranceWorkspace({
   initial,
+  identities,
+  verifiedActor,
+  allowLocalCompletion = true,
+  workspaceBase = "/admin/assurance",
   initialRevision = 0,
   programId,
   readOnly = false,
@@ -79,6 +147,20 @@ export function AssuranceWorkspace({
   const today = evaluationDate ?? new Date().toISOString().slice(0, 10);
   const summary = portfolio(w, today);
   const newId = () => crypto.randomUUID();
+  const ownerLabel = (id: string) =>
+    identities?.find((i) => i.id === id)?.label ?? id;
+  useEffect(() => {
+    if (initial && initialRevision > revision) {
+      if (dirty)
+        setError(
+          "The server has a newer revision. Export your local draft and reload before reconciling.",
+        );
+      else {
+        setW(initial);
+        setRevision(initialRevision);
+      }
+    }
+  }, [initial, initialRevision, revision, dirty]);
   function edit(next: Assurance) {
     if (readOnly) return;
     epoch.current++;
@@ -216,7 +298,7 @@ export function AssuranceWorkspace({
         const risks = d.findings.map((f) => ({
           id: `${prefix}:${f.id}`,
           title: f.observation.slice(0, 200),
-          owner: d.author,
+          owner: identities ? w.owner : d.author,
           likelihood: 3,
           impact: 3,
           controlEffectiveness: 0,
@@ -284,7 +366,7 @@ export function AssuranceWorkspace({
       setNotice(
         `Hosted revision ${result.revision} saved with an audit snapshot.`,
       );
-      if (!id) router.push(`/admin/assurance/${result.id}`);
+      if (!id) router.push(`${workspaceBase}/${result.id}`);
       else router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save");
@@ -375,11 +457,11 @@ export function AssuranceWorkspace({
           </label>
           <label>
             Accountable owner
-            <input
+            <OwnerField
+              identities={identities}
               disabled={readOnly}
               value={w.owner}
-              maxLength={120}
-              onChange={(e) => edit({ ...w, owner: e.target.value })}
+              onChange={(owner) => edit({ ...w, owner })}
             />
           </label>
           <label>
@@ -497,7 +579,7 @@ export function AssuranceWorkspace({
             <tbody>
               {ownerWorkload(w, today).map((o) => (
                 <tr key={o.owner}>
-                  <td>{o.owner}</td>
+                  <td>{ownerLabel(o.owner)}</td>
                   <td>{o.risks}</td>
                   <td>{o.open}</td>
                   <td>{o.overdue}</td>
@@ -534,7 +616,7 @@ export function AssuranceWorkspace({
                   <tr key={r.id}>
                     <td>
                       {r.title}
-                      <div className="fine">{r.owner}</div>
+                      <div className="fine">{ownerLabel(r.owner)}</div>
                     </td>
                     <td>{r.inherent}</td>
                     <td>
@@ -573,7 +655,11 @@ export function AssuranceWorkspace({
                   </label>
                   <label>
                     Risk owner
-                    <input name="owner" required maxLength={120} />
+                    <OwnerField
+                      identities={identities}
+                      name="owner"
+                      initial={w.owner}
+                    />
                   </label>
                   <div className="form-grid">
                     <label>
@@ -652,11 +738,10 @@ export function AssuranceWorkspace({
                     <h3>{r.title}</h3>
                     <label>
                       Risk owner
-                      <input
+                      <OwnerField
+                        identities={identities}
                         name="owner"
-                        defaultValue={r.owner}
-                        required
-                        maxLength={120}
+                        initial={r.owner}
                       />
                     </label>
                     <label>
@@ -777,6 +862,12 @@ export function AssuranceWorkspace({
       ) : null}
       <section className="form-card">
         <h2>Remediation &amp; recurring obligations</h2>
+        {!allowLocalCompletion ? (
+          <p className="notice">
+            Save actions in review, then use the authenticated review queue
+            below. A different authorized user must approve.
+          </p>
+        ) : null}
         <p>
           Open → in progress → review → complete. Closure requires current
           evidence, a resolution and a reviewer distinct from the owner.
@@ -787,7 +878,7 @@ export function AssuranceWorkspace({
           <article className="assurance-action" key={a.id}>
             <h3>{a.title}</h3>
             <p>
-              {a.owner} · Due {a.dueDate} · {a.status}
+              {ownerLabel(a.owner)} · Due {a.dueDate} · {a.status}
               {summary.overdue.some((x) => x.id === a.id) ? " · OVERDUE" : ""}
               {summary.blocked.some((x) => x.id === a.id) ? " · BLOCKED" : ""} ·
               Recurrence{" "}
@@ -855,11 +946,10 @@ export function AssuranceWorkspace({
                   >
                     <label>
                       Action owner
-                      <input
+                      <OwnerField
+                        identities={identities}
                         name="owner"
-                        defaultValue={a.owner}
-                        required
-                        maxLength={120}
+                        initial={a.owner}
                       />
                     </label>
                     <label>
@@ -913,7 +1003,9 @@ export function AssuranceWorkspace({
                         ? ["in_progress"]
                         : a.status === "in_progress"
                           ? ["review", "open"]
-                          : ["complete", "in_progress"]
+                          : allowLocalCompletion
+                            ? ["complete", "in_progress"]
+                            : ["in_progress"]
                       ).map((to) => (
                         <button className="btn" value={to} key={to}>
                           Move to {to.replace("_", " ")}
@@ -951,7 +1043,11 @@ export function AssuranceWorkspace({
             </label>
             <label>
               Action owner
-              <input name="owner" required maxLength={120} />
+              <OwnerField
+                identities={identities}
+                name="owner"
+                initial={w.owner}
+              />
             </label>
             <label>
               Due date
@@ -1003,8 +1099,14 @@ export function AssuranceWorkspace({
         <form className="form-card no-print" onSubmit={save}>
           <h2>Commit an audited revision</h2>
           <label>
-            Declared operator
-            <input name="actor" required maxLength={120} />
+            {verifiedActor ? "Authenticated operator" : "Declared operator"}
+            <input
+              name="actor"
+              required
+              maxLength={254}
+              readOnly={!!verifiedActor}
+              value={verifiedActor}
+            />
           </label>
           <label>
             Change reason
@@ -1017,10 +1119,13 @@ export function AssuranceWorkspace({
       ) : null}
       <p className="fine">
         Workspace data is portable through sealed JSON and CSV. Scores are based
-        on supplied facts and operator judgments. Owners and reviewers are
-        declared names, not authenticated approvals. UTC dates; recurrence uses
-        calendar days, not holiday calendars. No automated external
-        verification, notifications or compliance certification is implied.
+        on supplied facts and operator judgments.{" "}
+        {verifiedActor
+          ? "Company saves record the authenticated user. Final closure uses the separate authenticated review queue; draft labels do not grant approval."
+          : "Owners and reviewers are declared names, not authenticated approvals."}{" "}
+        UTC dates; recurrence uses calendar days, not holiday calendars. No
+        automated external verification, notifications or compliance
+        certification is implied.
       </p>
     </div>
   );

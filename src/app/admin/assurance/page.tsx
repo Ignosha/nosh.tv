@@ -18,6 +18,7 @@ export default async function Programs() {
   const { data, error } = await client
     .from("kl_assurance_programs")
     .select("id,name,revision,updated_at")
+    .is("organization_id",null)
     .order("updated_at", { ascending: false })
     .limit(100);
   if (error) throw new Error("Apply the latest assurance schema");

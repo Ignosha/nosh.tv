@@ -9,6 +9,7 @@ export async function loadAssurance(id: string) {
     .from("kl_assurance_programs")
     .select("id,workspace,revision,updated_at")
     .eq("id", id)
+    .is("organization_id",null)
     .maybeSingle();
   if (error) throw new Error("Could not read assurance workspace");
   return data ? { ...data, workspace: parseAssurance(data.workspace) } : null;

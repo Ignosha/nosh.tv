@@ -26,9 +26,11 @@ Each version has a printable page and JSON download. The archive renders stored 
 
 ## Product boundary
 
-Practice pricing proposes managed archive access in a pilot deployment. Self-service subscriptions, payment entitlements, separate user accounts, seat limits, organization isolation, authenticated reviewer signatures, live collaboration and automatic client delivery are not implemented. Do not sell those capabilities as existing features. The browser preview remains free and unmetered while the pilot is validated.
+The browser preview remains free and unmetered; local review names are declarations. The company path now implements individual MFA sessions, organization isolation and authenticated publication under `/workspace`. Company reviewers cannot publish their own submitted report. Authenticated publication records are separate from names inside the original sealed file.
 
-Report fingerprints establish whether exported content changed. They do not establish source authenticity, factual accuracy, chain of custody, ownership or legal admissibility.
+Enterprise access is provisioned under a signed contract, not an automated software subscription. SSO needs provider configuration. Production identity, recovery and operational acceptance are still required; see [RELEASE.md](RELEASE.md). The legacy shared-administrator archive is disabled in enterprise mode and existing pilot records are not automatically assigned to companies.
+
+Report fingerprints establish file integrity, not source authenticity, factual accuracy, chain of custody, ownership or legal admissibility.
 
 ## Validation
 

@@ -1,0 +1,383 @@
+-- Apply AFTER schema.sql. Existing pilot rows remain unassigned and invisible to company users.
+-- Supabase Auth owns auth.users, auth.uid() and auth.jwt(). Never emulate these functions in production.
+begin;
+revoke create on schema public from public,anon,authenticated;
+alter table kl_assurance_programs add column if not exists organization_id uuid;
+alter table kl_assurance_history add column if not exists organization_id uuid;
+alter table kl_assurance_history add column if not exists actor_id uuid;
+create table if not exists kl_organizations (
+ id uuid primary key default gen_random_uuid(), name text not null check(length(name) between 1 and 200),
+ entitlement text not null default 'trialing' check(entitlement in ('trialing','active','suspended','expired')),
+ access_until timestamptz not null default now()+interval '14 days',
+ max_members integer not null default 10 check(max_members between 2 and 10000),
+ max_programs integer not null default 5 check(max_programs between 1 and 1000),
+ created_at timestamptz not null default now()
+);
+create table if not exists kl_org_members (
+ organization_id uuid not null references kl_organizations(id),user_id uuid not null references auth.users(id),
+ role text not null check(role in ('owner','admin','editor','reviewer','viewer')),active boolean not null default true,
+ created_at timestamptz not null default now(),primary key(organization_id,user_id)
+);
+create table if not exists kl_org_events (
+ id bigint generated always as identity primary key,organization_id uuid not null references kl_organizations(id),
+ actor_id uuid references auth.users(id),kind text not null,detail jsonb not null default '{}',created_at timestamptz not null default now()
+);
+create table if not exists kl_org_invites (
+ id uuid primary key default gen_random_uuid(),organization_id uuid not null references kl_organizations(id),
+ email text not null,role text not null check(role in ('admin','editor','reviewer','viewer')),
+ token_hash text not null unique,expires_at timestamptz not null default now()+interval '48 hours',
+ created_by uuid not null references auth.users(id),accepted_by uuid references auth.users(id),revoked boolean not null default false
+);
+create table if not exists kl_org_rate_limits(bucket text primary key,window_start timestamptz not null,hits integer not null);
+create table if not exists kl_action_reviews (
+ program_id uuid not null references kl_assurance_programs(id),revision integer not null,action_id text not null,
+ organization_id uuid not null references kl_organizations(id),submitted_by uuid not null references auth.users(id),
+ reviewed_by uuid references auth.users(id),state text not null default 'pending' check(state in ('pending','approved','superseded')),
+ created_at timestamptz not null default now(),reviewed_at timestamptz,primary key(program_id,revision,action_id)
+);
+create index if not exists kl_assurance_org on kl_assurance_programs(organization_id,updated_at desc);
+create index if not exists kl_members_user on kl_org_members(user_id) where active;
+create index if not exists kl_reviews_org on kl_action_reviews(organization_id,state);
+create or replace function kl_org_access(p_org uuid,p_roles text[] default array['owner','admin','editor','reviewer','viewer'])
+returns boolean language sql stable security definer set search_path=public,pg_temp as $$
+ select coalesce(auth.jwt()->>'aal','')='aal2' and auth.uid() is not null and exists(
+ select 1 from kl_org_members where organization_id=p_org and user_id=auth.uid() and active and role=any(p_roles));
+$$;
+create or replace function kl_org_limit(p_org uuid,p_action text,p_limit integer default 30)
+returns void language plpgsql security definer set search_path=public,pg_temp as $$
+declare key text; used integer;begin
+ key:=auth.uid()::text||':'||p_org::text||':'||p_action;
+ insert into kl_org_rate_limits(bucket,window_start,hits) values(key,date_trunc('minute',now()),1)
+ on conflict(bucket) do update set hits=case when kl_org_rate_limits.window_start=date_trunc('minute',now()) then kl_org_rate_limits.hits+1 else 1 end,window_start=date_trunc('minute',now()) returning hits into used;
+ if used>p_limit then raise exception 'Rate limit exceeded; retry next minute'; end if;
+end $$;
+create or replace function kl_org_write(p_org uuid,p_roles text[])
+returns void language plpgsql security definer set search_path=public,pg_temp as $$
+begin
+ if not kl_org_access(p_org,p_roles) then raise exception 'Organization access denied'; end if;
+ if not exists(select 1 from kl_organizations where id=p_org and entitlement in ('active','trialing') and access_until>now()) then raise exception 'Organization is read-only; contact your billing administrator'; end if;
+end $$;
+create or replace function kl_provision_organization(p_name text,p_owner uuid)
+returns uuid language plpgsql security definer set search_path=public,pg_temp as $$
+declare result uuid;begin
+ if not exists(select 1 from auth.users where id=p_owner and email_confirmed_at is not null) then raise exception 'A verified existing account is required';end if;
+ insert into kl_organizations(name) values(trim(p_name)) returning id into result;
+ insert into kl_org_members(organization_id,user_id,role)values(result,p_owner,'owner');
+ insert into kl_org_events(organization_id,actor_id,kind)values(result,p_owner,'organization.provisioned');return result;
+end $$;
+create or replace function kl_create_org_invite(p_org uuid,p_email text,p_role text)
+returns text language plpgsql security definer set search_path=public,pg_temp as $$
+declare token text;begin
+ perform 1 from kl_organizations where id=p_org for update;
+ perform kl_org_write(p_org,array['owner','admin']);perform kl_org_limit(p_org,'invite',10);
+ if p_role not in ('admin','editor','reviewer','viewer') or (p_role='admin' and not kl_org_access(p_org,array['owner'])) then raise exception 'Role assignment denied';end if;
+ if p_email !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$' or length(p_email)>254 then raise exception 'Invalid invitation email';end if;
+ if (select count(*) from kl_org_invites where organization_id=p_org and not revoked and accepted_by is null and expires_at>now())>=100 then raise exception 'Pending invitation limit reached';end if;
+ token:=replace(gen_random_uuid()::text,'-','')||replace(gen_random_uuid()::text,'-','');
+ insert into kl_org_invites(organization_id,email,role,token_hash,created_by) values(p_org,lower(trim(p_email)),p_role,encode(sha256(convert_to(token,'UTF8')),'hex'),auth.uid());
+ insert into kl_org_events(organization_id,actor_id,kind,detail)values(p_org,auth.uid(),'membership.invited',jsonb_build_object('role',p_role));return token;
+end $$;
+create or replace function kl_accept_org_invite(p_token text)
+returns uuid language plpgsql security definer set search_path=public,pg_temp as $$
+declare invite kl_org_invites; seat_limit integer;begin
+ if auth.uid() is null or coalesce(auth.jwt()->>'aal','')<>'aal2' then raise exception 'MFA required';end if;
+ select * into invite from kl_org_invites where token_hash=encode(sha256(convert_to(p_token,'UTF8')),'hex') and not revoked and accepted_by is null and expires_at>now() for update;
+ if invite.id is null or lower(coalesce(auth.jwt()->>'email',''))<>invite.email then raise exception 'Invitation unavailable for this account';end if;
+ select max_members into seat_limit from kl_organizations where id=invite.organization_id and entitlement in ('active','trialing') and access_until>now() for update;
+ if seat_limit is null then raise exception 'Organization is read-only';end if;
+ if exists(select 1 from kl_org_members where organization_id=invite.organization_id and user_id=auth.uid() and active)then raise exception 'Already a member';end if;
+ if(select count(*) from kl_org_members where organization_id=invite.organization_id and active)>=seat_limit then raise exception 'Seat limit reached';end if;
+ insert into kl_org_members(organization_id,user_id,role)values(invite.organization_id,auth.uid(),invite.role) on conflict(organization_id,user_id)do update set role=excluded.role,active=true;
+ update kl_org_invites set accepted_by=auth.uid() where id=invite.id;
+ insert into kl_org_events(organization_id,actor_id,kind)values(invite.organization_id,auth.uid(),'membership.accepted');return invite.organization_id;
+end $$;
+create or replace function kl_set_org_member(p_org uuid,p_user uuid,p_role text,p_active boolean)
+returns void language plpgsql security definer set search_path=public,pg_temp as $$
+declare old_role text;begin
+ perform 1 from kl_organizations where id=p_org for update;
+ if not kl_org_access(p_org,array['owner'])then raise exception 'Organization access denied';end if;perform kl_org_limit(p_org,'membership');
+ if p_role not in ('owner','admin','editor','reviewer','viewer') then raise exception 'Invalid role';end if;
+ select role into old_role from kl_org_members where organization_id=p_org and user_id=p_user and active for update;
+ if old_role is null then raise exception 'Active member unavailable';end if;
+ if old_role='owner' and (not p_active or p_role<>'owner') and(select count(*)from kl_org_members where organization_id=p_org and role='owner'and active)<=1 then raise exception 'Cannot remove the last owner';end if;
+ update kl_org_members set role=p_role,active=p_active where organization_id=p_org and user_id=p_user;
+ insert into kl_org_events(organization_id,actor_id,kind,detail)values(p_org,auth.uid(),'membership.changed',jsonb_build_object('user',p_user,'role',p_role,'active',p_active));
+end $$;
+create or replace function kl_revoke_org_invite(p_org uuid,p_invite uuid)
+returns void language plpgsql security definer set search_path=public,pg_temp as $$
+begin if not kl_org_access(p_org,array['owner','admin'])then raise exception 'Organization access denied';end if;update kl_org_invites set revoked=true where id=p_invite and organization_id=p_org and accepted_by is null;
+ insert into kl_org_events(organization_id,actor_id,kind,detail)values(p_org,auth.uid(),'invitation.revoked',jsonb_build_object('invite',p_invite));end $$;
+-- Company reads are protected independently of the application; no authenticated direct writes.
+alter table kl_organizations enable row level security;
+alter table kl_org_members enable row level security;
+alter table kl_org_events enable row level security;
+alter table kl_org_invites enable row level security;
+alter table kl_org_rate_limits enable row level security;
+alter table kl_action_reviews enable row level security;
+drop policy if exists org_read on kl_organizations;create policy org_read on kl_organizations for select to authenticated using(kl_org_access(id));
+drop policy if exists member_read on kl_org_members;create policy member_read on kl_org_members for select to authenticated using(kl_org_access(organization_id));
+drop policy if exists event_read on kl_org_events;create policy event_read on kl_org_events for select to authenticated using(kl_org_access(organization_id,array['owner','admin','reviewer']));
+drop policy if exists invite_read on kl_org_invites;create policy invite_read on kl_org_invites for select to authenticated using(kl_org_access(organization_id,array['owner','admin']));
+drop policy if exists program_org_read on kl_assurance_programs;create policy program_org_read on kl_assurance_programs for select to authenticated using(kl_org_access(organization_id));
+drop policy if exists history_org_read on kl_assurance_history;create policy history_org_read on kl_assurance_history for select to authenticated using(kl_org_access(organization_id));
+drop policy if exists review_org_read on kl_action_reviews;create policy review_org_read on kl_action_reviews for select to authenticated using(kl_org_access(organization_id));
+revoke all on kl_organizations,kl_org_members,kl_org_events,kl_org_invites,kl_org_rate_limits,kl_action_reviews from anon,authenticated;
+grant select on kl_organizations,kl_org_members,kl_org_events,kl_action_reviews,kl_assurance_programs,kl_assurance_history to authenticated;
+grant select(id,organization_id,email,role,expires_at,created_by,accepted_by,revoked)on kl_org_invites to authenticated;
+revoke all on function kl_org_access(uuid,text[]),kl_org_write(uuid,text[]),kl_org_limit(uuid,text,integer),kl_provision_organization(text,uuid),kl_create_org_invite(uuid,text,text),kl_accept_org_invite(text),kl_set_org_member(uuid,uuid,text,boolean),kl_revoke_org_invite(uuid,uuid)from public,anon,authenticated;
+grant execute on function kl_org_access(uuid,text[]),kl_create_org_invite(uuid,text,text),kl_accept_org_invite(text),kl_set_org_member(uuid,uuid,text,boolean),kl_revoke_org_invite(uuid,uuid)to authenticated;
+grant execute on function kl_provision_organization(text,uuid)to service_role;
+commit;
+
+begin;
+create or replace function kl_validate_company_workspace(p_org uuid,w jsonb)
+returns void language plpgsql security definer set search_path=public,pg_temp as $$
+declare a jsonb;r jsonb;e jsonb;ref text;seen text[]:=array[]::text[];batch text[];begin
+ if w->>'format' is distinct from 'TraceSworn Assurance v1' or length(coalesce(w->>'name','')) not between 1 and 200 or octet_length(w::text)>600000 or
+ jsonb_typeof(w->'actions') is distinct from 'array' or jsonb_typeof(w->'risks') is distinct from 'array' or jsonb_typeof(w->'evidence') is distinct from 'array' then raise exception 'Invalid workspace';end if;
+ if jsonb_typeof(w->'freshnessDays')is distinct from'number'or jsonb_typeof(w->'owner')is distinct from'string'or jsonb_typeof(w->'name')is distinct from'string' then raise exception 'Invalid program settings';end if;
+ if jsonb_array_length(w->'actions')>500 or jsonb_array_length(w->'risks')>200 or jsonb_array_length(w->'evidence')>200 or (w->>'freshnessDays')::integer not between 1 and 3650 then raise exception 'Workspace capacity exceeded';end if;
+ if not exists(select 1 from kl_org_members where organization_id=p_org and user_id::text=w->>'owner' and active)then raise exception 'Accountable owner must be an active organization member';end if;
+ if exists(select 1 from jsonb_array_elements(w->'actions')x group by x->>'id' having count(*)>1)or exists(select 1 from jsonb_array_elements(w->'risks')x group by x->>'id' having count(*)>1)or exists(select 1 from jsonb_array_elements(w->'evidence')x group by x->>'id' having count(*)>1)then raise exception 'Duplicate identifiers';end if;
+ for e in select * from jsonb_array_elements(w->'evidence')loop
+  if exists(select 1 from unnest(array['id','title','reference','sha256','observedAt']) k where jsonb_typeof(e->k)is distinct from'string')then raise exception 'Invalid evidence field types';end if;
+  if length(coalesce(e->>'id','')) not between 1 and 120 or length(coalesce(e->>'title','')) not between 1 and 200 or (coalesce(e->>'reference','')='' and coalesce(e->>'sha256','')='') then raise exception 'Invalid evidence';end if;
+  if coalesce(e->>'reference','')<>'' and e->>'reference'!~'^https://[^/@[:space:]]+([/?#].*)?$'then raise exception 'HTTPS source reference required';end if;
+  if coalesce(e->>'sha256','')<>''and e->>'sha256'!~'^[a-f0-9]{64}$'then raise exception 'Invalid source hash';end if;
+  if coalesce(e->>'observedAt','') !~ '^\d{4}-\d{2}-\d{2}$'or to_char((e->>'observedAt')::date,'YYYY-MM-DD')<>e->>'observedAt' then raise exception 'Invalid evidence date';end if;
+ end loop;
+ for r in select * from jsonb_array_elements(w->'risks')loop
+  if exists(select 1 from unnest(array['id','title','owner','control'])k where jsonb_typeof(r->k)is distinct from'string')or exists(select 1 from unnest(array['likelihood','impact','controlEffectiveness'])k where jsonb_typeof(r->k)is distinct from'number')or jsonb_typeof(r->'assessed')is distinct from'boolean'or length(r->>'control')>4000 then raise exception 'Invalid risk field types';end if;
+  if length(coalesce(r->>'id',''))not between 1 and 120 or length(coalesce(r->>'title',''))not between 1 and 200 or (r->>'likelihood')::integer not between 1 and 5 or(r->>'impact')::integer not between 1 and 5 or(r->>'controlEffectiveness')::integer not between 0 and 100 or jsonb_typeof(r->'evidenceIds')is distinct from 'array' then raise exception 'Invalid risk';end if;
+  if not exists(select 1 from kl_org_members where organization_id=p_org and user_id::text=r->>'owner'and active)then raise exception 'Risk owner must be an active organization member';end if;
+  if jsonb_array_length(r->'evidenceIds')>200 or exists(select 1 from jsonb_array_elements(r->'evidenceIds')x where jsonb_typeof(x)<>'string')or exists(select 1 from jsonb_array_elements_text(r->'evidenceIds')x group by x having count(*)>1)then raise exception 'Invalid risk references';end if;
+  for ref in select jsonb_array_elements_text(r->'evidenceIds')loop if not exists(select 1 from jsonb_array_elements(w->'evidence')x where x->>'id'=ref)then raise exception 'Missing risk evidence';end if;end loop;
+ end loop;
+ for a in select * from jsonb_array_elements(w->'actions')loop
+  if exists(select 1 from unnest(array['id','riskId','title','owner','dueDate','status','reviewer','resolution','series'])k where jsonb_typeof(a->k)is distinct from'string')or exists(select 1 from unnest(array['recurrenceDays','cycle'])k where jsonb_typeof(a->k)is distinct from'number')or jsonb_typeof(a->'completedAt')not in('string','null')or length(a->>'resolution')>4000 or length(a->>'series')>100 then raise exception 'Invalid action field types';end if;
+  if not(a?'completedAt')or length(a->>'reviewer')>120 or length(a->>'riskId')>120 or (a->>'completedAt'is not null and(length(a->>'completedAt')>40 or(a->>'completedAt')::timestamptz is null))then raise exception 'Invalid action completion metadata';end if;
+  if length(coalesce(a->>'id',''))not between 1 and 120 or length(coalesce(a->>'title',''))not between 1 and 200 or coalesce(a->>'status','')not in('open','in_progress','review','complete')or jsonb_typeof(a->'dependsOn')is distinct from 'array'or jsonb_typeof(a->'evidenceIds')is distinct from 'array'or(a->>'recurrenceDays')::integer not between 0 and 365 or(a->>'cycle')::integer not between 0 and 100000 then raise exception 'Invalid action';end if;
+  if coalesce(a->>'dueDate','')!~'^\d{4}-\d{2}-\d{2}$'or to_char((a->>'dueDate')::date,'YYYY-MM-DD')<>a->>'dueDate'then raise exception 'Invalid due date';end if;
+  if not exists(select 1 from kl_org_members where organization_id=p_org and user_id::text=a->>'owner'and(active or a->>'status'='complete'))then raise exception 'Action owner must belong to the organization';end if;
+  if coalesce(a->>'riskId','')<>''and not exists(select 1 from jsonb_array_elements(w->'risks')x where x->>'id'=a->>'riskId')then raise exception 'Missing linked risk';end if;
+  if jsonb_array_length(a->'dependsOn')>200 or jsonb_array_length(a->'evidenceIds')>200 or exists(select 1 from jsonb_array_elements(a->'dependsOn')x where jsonb_typeof(x)<>'string')or exists(select 1 from jsonb_array_elements(a->'evidenceIds')x where jsonb_typeof(x)<>'string')or exists(select 1 from jsonb_array_elements_text(a->'dependsOn')x group by x having count(*)>1)or exists(select 1 from jsonb_array_elements_text(a->'evidenceIds')x group by x having count(*)>1)then raise exception 'Invalid action references';end if;
+  for ref in select jsonb_array_elements_text(a->'dependsOn')loop if not exists(select 1 from jsonb_array_elements(w->'actions')x where x->>'id'=ref)then raise exception 'Missing dependency';end if;end loop;
+  for ref in select jsonb_array_elements_text(a->'evidenceIds')loop if not exists(select 1 from jsonb_array_elements(w->'evidence')x where x->>'id'=ref)then raise exception 'Missing closure evidence';end if;end loop;
+  if a->>'status'='complete'then
+   if coalesce(a->>'completedAt','')=''or coalesce(a->>'reviewer','')=''or coalesce(a->>'resolution','')=''or jsonb_array_length(a->'evidenceIds')=0 then raise exception 'Invalid completed action';end if;
+   if jsonb_array_length(a->'dependsOn')>200 or jsonb_array_length(a->'evidenceIds')>200 or exists(select 1 from jsonb_array_elements(a->'dependsOn')x where jsonb_typeof(x)<>'string')or exists(select 1 from jsonb_array_elements(a->'evidenceIds')x where jsonb_typeof(x)<>'string')or exists(select 1 from jsonb_array_elements_text(a->'dependsOn')x group by x having count(*)>1)or exists(select 1 from jsonb_array_elements_text(a->'evidenceIds')x group by x having count(*)>1)then raise exception 'Invalid action references';end if;
+  for ref in select jsonb_array_elements_text(a->'dependsOn')loop if not exists(select 1 from jsonb_array_elements(w->'actions')x where x->>'id'=ref and x->>'status'='complete')then raise exception 'Incomplete dependency';end if;end loop;
+  elsif a->>'completedAt'is not null then raise exception 'Open action has completion timestamp';end if;
+ end loop;
+ loop
+  select array_agg(x->>'id') into batch from jsonb_array_elements(w->'actions')x where not(x->>'id'=any(seen))and not exists(select 1 from jsonb_array_elements_text(x->'dependsOn')d where not(d=any(seen)));
+  exit when coalesce(cardinality(batch),0)=0;seen:=seen||batch;
+ end loop;
+ if cardinality(seen)<>jsonb_array_length(w->'actions')then raise exception 'Circular dependencies';end if;
+end $$;
+alter table kl_organizations add column if not exists max_audit_bytes bigint not null default 209715200 check(max_audit_bytes>0);
+alter table kl_organizations add column if not exists max_audit_versions integer not null default 5000 check(max_audit_versions>0);
+create index if not exists kl_history_org on kl_assurance_history(organization_id,revision);
+create or replace function kl_org_snapshot_budget(p_org uuid,p_workspace jsonb)returns void language plpgsql security definer set search_path=public,pg_temp as $$
+declare used_bytes bigint;versions bigint;byte_limit bigint;version_limit integer;begin
+ select max_audit_bytes,max_audit_versions into byte_limit,version_limit from kl_organizations where id=p_org;
+ select coalesce(sum(pg_column_size(workspace)),0),count(*) into used_bytes,versions from kl_assurance_history where organization_id=p_org;
+ if used_bytes+pg_column_size(p_workspace)>byte_limit or versions>=version_limit then raise exception 'Audit storage quota reached; export data and contact your account team';end if;
+end $$;
+revoke all on function kl_org_snapshot_budget(uuid,jsonb)from public,anon,authenticated;
+create or replace function kl_company_save(p_org uuid,p_id uuid,p_expected integer,p_workspace jsonb,p_reason text)
+returns table(id uuid,revision integer) language plpgsql security definer set search_path=public,pg_temp as $$
+declare target uuid;next_revision integer;old_workspace jsonb;a jsonb;old_action jsonb;begin
+ perform 1 from kl_organizations where kl_organizations.id=p_org for update;perform kl_org_write(p_org,array['owner','admin','editor']);perform kl_org_limit(p_org,'save');
+ if length(trim(coalesce(p_reason,'')))not between 1 and 2000 then raise exception 'A change reason is required';end if;
+ perform kl_validate_company_workspace(p_org,p_workspace);perform kl_org_snapshot_budget(p_org,p_workspace);
+ if p_id is null then
+  if p_expected<>0 then raise exception 'Revision conflict';end if;
+  if(select count(*)from kl_assurance_programs where organization_id=p_org)>=(select max_programs from kl_organizations where kl_organizations.id=p_org)then raise exception 'Program quota reached';end if;
+  old_workspace:='{"actions":[]}'::jsonb;next_revision:=1;
+ else
+  select workspace,ap.revision+1 into old_workspace,next_revision from kl_assurance_programs ap where ap.id=p_id and organization_id=p_org for update;
+  if not found then raise exception 'Workspace unavailable';end if;if next_revision<>p_expected+1 then raise exception 'Revision conflict';end if;target:=p_id;
+ end if;
+ for a in select * from jsonb_array_elements(p_workspace->'actions')loop
+  select x into old_action from jsonb_array_elements(old_workspace->'actions')x where x->>'id'=a->>'id';
+  if old_action is null and a->>'status'<>'open'then raise exception 'New actions must start open';end if;
+  if old_action is not null and a->>'status'<>old_action->>'status'and not((old_action->>'status'='open'and a->>'status'='in_progress')or(old_action->>'status'='in_progress'and a->>'status'in('open','review'))or(old_action->>'status'='review'and a->>'status'='in_progress')or(old_action->>'status'='complete'and a->>'status'='in_progress'))then raise exception 'Invalid action transition';end if;
+  if a->>'status'='complete'and(old_action is null or old_action is distinct from a)then raise exception 'Completed actions require authenticated review; use approval workflow';end if;
+ end loop;
+ for old_action in select * from jsonb_array_elements(old_workspace->'actions')x where x->>'status'='complete'loop
+  select x into a from jsonb_array_elements(p_workspace->'actions')x where x->>'id'=old_action->>'id';
+  if a is null then raise exception 'Completed history cannot be removed';end if;
+  if a->>'status'<>'complete'and a->>'status'<>'in_progress'then raise exception 'Completed actions must be reopened to in progress';end if;
+ end loop;
+ if target is null then insert into kl_assurance_programs(name,workspace,organization_id)values(p_workspace->>'name',p_workspace,p_org)returning kl_assurance_programs.id into target;
+ else update kl_assurance_programs set workspace=p_workspace,name=p_workspace->>'name',revision=next_revision,updated_at=now()where kl_assurance_programs.id=target;end if;
+ insert into kl_assurance_history(program_id,revision,actor,actor_id,reason,workspace,organization_id)values(target,next_revision,auth.uid()::text,auth.uid(),p_reason,p_workspace,p_org);
+ update kl_action_reviews set state='superseded'where program_id=target and state='pending';
+ insert into kl_action_reviews(program_id,revision,action_id,organization_id,submitted_by)select target,next_revision,x->>'id',p_org,auth.uid()from jsonb_array_elements(p_workspace->'actions')x where x->>'status'='review';
+ return query select target,next_revision;
+end $$;
+create or replace function kl_company_approve_action(p_org uuid,p_program uuid,p_revision integer,p_action text,p_resolution text)
+returns integer language plpgsql security definer set search_path=public,pg_temp as $$
+declare w jsonb;a jsonb;e jsonb;refs text;idx integer;review kl_action_reviews;next_action jsonb;series text;next_id text;next_revision integer;begin
+ perform 1 from kl_organizations where id=p_org for update;
+ perform kl_org_write(p_org,array['owner','admin','reviewer']);perform kl_org_limit(p_org,'approve');
+ select workspace,revision+1 into w,next_revision from kl_assurance_programs where id=p_program and organization_id=p_org for update;
+ if not found then raise exception 'Workspace unavailable';end if;if next_revision<>p_revision+1 then raise exception 'Revision conflict';end if;
+ select * into review from kl_action_reviews where program_id=p_program and revision=p_revision and action_id=p_action and state='pending'for update;
+ if review.program_id is null then raise exception 'Current review request unavailable';end if;
+ if review.submitted_by=auth.uid()then raise exception 'A different authenticated reviewer is required';end if;
+ select value,ordinality::integer-1 into a,idx from jsonb_array_elements(w->'actions')with ordinality where value->>'id'=p_action;
+ if a->>'status'<>'review'or a->>'owner'=auth.uid()::text then raise exception 'Action owner cannot approve own work';end if;
+ if length(trim(coalesce(p_resolution,'')))not between 1 and 4000 or jsonb_array_length(a->'evidenceIds')=0 then raise exception 'Resolution and evidence required';end if;
+ for refs in select jsonb_array_elements_text(a->'dependsOn')loop if not exists(select 1 from jsonb_array_elements(w->'actions')x where x->>'id'=refs and x->>'status'='complete')then raise exception 'Complete dependencies first';end if;end loop;
+ for refs in select jsonb_array_elements_text(a->'evidenceIds')loop select x into e from jsonb_array_elements(w->'evidence')x where x->>'id'=refs;
+ if e is null or(e->>'observedAt')::date>(now()at time zone'UTC')::date or(e->>'observedAt')::date+(w->>'freshnessDays')::integer<(now()at time zone'UTC')::date then raise exception 'Fresh evidence required';end if;end loop;
+ a:=a||jsonb_build_object('status','complete','reviewer',auth.uid()::text,'resolution',trim(p_resolution),'completedAt',to_char(now()at time zone'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'));
+ w:=jsonb_set(w,array['actions',idx::text],a);
+ if(a->>'recurrenceDays')::integer>0 then
+  series:=coalesce(nullif(a->>'series',''),a->>'id');next_id:=series||':r'||((a->>'cycle')::integer+1);
+  if not exists(select 1 from jsonb_array_elements(w->'actions')x where x->>'id'=next_id)then
+   next_action:=a||jsonb_build_object('id',next_id,'series',series,'cycle',(a->>'cycle')::integer+1,'dueDate',to_char((a->>'dueDate')::date+(a->>'recurrenceDays')::integer,'YYYY-MM-DD'),'status','open','dependsOn',jsonb_build_array(p_action),'evidenceIds','[]'::jsonb,'reviewer','','resolution','','completedAt',null);
+   w:=jsonb_set(w,'{actions}',(w->'actions')||jsonb_build_array(next_action));end if;
+ end if;
+ perform kl_validate_company_workspace(p_org,w);perform kl_org_snapshot_budget(p_org,w);
+ update kl_assurance_programs set workspace=w,revision=next_revision,updated_at=now()where id=p_program;
+ insert into kl_assurance_history(program_id,revision,actor,actor_id,reason,workspace,organization_id)values(p_program,next_revision,auth.uid()::text,auth.uid(),'Authenticated approval: '||p_action,w,p_org);
+ update kl_action_reviews set state='approved',reviewed_by=auth.uid(),reviewed_at=now()where program_id=p_program and revision=p_revision and action_id=p_action;
+ update kl_action_reviews set state='superseded'where program_id=p_program and state='pending';
+ -- Unchanged outstanding actions retain their original submitter; the reviewer cannot self-authorize them.
+ insert into kl_action_reviews(program_id,revision,action_id,organization_id,submitted_by)select p_program,next_revision,r.action_id,p_org,r.submitted_by from kl_action_reviews r where r.program_id=p_program and r.revision=p_revision and r.action_id<>p_action and exists(select 1 from jsonb_array_elements(w->'actions')x where x->>'id'=r.action_id and x->>'status'='review');
+ insert into kl_org_events(organization_id,actor_id,kind,detail)values(p_org,auth.uid(),'action.approved',jsonb_build_object('program',p_program,'action',p_action,'revision',next_revision));return next_revision;
+end $$;
+create or replace function kl_org_directory(p_org uuid)
+returns table(user_id uuid,email text,role text,active boolean)language plpgsql security definer set search_path=public,pg_temp as $$
+begin if not kl_org_access(p_org)then raise exception 'Organization access denied';end if;return query select m.user_id,u.email::text,m.role,m.active from kl_org_members m join auth.users u on u.id=m.user_id where m.organization_id=p_org;end $$;
+-- Prevent old service-key pilot functions from mutating organization-owned workspaces.
+create or replace function kl_save_assurance(p_id uuid,p_expected integer,p_workspace jsonb,p_actor text,p_reason text)
+returns table(id uuid,revision integer)language plpgsql security definer set search_path=public,pg_temp as $$
+declare target uuid;current_revision integer;next_revision integer;begin
+ if p_workspace->>'format'is distinct from'TraceSworn Assurance v1'or length(trim(coalesce(p_workspace->>'name','')))=0 or length(trim(coalesce(p_actor,'')))=0 or length(trim(coalesce(p_reason,'')))=0 or octet_length(p_workspace::text)>800000 then raise exception 'Invalid assurance save';end if;
+ if p_id is null then if p_expected<>0 then raise exception 'Revision conflict';end if;insert into kl_assurance_programs(name,workspace)values(p_workspace->>'name',p_workspace)returning kl_assurance_programs.id into target;next_revision:=1;
+ else select ap.revision into current_revision from kl_assurance_programs ap where ap.id=p_id and organization_id is null for update;if not found then raise exception 'Pilot workspace unavailable';end if;if current_revision<>p_expected then raise exception 'Revision conflict';end if;target:=p_id;next_revision:=current_revision+1;update kl_assurance_programs set workspace=p_workspace,name=p_workspace->>'name',revision=next_revision,updated_at=now()where kl_assurance_programs.id=target;end if;
+ insert into kl_assurance_history(program_id,revision,actor,reason,workspace)values(target,next_revision,p_actor,p_reason,p_workspace);return query select target,next_revision;
+end $$;
+revoke all on function kl_validate_company_workspace(uuid,jsonb),kl_company_save(uuid,uuid,integer,jsonb,text),kl_company_approve_action(uuid,uuid,integer,text,text),kl_org_directory(uuid)from public,anon,authenticated;
+grant execute on function kl_company_save(uuid,uuid,integer,jsonb,text),kl_company_approve_action(uuid,uuid,integer,text,text),kl_org_directory(uuid)to authenticated;
+commit;
+
+begin;
+create table if not exists kl_org_reports (
+ id uuid primary key default gen_random_uuid(),organization_id uuid not null references kl_organizations(id),
+ submitted_by uuid not null references auth.users(id),created_at timestamptz not null default now(),
+ reviewed_by uuid references auth.users(id),published_at timestamptz,sealed jsonb not null,fingerprint text not null,
+ unique(organization_id,fingerprint),check((reviewed_by is null)=(published_at is null)),check(reviewed_by is null or reviewed_by<>submitted_by)
+);
+alter table kl_org_reports enable row level security;
+create or replace function kl_canonical_json(v jsonb)returns text language sql immutable set search_path=public,pg_temp as $$
+ select case jsonb_typeof(v)when'object'then'{'||coalesce((select string_agg(to_jsonb(key)::text||':'||kl_canonical_json(value),','order by key collate"C")from jsonb_each(v)),'')||'}'when'array'then'['||coalesce((select string_agg(kl_canonical_json(value),','order by ordinality)from jsonb_array_elements(v)with ordinality),'')||']'else v::text end;
+$$;
+create or replace function kl_validate_issued_document(d jsonb)returns void language plpgsql security definer set search_path=public,pg_temp as $$
+declare s jsonb;f jsonb;k text;ref text;begin
+ if jsonb_typeof(d)is distinct from'object'or jsonb_typeof(d->'template')is distinct from'string'or jsonb_typeof(d->'accent')is distinct from'string'or coalesce(d->>'template','')not in('asset-review','financial-evidence','chronology')or d->>'accent'!~'^#[A-Fa-f0-9]{6}$'then raise exception 'Invalid report document';end if;
+ if exists(select 1 from jsonb_object_keys(d)as keys(key_name)where keys.key_name<>all(array['template','title','organization','accent','matterReference','preparedFor','author','reviewer','scope','methodology','limitations','conclusion','sources','findings','checks']))then raise exception 'Unsupported document fields';end if;
+ foreach k in array array['title','organization','matterReference','preparedFor','author','reviewer','scope','methodology','limitations','conclusion']loop
+  if jsonb_typeof(d->k)is distinct from'string'or length(d->>k)=0 or trim(d->>k)<>d->>k or length(d->>k)>8000 then raise exception 'Report fields must be complete and normalized';end if;
+ end loop;
+ if length(d->>'title')>200 or length(d->>'organization')>120 or length(d->>'matterReference')>120 or length(d->>'preparedFor')>200 or length(d->>'author')>120 or length(d->>'reviewer')>120 or lower(d->>'author')=lower(d->>'reviewer')then raise exception 'Report attribution invalid';end if;
+ if jsonb_typeof(d->'checks')is distinct from'object'or d->'checks'<> '{"sources":true,"limitations":true,"conclusions":true}'::jsonb or jsonb_typeof(d->'sources')is distinct from'array'or jsonb_typeof(d->'findings')is distinct from'array'then raise exception 'Reviewed report required';end if;
+ if jsonb_array_length(d->'sources')not between 1 and 100 or jsonb_array_length(d->'findings')not between 1 and 200 then raise exception 'Report capacity exceeded';end if;
+ if exists(select 1 from jsonb_array_elements(d->'sources')x group by x->>'id'having count(*)>1)or exists(select 1 from jsonb_array_elements(d->'findings')x group by x->>'id'having count(*)>1)then raise exception 'Duplicate report identifiers';end if;
+ for s in select * from jsonb_array_elements(d->'sources')loop
+  if exists(select 1 from jsonb_object_keys(s)as keys(key_name)where keys.key_name<>all(array['id','title','reference','observedAt','sha256','note']))then raise exception 'Unsupported source fields';end if;
+  foreach k in array array['id','title','reference','observedAt','sha256','note']loop if jsonb_typeof(s->k)is distinct from'string'or trim(s->>k)<>s->>k then raise exception 'Invalid source field';end if;end loop;
+  if length(s->>'id')not between 1 and 80 or length(s->>'title')not between 1 and 200 or length(s->>'reference')>2000 or length(s->>'note')>2000 or length(s->>'observedAt')not between 1 and 40 or(s->>'observedAt')::timestamptz is null then raise exception 'Invalid source';end if;
+  if s->>'reference'=''and s->>'sha256'=''then raise exception 'Source reference required';end if;
+  if s->>'reference'<>''and s->>'reference'!~'^https://[^/@[:space:]]+([/?#].*)?$'then raise exception 'HTTPS source required';end if;
+  if s->>'sha256'<>''and s->>'sha256'!~'^[a-f0-9]{64}$'then raise exception 'Invalid source fingerprint';end if;
+ end loop;
+ for f in select * from jsonb_array_elements(d->'findings')loop
+  if exists(select 1 from jsonb_object_keys(f)as keys(key_name)where keys.key_name<>all(array['id','date','observation','sourceIds']))then raise exception 'Unsupported finding fields';end if;
+  foreach k in array array['id','date','observation']loop if jsonb_typeof(f->k)is distinct from'string'or trim(f->>k)<>f->>k then raise exception 'Invalid finding field';end if;end loop;
+  if length(f->>'id')not between 1 and 80 or length(f->>'observation')not between 1 and 6000 or length(f->>'date')>10 or jsonb_typeof(f->'sourceIds')is distinct from'array'or jsonb_array_length(f->'sourceIds')=0 then raise exception 'Cited findings required';end if;
+  if exists(select 1 from jsonb_array_elements(f->'sourceIds')x where jsonb_typeof(x)<>'string')or exists(select 1 from jsonb_array_elements_text(f->'sourceIds')x group by x having count(*)>1)then raise exception 'Invalid finding citations';end if;
+  for ref in select jsonb_array_elements_text(f->'sourceIds')loop if not exists(select 1 from jsonb_array_elements(d->'sources')x where x->>'id'=ref)then raise exception 'Missing finding citation';end if;end loop;
+ end loop;
+end $$;
+create or replace function kl_submit_org_report(p_org uuid,p_sealed jsonb)returns uuid language plpgsql security definer set search_path=public,pg_temp as $$
+declare v_fingerprint text;result uuid;begin
+ perform 1 from kl_organizations where id=p_org for update;perform kl_org_write(p_org,array['owner','admin','editor']);perform kl_org_limit(p_org,'report');
+ if octet_length(p_sealed::text)>900000 or p_sealed->'fingerprint'->>'algorithm'is distinct from'SHA-256'or p_sealed->'fingerprint'->>'canonicalization'is distinct from'sorted-keys-json'or p_sealed->'record'->>'format'is distinct from'TraceSworn Report Studio v1'then raise exception 'Invalid issued report';end if;
+ v_fingerprint:=encode(sha256(convert_to(kl_canonical_json(p_sealed->'record'),'UTF8')),'hex');
+ if v_fingerprint is distinct from p_sealed->'fingerprint'->>'value'then raise exception 'Report fingerprint mismatch';end if;
+ if jsonb_typeof(p_sealed->'record'->'revision')is distinct from'number'or jsonb_typeof(p_sealed->'record'->'issuedAt')is distinct from'string'or(p_sealed->'record'->>'revision')::integer<1 or(p_sealed->'record'->>'issuedAt')::timestamptz is null then raise exception 'Invalid report revision';end if;
+ perform kl_validate_issued_document(p_sealed->'record'->'document');
+ select id into result from kl_org_reports where organization_id=p_org and kl_org_reports.fingerprint=v_fingerprint;
+ if result is not null then return result;end if;
+ if(select count(*)from kl_org_reports where organization_id=p_org and created_at>=date_trunc('month',now()))>=100 then raise exception 'Monthly report quota reached';end if;
+ if(select coalesce(sum(pg_column_size(sealed)),0)from kl_org_reports where organization_id=p_org)+pg_column_size(p_sealed)>52428800 then raise exception 'Report storage quota reached';end if;
+ insert into kl_org_reports(organization_id,submitted_by,sealed,fingerprint)values(p_org,auth.uid(),p_sealed,v_fingerprint)returning id into result;
+ insert into kl_org_events(organization_id,actor_id,kind,detail)values(p_org,auth.uid(),'report.submitted',jsonb_build_object('report',result));return result;
+end $$;
+create or replace function kl_publish_org_report(p_org uuid,p_report uuid)returns void language plpgsql security definer set search_path=public,pg_temp as $$
+declare r kl_org_reports;begin
+ perform 1 from kl_organizations where id=p_org for update;perform kl_org_write(p_org,array['owner','admin','reviewer']);perform kl_org_limit(p_org,'publish');
+ select * into r from kl_org_reports where id=p_report and organization_id=p_org for update;if r.id is null then raise exception 'Report unavailable';end if;
+ if r.submitted_by=auth.uid()then raise exception 'A different authenticated reviewer is required';end if;if r.published_at is not null then return;end if;
+ update kl_org_reports set reviewed_by=auth.uid(),published_at=now()where id=p_report;
+ insert into kl_org_events(organization_id,actor_id,kind,detail)values(p_org,auth.uid(),'report.published',jsonb_build_object('report',p_report,'fingerprint',r.fingerprint));end $$;
+create or replace function kl_preserve_company_report()returns trigger language plpgsql as $$begin if tg_op='DELETE'or old.published_at is not null or new.sealed is distinct from old.sealed or new.submitted_by is distinct from old.submitted_by or new.organization_id is distinct from old.organization_id then raise exception 'Published report content is immutable';end if;return new;end $$;
+drop trigger if exists preserve_company_report on kl_org_reports;create trigger preserve_company_report before update or delete on kl_org_reports for each row execute function kl_preserve_company_report();
+drop policy if exists report_org_read on kl_org_reports;create policy report_org_read on kl_org_reports for select to authenticated using(kl_org_access(organization_id)and(published_at is not null or kl_org_access(organization_id,array['owner','admin','editor','reviewer'])));
+revoke all on kl_org_reports from anon,authenticated,service_role;grant select on kl_org_reports to authenticated,service_role;
+revoke all on function kl_canonical_json(jsonb),kl_validate_issued_document(jsonb),kl_submit_org_report(uuid,jsonb),kl_publish_org_report(uuid,uuid)from public,anon,authenticated;
+grant execute on function kl_submit_org_report(uuid,jsonb),kl_publish_org_report(uuid,uuid)to authenticated;
+commit;
+
+begin;
+create or replace function kl_preserve_org_event()returns trigger language plpgsql as $$begin raise exception 'Organization audit events are append-only';end $$;
+drop trigger if exists org_events_immutable on kl_org_events;create trigger org_events_immutable before update or delete on kl_org_events for each row execute function kl_preserve_org_event();
+revoke insert,update,delete,truncate on kl_org_events from service_role,anon,authenticated;
+grant select on kl_org_events to service_role;
+alter table kl_organizations add column if not exists contract_reference text;
+create or replace function kl_activate_contract(p_org uuid,p_reference text,p_until timestamptz,p_seats integer,p_programs integer)
+returns void language plpgsql security definer set search_path=public,pg_temp as $$begin
+ if length(trim(coalesce(p_reference,'')))not between 1 and 250 or p_until<=now()or p_until>now()+interval '2 years'or p_seats not between 2 and 10000 or p_programs not between 1 and 1000 then raise exception 'Invalid signed-contract activation';end if;
+ perform 1 from kl_organizations where id=p_org for update;if not found then raise exception 'Organization unavailable';end if;
+ if p_seats<(select count(*)from kl_org_members where organization_id=p_org and active)or p_programs<(select count(*)from kl_assurance_programs where organization_id=p_org)then raise exception 'Quota cannot be reduced below current usage';end if;
+ update kl_organizations set entitlement='active',access_until=p_until,max_members=p_seats,max_programs=p_programs,contract_reference=trim(p_reference)where id=p_org;
+ insert into kl_org_events(organization_id,kind,detail)values(p_org,'contract.activated',jsonb_build_object('reference',p_reference,'until',p_until,'seats',p_seats,'programs',p_programs));end $$;
+create or replace function kl_enterprise_ready()returns boolean language sql security definer set search_path=public,pg_temp as $$
+ select exists(select 1 from pg_class where oid='public.kl_org_members'::regclass and relrowsecurity)and exists(select 1 from pg_class where oid='public.kl_assurance_programs'::regclass and relrowsecurity)and exists(select 1 from pg_class where oid='public.kl_org_reports'::regclass and relrowsecurity)and not has_function_privilege('anon','public.kl_company_save(uuid,uuid,integer,jsonb,text)','execute');
+$$;
+revoke all on function kl_activate_contract(uuid,text,timestamptz,integer,integer),kl_enterprise_ready()from public,anon,authenticated;
+grant execute on function kl_activate_contract(uuid,text,timestamptz,integer,integer),kl_enterprise_ready()to service_role;
+grant execute on function kl_enterprise_ready()to anon;
+commit;
+
+begin;
+do $$begin
+ if not exists(select 1 from pg_constraint where conname='kl_assurance_program_tenant_key')then alter table kl_assurance_programs add constraint kl_assurance_program_tenant_key unique(id,organization_id);end if;
+ if not exists(select 1 from pg_constraint where conname='kl_assurance_program_org_fk')then alter table kl_assurance_programs add constraint kl_assurance_program_org_fk foreign key(organization_id)references kl_organizations(id);end if;
+ if not exists(select 1 from pg_constraint where conname='kl_assurance_history_tenant_fk')then alter table kl_assurance_history add constraint kl_assurance_history_tenant_fk foreign key(program_id,organization_id)references kl_assurance_programs(id,organization_id);end if;
+ if not exists(select 1 from pg_constraint where conname='kl_action_review_tenant_fk')then alter table kl_action_reviews add constraint kl_action_review_tenant_fk foreign key(program_id,organization_id)references kl_assurance_programs(id,organization_id);end if;
+end $$;
+create or replace function kl_enterprise_ready()returns boolean language sql security definer set search_path=public,pg_temp as $$
+ select (select count(*)=5 from pg_class where oid in('public.kl_organizations'::regclass,'public.kl_org_members'::regclass,'public.kl_assurance_programs'::regclass,'public.kl_assurance_history'::regclass,'public.kl_org_reports'::regclass)and relrowsecurity)
+ and exists(select 1 from pg_policies where tablename='kl_assurance_programs'and policyname='program_org_read')
+ and exists(select 1 from pg_trigger where tgrelid='public.kl_org_events'::regclass and tgname='org_events_immutable'and tgenabled<>'D')
+ and not has_function_privilege('anon','public.kl_company_save(uuid,uuid,integer,jsonb,text)','execute')
+ and has_function_privilege('authenticated','public.kl_company_save(uuid,uuid,integer,jsonb,text)','execute')
+ and not has_table_privilege('authenticated','public.kl_assurance_programs','UPDATE')
+ and not has_table_privilege('authenticated','public.kl_org_reports','UPDATE');
+$$;
+grant execute on function kl_enterprise_ready()to anon,service_role;
+commit;
+
+-- Legacy service data is never available to company JWTs, including non-RLS privileges.
+revoke all on kl_cases,kl_events,kl_watches,kl_leads,kl_lead_events,kl_firms,kl_screenings,kl_screening_matters,kl_time_entries,kl_jobs,kl_report_versions from anon,authenticated;
+-- Apply an upper bound for authenticated database requests; verify PostgREST role config on staging.
+alter role authenticated set statement_timeout='8s';
+
+notify pgrst,'reload schema';
+notify pgrst,'reload config';

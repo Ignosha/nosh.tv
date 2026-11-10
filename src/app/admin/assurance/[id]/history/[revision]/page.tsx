@@ -1,3 +1,4 @@
+import { loadAssurance } from "@/lib/assuranceStore";
 import { db } from "@/lib/db";
 import { isUuid } from "@/lib/cases";
 import { parseAssurance } from "@/lib/assurance";
@@ -13,6 +14,7 @@ export default async function History({
   const n = Number(revision);
   const client = db();
   if (!client || !isUuid(id) || !Number.isSafeInteger(n) || n < 1) notFound();
+  if(!await loadAssurance(id)) notFound();
   const { data, error } = await client
     .from("kl_assurance_history")
     .select("*")

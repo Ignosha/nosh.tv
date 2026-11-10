@@ -316,3 +316,8 @@ revoke all on function kl_save_assurance(uuid,integer,jsonb,text,text) from publ
 grant execute on function kl_save_assurance(uuid,integer,jsonb,text,text) to service_role;
 revoke insert,update,delete,truncate on kl_assurance_programs,kl_assurance_history from anon,authenticated,service_role;
 grant select on kl_assurance_programs,kl_assurance_history to service_role;
+
+-- Nullable tenant ownership for staged enterprise migration; no automatic tenant assignment.
+alter table kl_assurance_programs add column if not exists organization_id uuid;
+alter table kl_assurance_history add column if not exists organization_id uuid;
+alter table kl_assurance_history add column if not exists actor_id uuid;

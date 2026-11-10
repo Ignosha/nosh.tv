@@ -1,3 +1,4 @@
+import { THEME_BOOTSTRAP } from "@/lib/themeBootstrap";
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem("ts-theme")==="light")document.documentElement.dataset.theme="light"}catch(e){}`,
+            __html: THEME_BOOTSTRAP,
           }}
         />
       </head>

@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start -p 3100",
     "typecheck": "tsc --noEmit",
-    "test": "node tests/premier.cjs && node tests/assurance.cjs && node tests/database.cjs",
+    "test": "node tests/premier.cjs && node tests/assurance.cjs && node tests/hardening.cjs && node tests/database.cjs && node tests/enterprise.cjs",
     "test:browser": "node tests/report-studio.browser.cjs && node tests/assurance.browser.cjs",
-    "test:admin-security": "node tests/admin-security.cjs"
+    "test:admin-security": "node tests/admin-security.cjs",
+    "check:release": "node scripts/enterprise-preflight.mjs",
+    "test:enterprise-boundary": "node tests/enterprise-boundary.cjs"
   },
   "dependencies": {
     "@noble/hashes": "^1.8.0",
@@ -17,8 +19,9 @@
     "@scure/bip32": "^1.7.0",
     "@scure/bip39": "^1.6.0",
     "@scure/btc-signer": "^1.8.1",
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
-    "next": "^15.5.29",
+    "next": "^16.4.6",
     "pdfjs-dist": "^4.10.38",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
@@ -30,5 +33,8 @@
     "@types/react-dom": "^19.3.0",
     "playwright": "^1.65.0",
     "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22 <25"
   }
 }
