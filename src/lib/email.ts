@@ -4,12 +4,12 @@ export function emailEnabled(): boolean {
   return !!(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
 }
 
-export async function sendEmail(to: string, subject: string, text: string, headers?: Record<string, string>): Promise<{ ok: boolean; error?: string; id?: string }> {
+export async function sendEmail(to: string, subject: string, text: string, headers?: Record<string, string>, idempotencyKey?: string): Promise<{ ok: boolean; error?: string; id?: string }> {
   if (!emailEnabled()) return { ok: false, error: "Email sending is not configured." };
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json", ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}) },
       body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [to], subject, text, reply_to: process.env.EMAIL_REPLY_TO || undefined, headers }),
       signal: AbortSignal.timeout(15000),
     });

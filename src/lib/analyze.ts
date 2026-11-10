@@ -23,7 +23,8 @@ export async function buildReport(c: Case): Promise<Report> {
     const scan = await scanXpub(x);
     for (const u of scan.used) wanted.set("bitcoin:" + u.address, { chain: "bitcoin", address: u.address });
   }
-  const list = [...wanted.values()].slice(0, 60);
+  const maxAddresses = ["report","premier"].includes(c.package??"") ? 10 : 60;
+  const list = [...wanted.values()].slice(0, maxAddresses);
 
   const reports = [];
   for (let i = 0; i < list.length; i += 4) {
@@ -59,19 +60,20 @@ export async function buildReport(c: Case): Promise<Report> {
     }
   }
   const nonZeroAtDate = rows.filter((r) => !(r.balanceNow === 0 && r.balanceAtDate === 0));
-  const atDateComplete = !!date && nonZeroAtDate.every((r) => r.valueAtDate !== null);
+  const atDateComplete = !!date && reports.length > 0 && reports.every(r=>r.ok && !r.unreadNetworks?.length) && nonZeroAtDate.every((r) => r.valueAtDate !== null);
   const sources = Object.entries(prices).map(([a, p]) => `${a}: ${p.now.source}${p.atDate ? `; ${p.atDate.source}` : ""}`);
 
   return {
     readAt: new Date().toISOString(),
     dateOfDeath: date,
     rows,
-    failed: reports.filter((r) => !r.ok).map((r) => ({ address: r.address, error: r.error ?? "Read failed" })),
+    failed: reports.flatMap((r) => !r.ok ? [{ address: r.address, error: r.error ?? "Read failed" }] : r.unreadNetworks?.length ? [{ address:r.address,error:`Unread networks: ${r.unreadNetworks.join(", ")}` }] : []),
     totalNow: rows.reduce((s, r) => s + (r.valueNow ?? 0), 0),
     totalAtDate: date && rows.some((r) => r.valueAtDate !== null) ? rows.reduce((s, r) => s + (r.valueAtDate ?? 0), 0) : null,
     atDateComplete,
     sources: [
       "Balances: Blockstream (Bitcoin), PublicNode (Ethereum, Base, Arbitrum, Optimism, Polygon), Solana mainnet RPC",
+      ...(wanted.size>maxAddresses ? [`Scope limit: ${list.length} of ${wanted.size} discovered addresses read. Additional addresses require a separate scope.`] : []),
       ...sources,
     ],
   };

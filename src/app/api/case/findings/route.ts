@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getCaseByToken, updateCase, logEvent, type Findings } from "@/lib/cases";
-import { startWatching } from "@/lib/watch";
 import { detectChain } from "@/lib/extract";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +44,7 @@ export async function POST(req: Request) {
   };
   const saved = await updateCase(c.id, { findings: merged, next_followup_at: new Date().toISOString() });
   if (!saved) return NextResponse.json({error:"Could not save findings"},{status:500});
-  if (c.firm_id) await startWatching({ ...c, findings: merged });
+  // Alert enrollment is handled by the watch worker; keep portal submissions quick.
   await logEvent(c.id, "findings", `Family sent ${addresses.length} address(es), ${sources.length} exchange/wallet clue(s)${xpubs.length ? `, ${xpubs.length} wallet key(s)` : ""}.`);
   return NextResponse.json({ ok: true, total: merged.addresses.length });
 }

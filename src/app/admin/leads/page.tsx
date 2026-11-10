@@ -1,3 +1,4 @@
+import { PILOT_PROSPECTS } from "@/lib/pilotProspects";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -16,6 +17,13 @@ const SEGMENTS: { id: Segment; name: string }[] = [
 ];
 
 const back = (msg: string) => redirect(`/admin/leads?msg=${encodeURIComponent(msg)}`);
+
+async function loadPilot() {
+  "use server";
+  const {added,skipped}=await saveLeads(PILOT_PROSPECTS.map(l=>({...l,score:l.practice.includes("bankruptcy")?60:30})));
+  revalidatePath("/admin/leads");
+  back(`Pilot: ${added} prospects added, ${skipped} duplicates. Review fit and contact details before queueing; no emails sent.`);
+}
 
 async function findCity(form: FormData) {
   "use server";
@@ -99,10 +107,11 @@ export default async function Leads({ searchParams }: { searchParams: Promise<{ 
       {sp.msg ? <div className="notice">{sp.msg}</div> : null}
       <div className={`notice ${ready.ok ? "" : "warn"}`}>
         {ready.ok
-          ? `Outreach is on: up to ${DAILY_LIMIT} emails each weekday, ${SEQUENCE_LENGTH} emails per lead, stopping on reply or unsubscribe.`
+          ? `Outreach is on: up to ${DAILY_LIMIT} emails each weekday, ${SEQUENCE_LENGTH} emails per lead, stopping on unsubscribe or when you mark a reply in the lead desk. A monitored reply mailbox is required.`
           : <>Outreach sending is off until you add: {ready.missing.join(" · ")}. You can still find, review and queue leads, and send from your own mail app.</>}
       </div>
 
+      <form action={loadPilot} className="form-card"><h2>Start the US insolvency pilot</h2><p>Four source-backed firms, researched on their own websites. One verified general business email; other contacts need qualification. These are prospects, not customers or expressions of interest.</p><button className="btn">Load researched pilot prospects</button></form>
       <div className="instrument">
         <form action={findCity}>
           <div className="pane-head"><span>1 · Law offices in a city</span><span>OpenStreetMap + firm websites</span></div>

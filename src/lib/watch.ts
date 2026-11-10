@@ -31,7 +31,9 @@ export async function startWatching(c: Case): Promise<number> {
   for (const r of c.report?.rows ?? []) seen.set(r.chain + ":" + r.address, { chain: r.chain as Chain, address: r.address });
   for (const a of c.findings?.addresses ?? []) seen.set(a.chain + ":" + a.address, { chain: a.chain as Chain, address: a.address });
   let added = 0;
+  const existing = new Set((await watchesFor(c.id)).filter(w=>w.active).map(w=>w.chain+":"+w.address));
   for (const a of seen.values()) {
+    if(existing.has(a.chain+":"+a.address)) continue;
     const r = await readAddress(a.chain, a.address, null);
     if (!r.ok || r.unreadNetworks?.length) continue;
     const tx = a.chain === "bitcoin" ? r.txCount ?? null : null;
@@ -40,7 +42,7 @@ export async function startWatching(c: Case): Promise<number> {
       .upsert({ case_id: c.id, chain: a.chain, address: a.address, snapshot: snap(r), tx_count: tx, active: true, last_checked_at: new Date().toISOString() }, { onConflict: "case_id,chain,address" });
     if (!error) added++;
   }
-  await logEvent(c.id, "alerts", `Asset-movement alerts on for ${added} address(es).`);
+  if (added) await logEvent(c.id, "alerts", `Asset-movement alerts on for ${added} address(es).`);
   return added;
 }
 

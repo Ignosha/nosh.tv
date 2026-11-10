@@ -33,10 +33,10 @@ export const PACKAGES: Package[] = [
     cadence: "once",
     tagline: "Find it and value it, for one matter.",
     includes: [
-      "Statement, document and device tracing for one person",
+      "One person, one date, up to 10 supplied addresses",
       "Every address and wallet key read on the public ledger",
       "Valuation on one date: death, separation or petition",
-      "Sealed evidence record anyone can verify",
+      "Source-linked record with limitations and one revision",
     ],
   },
   {
@@ -84,7 +84,7 @@ export const PACKAGES: Package[] = [
   {
     id: "premier", name: "Firm Premier", price: 10000, cadence: "month",
     tagline: "A dedicated crypto investigation desk for your firm.",
-    includes: ["Ethereum money tracing with sourced exchange labels", "Private firm portal for every matter", "Unlimited asset-movement alert enrollment", "Monthly screening of the firm’s new matters", "Same-week turnaround with a named case lead"],
+    includes: ["Ethereum money tracing with sourced exchange labels", "Private firm portal; 4 investigations/month", "Unlimited asset-movement alert enrollment", "Monthly screening of up to 50 new matters", "Same-week initial findings with a named lead; 25 specialist hours/month, 1 revision/matter"],
   },
 ];
 

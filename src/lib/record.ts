@@ -1,10 +1,11 @@
 // The sealed evidence record for a matter: the report plus any add-on schedules, fingerprinted with SHA-256.
+import type { TokenEvidence } from "./tokenEvidence";
 import { seal } from "./fingerprint";
 import type { Case } from "./cases";
 import type { Trace } from "./trace";
 import type { CostBasis, Dissipation } from "./schedules";
 
-export type Extras = { trace?: Trace; ethereumTrace?: Trace; costBasis?: CostBasis; dissipation?: Dissipation; alerts?: unknown[] };
+export type Extras = { trace?: Trace; ethereumTrace?: Trace; tokenEvidence?: TokenEvidence[]; costBasis?: CostBasis; dissipation?: Dissipation; alerts?: unknown[] };
 
 export const extrasOf = (c: Case) => (c.extras ?? {}) as Extras;
 
@@ -25,6 +26,7 @@ export async function matterRecord(c: Case) {
     report: c.report,
     tracing: x.trace ?? null,
     ethereumTracing: x.ethereumTrace ?? null,
+    tokenEvidence: x.tokenEvidence ?? [],
     costBasis: x.costBasis ?? null,
     dissipation: x.dissipation ?? null,
     alerts: x.alerts ?? [],

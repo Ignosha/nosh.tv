@@ -23,7 +23,7 @@ export default async function Home() {
           <div>
             <span className="kicker">Crypto discovery for estates, divorce &amp; bankruptcy</span>
             <h1>
-              Crypto leaves a trail. <em>We swear to it.</em>
+              Crypto leaves a trail. <em>Document the next step.</em>
             </h1>
             <p className="lede">
               TraceSworn finds the crypto in an estate, a divorce or a bankruptcy, values it on the date that matters, and
@@ -31,10 +31,10 @@ export default async function Home() {
             </p>
             <div className="hero-actions">
               <Link href="#open-a-case" className="btn btn-primary">
-                Open a matter <span className="arrow">↗</span>
+                Scope a fixed-fee matter <span className="arrow">↗</span>
               </Link>
-              <Link href="/tools" className="btn">
-                Try the free tools
+              <Link href="/for-firms" className="btn">
+                For law firms
               </Link>
             </div>
             <p className="fine" style={{ margin: "18px 0 0" }}>

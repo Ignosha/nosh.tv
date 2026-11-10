@@ -143,3 +143,85 @@ create table if not exists kl_screening_matters (
   primary key(screening_id,case_id)
 );
 alter table kl_screening_matters enable row level security;
+
+-- Profitable scope and automation. Functions are service-role only.
+alter table kl_cases add column if not exists service_kind text not null default 'investigation';
+alter table kl_cases add column if not exists findings_version integer not null default 0;
+alter table kl_cases add column if not exists report_version integer;
+create table if not exists kl_time_entries (
+  id bigint generated always as identity primary key,
+  case_id uuid not null references kl_cases(id),
+  minutes integer not null check(minutes > 0 and minutes <= 1440),
+  note text not null,
+  created_at timestamptz not null default now()
+);
+alter table kl_time_entries enable row level security;
+create table if not exists kl_jobs (
+  id bigint generated always as identity primary key,
+  case_id uuid not null references kl_cases(id),
+  version integer not null,
+  state text not null default 'pending' check(state in ('pending','running','review','failed')),
+  attempts integer not null default 0,
+  available_at timestamptz not null default now(),
+  locked_at timestamptz,
+  error text,
+  unique(case_id,version)
+);
+alter table kl_jobs enable row level security;
+create or replace function kl_enqueue_findings() returns trigger language plpgsql set search_path = public as $$
+begin
+  if new.findings is distinct from old.findings then
+    new.findings_version := old.findings_version + 1;
+    new.report_approved := false;
+  end if;
+  if new.findings is not null and (new.paid_at is not null or new.firm_id is not null) and (new.findings is distinct from old.findings or new.paid_at is distinct from old.paid_at) then
+    insert into kl_jobs(case_id,version) values(new.id,new.findings_version) on conflict(case_id,version) do nothing;
+  end if;
+  return new;
+end $$;
+drop trigger if exists kl_findings_queue on kl_cases;
+create trigger kl_findings_queue before update of findings,paid_at on kl_cases for each row execute function kl_enqueue_findings();
+create or replace function kl_claim_job() returns setof kl_jobs language sql security definer set search_path = public as $$
+  update kl_jobs set state='running', attempts=attempts+1, locked_at=now()
+  where id=(select id from kl_jobs where attempts<3 and
+    ((state='pending' and available_at<=now()) or (state='running' and locked_at<now()-interval '10 minutes'))
+    order by available_at for update skip locked limit 1) returning *;
+$$;
+create or replace function kl_open_firm_matter(p_token uuid,p_name text,p_type text,p_kind text,p_due timestamptz)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare f kl_firms; n integer; used_minutes integer; result uuid;
+begin
+  select * into f from kl_firms where token=p_token and active=true for update;
+  if f.id is null then raise exception 'Firm unavailable'; end if;
+  if length(trim(p_name))=0 or length(p_name)>200 or p_type not in ('estate','divorce','bankruptcy','other') or p_kind not in ('investigation','screening') then raise exception 'Invalid matter'; end if;
+  select count(*) into n from kl_cases where firm_id=f.id and service_kind=p_kind and created_at>=date_trunc('month',now());
+  if (p_kind='investigation' and n>=4) or (p_kind='screening' and n>=50) then raise exception 'Monthly capacity reached. Contact your case lead for a separate quote.'; end if;
+  select coalesce(sum(t.minutes),0) into used_minutes from kl_time_entries t join kl_cases c on c.id=t.case_id
+    where c.firm_id=f.id and t.created_at>=date_trunc('month',now());
+  if p_kind='investigation' and used_minutes>=1500 then raise exception 'Included specialist hours used. Request a separate quote.'; end if;
+  insert into kl_cases(name,role,email,firm_id,case_lead,due_at,package,matter_type,status,next_followup_at,service_kind)
+  values(p_name,'attorney',f.email,f.id,f.case_lead,p_due,'premier',p_type,'new',now(),p_kind) returning token into result;
+  return result;
+end $$;
+revoke all on function kl_claim_job() from public, anon, authenticated;
+revoke all on function kl_open_firm_matter(uuid,text,text,text,timestamptz) from public, anon, authenticated;
+grant execute on function kl_claim_job() to service_role;
+grant execute on function kl_open_firm_matter(uuid,text,text,text,timestamptz) to service_role;
+-- Outreach state controls: durable per-step claim prevents concurrent duplicate sends.
+alter table kl_leads add column if not exists send_claimed_at timestamptz;
+alter table kl_leads add column if not exists delivery_id text;
+alter table kl_leads add column if not exists delivery_error text;
+
+create or replace function kl_save_preparation(p_case uuid,p_version integer,p_report jsonb,p_drafts jsonb,p_tokens jsonb)
+returns boolean language plpgsql security definer set search_path=public as $$
+declare changed integer;
+begin
+  update kl_cases set report=p_report,drafts=p_drafts,report_version=p_version,
+    extras=coalesce(extras,'{}'::jsonb)||jsonb_build_object('tokenEvidence',p_tokens),
+    next_followup_at=now()
+    where id=p_case and findings_version=p_version and report_approved=false;
+  get diagnostics changed=row_count;
+  return changed>0;
+end $$;
+revoke all on function kl_save_preparation(uuid,integer,jsonb,jsonb,jsonb) from public,anon,authenticated;
+grant execute on function kl_save_preparation(uuid,integer,jsonb,jsonb,jsonb) to service_role;

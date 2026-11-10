@@ -36,3 +36,23 @@ test('Premier is $10,000 monthly and never falls back to the old checkout',()=>{
   const {packageById,payLink}=load('src/lib/pricing.ts');
   const p=packageById('premier');assert.equal(p.price,10000);assert.equal(p.cadence,'month');assert.equal(p.includes.length,5);assert.equal(payLink('premier'),null);
 });
+test('Token evidence preserves exact quantities and identifies truncation',async()=>{
+  const {tokenEvidence,decimalAmount}=load('src/lib/tokenEvidence.ts',{'./evmTrace':{EXPLORERS:{ethereum:{url:'https://eth.blockscout.com'}}},'./chains':{getJson:async()=>({items:[{transaction_hash:'0xabc',timestamp:'2026-11-10',from:{hash:a},to:{hash:b},token:{address_hash:b,symbol:'USDC',decimals:'6'},total:{value:'123456789012345678901234',decimals:'6'}}],next_page_params:{block:123}})}});
+  const result=await tokenEvidence(a);
+  assert.equal(result.transfers[0].amount,'123456789012345678.901234');
+  assert.ok(result.limits.some(s=>s.includes('truncated')));
+  assert.equal(decimalAmount('1',6),'0.000001');
+  assert.throws(()=>decimalAmount('1',99));
+});
+test('Contribution estimates include labor and additional costs; zero revenue has no margin',()=>{
+  const {contribution}=load('src/lib/servicePolicy.ts');
+  const e=contribution(1000000,1500,100000);
+  assert.equal(e.laborCents,312500);assert.equal(e.contributionCents,587500);assert.equal(contribution(0,60).margin,null);
+});
+test('Unclaimed or suppressed outreach step never sends',async()=>{
+  let sent=0;
+  const chain={update(){return this},eq(){return this},in(){return this},is(){return this},select:async()=>({data:[],error:null})};
+  const {sendNextStep}=load('src/lib/outreachSend.ts',{'./db':{db:()=>({from:()=>chain})},'./email':{sendEmail:async()=>{sent++;return {ok:true}}},'./outreach':{outreachReady:()=>({ok:true}),draftStep:()=>({subject:'test',body:'test'})},'./leads':{},'./site':{SITE_URL:'https://example.com'}});
+  const result=await sendNextStep({id:'id',email:'a@example.com',status:'queued',step:0});
+  assert.equal(result.ok,false);assert.equal(sent,0);
+});

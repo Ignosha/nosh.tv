@@ -112,4 +112,33 @@ In this environment Ethereum answered successfully; Base, Arbitrum and Polygon r
 
 Set `NEXT_PUBLIC_PAY_PREMIER` only to a verified **$10,000/month** subscription checkout. Until configured the site routes Premier inquiries into intake. The old $1,500 Firm Plan remains separate. Premier subscription activation, renewal and cancellation are currently administered manually; the existing case payment webhook is not a firm entitlement system.
 
-Validation: `npm run typecheck`, `npm run build`, and `node tests/premier.cjs`. Full database and email acceptance testing requires configured Supabase and Resend; no service credentials are included.
+Validation: `npm run typecheck`, `npm run build`, and `npm test`. Full database and email acceptance testing requires configured Supabase and Resend; no service credentials are included.
+
+## Low-workload paid pilot (current operating model)
+
+The offer now starts with one paid, scoped Discovery Report at `/for-firms`; Premier is an upgrade for repeat customers. Premier includes **4 investigations, 50 screening submissions, 25 specialist hours total, and one revision per investigation per calendar month**. Capacity does not roll over. The service-role `kl_open_firm_matter` function locks the firm row and rejects excess monthly submissions and new investigations after 25 recorded specialist hours. Additional work requires a separate written quote. Discovery and Premier reports read up to 10 supplied/derived public addresses; larger scopes require review. Unlimited alerts means no per-address enrollment charge, not unlimited investigator labor or real-time monitoring.
+
+### Automated work
+
+- New findings invalidate approval, increment a version and queue preparation **only for paid cases or provisioned firms**. First payment also queues already-submitted findings.
+- `/api/cron/prepare` runs every ten minutes, claims one job with `SKIP LOCKED`, and prepares readings, summary drafts and recent ERC-20 evidence. Failed jobs retry up to three times; expired leases recover. It checks the findings version before saving and leaves final publication to the reviewer. Old findings cannot overwrite an approved or newer report. The worker can process up to 144 jobs/day at this cadence; increase capacity only after measuring demand and costs.
+- ERC-20 evidence preserves exact raw quantities and contract addresses, reads at most 50 recent transfers for each of the first three supplied Ethereum addresses, and discloses truncation. It is **not** complete token-flow tracing, bridge tracking or verified token metadata.
+- Firm alert enrollment occurs during successful preparation, keeping intake responsive. Already-watched addresses keep their movement baselines. Daily watch-worker throughput remains 300 addresses/run; expand scheduling when needed.
+- `/api/cron/digest` sends one weekday digest to `OPS_EMAIL`: review counts, failed jobs and leads marked as replied/booked. It does not read your inbox.
+- `/admin/operations` combines review tasks, delivery dates, failed-job retries, time entry, estimated contribution and acquisition counts. Record all specialist time. Firm margins are modeled at list price and exclude other expenses; case receipts are existing cumulative payment fields. These numbers are operational estimates, not an accounting ledger or profit guarantee.
+
+### Remaining human work
+
+Confirm authority and scope, assign an actual qualified lead, review source coverage and conclusions, approve final reports, handle third-party records, answer sales replies, and record time. Screening completion still requires per-matter outcomes. There is no automated expert testimony, recovery, admissibility determination, or guaranteed asset identification. Provisioning and subscription lifecycle remain manual.
+
+### Outreach pilot
+
+`/admin/leads` has a **Load researched pilot prospects** button. Four firms have practice evidence from their own websites; only one general business email was verified. Load and qualify them once, then queue appropriate prospects. Duplicate imports are skipped. The three-message sequence offers the $2,500 scoped engagement and links to `/for-firms`; it does not promise recovery or pretend to have read a case.
+
+Configure `RESEND_API_KEY`, verified `EMAIL_FROM`, monitored `EMAIL_REPLY_TO`, actual `OPERATOR_NAME`, actual `BUSINESS_ADDRESS`, the deployed `NEXT_PUBLIC_SITE_URL`, `CRON_SECRET`, and `OUTREACH_ENABLED=1`. Never use a prospect's address as your own. Start with `OUTREACH_DAILY_LIMIT=10`, check domain authentication/deliverability, and honor applicable recipient rules. Public listings are not consent or buying intent.
+
+Each email step is claimed in the database before sending and has a stable provider idempotency key. Uncertain or failed sends hold their claim for operator review rather than silently retrying and risking duplicates. Check provider logs before manually reconciling `send_claimed_at`, `delivery_id` and `delivery_error`. Provider idempotency is time-limited; do not blindly clear claims and resend later. Replies, bounces and complaints are **not imported automatically**: monitor the configured mailbox/provider dashboard and mark leads replied, bounced, not-fit or unsubscribed. The unsubscribe endpoint stops future sequence steps automatically. Review cross-border outreach rules before contacting firms outside the initial US pilot.
+
+This environment has no Supabase, sender or billing credentials, so production activation, actual outreach delivery and full database acceptance testing remain blocked. The researched list is a starting pipeline, not acquired clients. See `PILOT.md` for the validation and operator routine.
+
+Database acceptance tests run against embedded PostgreSQL (PGlite), including schema reruns, 4/50 submission caps, the 25-hour gate, payment-triggered queueing, exclusive job claims, invalidation, stale-write rejection and preservation of approved reports. This does not replace acceptance against deployed Supabase, RLS roles and email delivery.
