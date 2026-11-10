@@ -178,3 +178,58 @@ test("Company sessions verify provider identity, require confirmed email and cur
     /REDIRECT \/auth\/sign-in/,
   );
 });
+
+test("One-tap sample creation keeps origin/role checks, verified ownership and the audited save path", async () => {
+  const org = "11111111-1111-4111-8111-111111111111";
+  const owner = "22222222-2222-4222-8222-222222222222";
+  const program = "33333333-3333-4333-8333-333333333333";
+  let originAllowed = false, role = "owner", existing = null, writes = [];
+  let reads = 0;
+  const query = {
+    select() { return this; },
+    eq() { return this; },
+    order() { return this; },
+    limit() { return this; },
+    async maybeSingle() { reads++; return { data: existing, error: null }; },
+  };
+  const client = {
+    from: () => query,
+    rpc: async (name, args) => {
+      writes.push({ name, args });
+      return { data: [{ id: program, revision: 1 }], error: null };
+    },
+  };
+  const assurance = load("src/lib/assurance.ts");
+  const actions = load("src/app/workspace/actions.ts", {
+    "@/lib/enterprise/origin": { requireMutationOrigin: async () => {
+      if (!originAllowed) throw Error("origin denied");
+    } },
+    "@/lib/enterprise/session": { requireOrganization: async (requested, roles) => {
+      assert.equal(requested, org);
+      if (!roles.includes(role)) throw Error("role denied");
+      return { client, user: { id: owner, email: "owner@example.invalid" } };
+    } },
+    "@/lib/assurance": assurance,
+    "@/lib/enterprise/errors": { operationError: () => ({ error: "Unable to save" }) },
+    "@/lib/cases": { isUuid: () => true },
+    "next/cache": { revalidatePath: () => {} },
+    "next/navigation": { redirect: (destination) => { throw Error("REDIRECT " + destination); } },
+  });
+  await assert.rejects(() => actions.createSampleProgram(org, {}), /origin denied/);
+  assert.equal(reads, 0);
+  originAllowed = true; role = "viewer";
+  await assert.rejects(() => actions.createSampleProgram(org, {}), /role denied/);
+  assert.equal(reads, 0); assert.equal(writes.length, 0);
+  role = "owner";
+  await assert.rejects(() => actions.createSampleProgram(org, {}), new RegExp("REDIRECT /workspace/" + org + "/programs/" + program));
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].name, "kl_company_save");
+  assert.equal(writes[0].args.p_org, org);
+  assert.equal(writes[0].args.p_workspace.owner, owner);
+  assert.equal(writes[0].args.p_workspace.name, "First test program");
+  assert.equal(writes[0].args.p_expected, 0);
+  assert.ok(writes[0].args.p_reason);
+  existing = { id: program };
+  await assert.rejects(() => actions.createSampleProgram(org, {}), /REDIRECT/);
+  assert.equal(writes.length, 1, "Opening an existing sample must preserve it");
+});

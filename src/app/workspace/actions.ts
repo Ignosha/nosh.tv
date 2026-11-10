@@ -1,7 +1,7 @@
 "use server";
 import { requireMutationOrigin } from "@/lib/enterprise/origin";
 import { requireMfa, requireOrganization } from "@/lib/enterprise/session";
-import { parseAssurance } from "@/lib/assurance";
+import { newAssurance, parseAssurance } from "@/lib/assurance";
 import { operationError } from "@/lib/enterprise/errors";
 import { isUuid } from "@/lib/cases";
 import { revalidatePath } from "next/cache";
@@ -43,6 +43,38 @@ export async function saveCompany(
   } catch (e) {
     return operationError(e);
   }
+}
+export async function createSampleProgram(org: string, _form: FormData) {
+  await requireMutationOrigin();
+  const { client, user } = await requireOrganization(org, [
+    "owner",
+    "admin",
+    "editor",
+  ]);
+  const name = "First test program";
+  const existing = await client
+    .from("kl_assurance_programs")
+    .select("id")
+    .eq("organization_id", org)
+    .eq("name", name)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (existing.error) return operationError(existing.error);
+  let id = existing.data?.id as string | undefined;
+  if (!id) {
+    const saved = await saveCompany(
+      org,
+      null,
+      0,
+      { ...newAssurance(), name, owner: user.id },
+      user.email ?? user.id,
+      "Initial setup: create sample program",
+    );
+    if ("error" in saved) return saved;
+    id = saved.id;
+  }
+  redirect(`/workspace/${org}/programs/${id}`);
 }
 export async function approveCompanyAction(org: string, form: FormData) {
   await requireMutationOrigin();

@@ -1,12 +1,19 @@
 import { requireMfa } from "@/lib/enterprise/session";
 import { CompanyForm } from "@/components/CompanyForms";
-import { acceptInvite } from "./actions";
+import { acceptInvite, createSampleProgram } from "./actions";
 export default async function Workspace() {
-  const { client } = await requireMfa();
-  const { data, error } = await client
-    .from("kl_organizations")
-    .select("id,name,entitlement,access_until");
-  if (error) throw new Error("Company access unavailable");
+  const { client, user } = await requireMfa();
+  const [organizations, memberships] = await Promise.all([
+    client.from("kl_organizations").select("id,name,entitlement,access_until"),
+    client.from("kl_org_members").select("organization_id,role")
+      .eq("user_id", user.id).eq("active", true),
+  ]);
+  if (organizations.error || memberships.error) throw new Error("Company access unavailable");
+  const data = organizations.data;
+  const editable = new Set(
+    memberships.data?.filter((m) => ["owner", "admin", "editor"].includes(m.role))
+      .map((m) => m.organization_id),
+  );
   return (
     <>
       <h1>Your organizations</h1>
@@ -24,6 +31,16 @@ export default async function Workspace() {
                   </span>
                   <span className="company-org-open">Open workspace <span aria-hidden="true">→</span></span>
                 </a>
+                {editable.has(org.id) && ["active", "trialing"].includes(org.entitlement)
+                  && Date.parse(org.access_until) > Date.now() ? (
+                  <CompanyForm
+                    action={createSampleProgram.bind(null, org.id)}
+                    label="Create sample program"
+                    className="company-quickstart"
+                  >
+                    <p className="fine">Create an empty sample with your account as owner, or open the existing first test program.</p>
+                  </CompanyForm>
+                ) : null}
               </li>
             ))}
           </ul>
