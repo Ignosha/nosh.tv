@@ -10,24 +10,41 @@ export default async function Workspace() {
   return (
     <>
       <h1>Your organizations</h1>
-      {data?.map((org) => (
-        <p key={org.id}>
-          <a href={`/workspace/${org.id}`}>{org.name}</a> · {org.entitlement} ·
-          access through {org.access_until.slice(0, 10)}
-        </p>
-      ))}
+      {data?.length ? (
+        <>
+          <p className="muted">Choose a company to open its programs, reports and memberships.</p>
+          <ul className="company-org-list">
+            {data.map((org) => (
+              <li key={org.id}>
+                <a href={`/workspace/${org.id}`} className="company-org-card">
+                  <span className="company-org-name">{org.name}</span>
+                  <span className="fine">
+                    {org.entitlement === "trialing" ? "Trial" : org.entitlement} · access through{" "}
+                    <time dateTime={org.access_until}>{org.access_until.slice(0, 10)}</time>
+                  </span>
+                  <span className="company-org-open">Open workspace <span aria-hidden="true">→</span></span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
       {!data?.length ? (
         <p>
           No active memberships. Ask your company administrator for an
           invitation.
         </p>
       ) : null}
-      <CompanyForm action={acceptInvite} label="Accept invitation">
-        <label>
-          One-use invitation token
-          <input name="token" required autoComplete="off" maxLength={64} />
-        </label>
-      </CompanyForm>
+      <details className="company-invitation" open={!data?.length}>
+        <summary>{data?.length ? "Join another company" : "Have an invitation?"}</summary>
+        <p className="fine">Enter a token only when a company administrator has invited you.</p>
+        <CompanyForm action={acceptInvite} label="Accept invitation">
+          <label>
+            One-use invitation token
+            <input name="token" required autoComplete="off" maxLength={64} />
+          </label>
+        </CompanyForm>
+      </details>
     </>
   );
 }

@@ -8,10 +8,10 @@ export default async function WorkspaceLayout({
 }) {
   const { user } = await requireMfa();
   return (
-    <div className="wrap assurance-page" style={{ padding: "40px 0" }}>
-      <nav className="no-print studio-toolbar">
+    <div className="wrap assurance-page company-workspace">
+      <nav className="no-print company-account-nav" aria-label="Workspace account">
         <a href="/workspace">Organizations</a>
-        <span>Signed in: {user.email}</span>
+        <span className="company-account-email">Signed in: {user.email}</span>
         <form action={signOut}>
           <button className="btn btn-small">Sign out</button>
         </form>

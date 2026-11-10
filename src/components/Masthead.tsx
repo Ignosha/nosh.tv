@@ -5,7 +5,7 @@ import { ThemeToggle } from "./ThemeToggle";
 export function Masthead() {
   const enterprise = process.env.ENTERPRISE_MODE === "1";
   return (
-    <header className="masthead">
+    <header className={enterprise ? "masthead company-masthead" : "masthead"}>
       <div className="wrap masthead-inner">
         <Link href="/" className="brand" aria-label="TraceSworn home">
           <Mark />
@@ -32,21 +32,18 @@ export function Masthead() {
           >
             Pricing
           </Link>
-          <Link
-            href={enterprise ? "/workspace" : "/#matters"}
-            className="nav-hide"
-          >
-            {enterprise ? "Company workspace" : "Who we serve"}
-          </Link>
+          {!enterprise ? (
+            <Link href="/#matters" className="nav-hide">Who we serve</Link>
+          ) : null}
           <Link href="/verify" className="nav-hide">
             Verify
           </Link>
           <ThemeToggle />
           <Link
-            href={enterprise ? "/auth/sign-in" : "/#open-a-case"}
+            href={enterprise ? "/workspace" : "/#open-a-case"}
             className="btn btn-small btn-primary"
           >
-            {enterprise ? "Company sign in" : "Open a matter"}
+            {enterprise ? "Workspace" : "Open a matter"}
           </Link>
         </nav>
       </div>

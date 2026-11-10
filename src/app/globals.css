@@ -2392,3 +2392,25 @@ h3 {
 .assurance-diff { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; max-height: 500px; overflow: auto; }
 @media print { body:has(.assurance-workspace) .masthead, body:has(.assurance-page) .masthead, body:has(.assurance-workspace) footer, body:has(.assurance-page) footer { display: none !important; } .assurance-workspace, .assurance-page { color: #111; background: #fff; } .assurance-workspace .form-card { color: #111; background: #fff; border-color: #bbb; } .assurance-diff { max-height: none; overflow: visible; } .assurance-action { break-inside: avoid; } }
 .assurance-workspace input[type=checkbox] { width: auto; }
+
+/* Company pages keep the shared page gutters on narrow screens. */
+.company-workspace { padding-block: 36px 56px; min-width: 0; }
+.company-workspace > h1 { font-size: clamp(32px, 5vw, 48px); overflow-wrap: anywhere; }
+.company-account-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.company-account-email { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; color: var(--ink-2); font-size: 14px; }
+.company-account-nav form { margin: 0; }
+.company-org-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; list-style: none; padding: 0; margin: 24px 0 32px; }
+.company-org-list li { min-width: 0; }
+.company-org-card { display: grid; gap: 12px; height: 100%; padding: 24px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); text-decoration: none; overflow-wrap: anywhere; }
+.company-org-card:hover { border-color: var(--accent); }
+.company-org-name { font-size: 21px; font-weight: 600; }
+.company-org-open { font-size: 14px; font-weight: 600; color: var(--accent); }
+.company-invitation { max-width: 640px; margin-top: 24px; }
+.company-invitation summary { cursor: pointer; padding-block: 12px; font-weight: 600; }
+.company-workspace input:not([type=checkbox]):not([type=file]) { max-width: 100%; font-size: 16px; }
+@media (max-width: 520px) {
+  .company-masthead .masthead-inner { height: auto; min-height: 68px; flex-wrap: wrap; gap: 12px; padding-block: 12px; }
+  .company-masthead .nav { flex-wrap: wrap; }
+  .company-workspace { padding-block-start: 24px; }
+  .company-org-card { padding: 20px; }
+}
