@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SOFTWARE_PLANS } from "@/lib/softwarePlans";
 export const metadata = {
   title: "Report Studio — professional report software pilot",
 };
@@ -45,21 +46,41 @@ export default function Plans() {
       </section>
       <section className="form-card">
         <h2>Pilot pricing to validate</h2>
+        {SOFTWARE_PLANS.map((plan) => (
+          <article className="form-card" key={plan.id}>
+            <h3>{plan.name}</h3>
+            <p>
+              <strong>
+                ${plan.monthlyUsd.toLocaleString("en-US")}/month proposed
+              </strong>
+            </p>
+            <ul>
+              {plan.features.map((feature) => (
+                <li key={feature}>{feature}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
         <p>
-          <strong>Individual: $199/month proposed.</strong> Branded report
-          preparation, reusable drafts, citations, review checks and local
-          exports.
+          Company Assurance preview supports up to 200 risks, 200 evidence
+          references and 500 action instances in one workspace. Hosted programs
+          are managed by the existing administrator, not separate company
+          logins. Proposals require a written scope and deployment acceptance.
         </p>
-        <p>
-          <strong>Practice: $499/month proposed.</strong> Adds case-linked
-          issued-version archives through the existing administrator workspace.
-        </p>
+        <Link className="btn" href="/assurance">
+          Try the assurance workspace
+        </Link>{" "}
+        <Link className="btn" href="/report-compare">
+          Compare issued reports
+        </Link>
         <p>
           These are proposed pilot prices, not active subscriptions. The browser
           preview is free and unmetered. Hosted archives require database setup.
-          Separate user accounts, seat billing, authenticated reviewer
-          signatures, organization isolation and automatic client delivery are
-          not included in this preview.
+          Enterprise SSO, separate user accounts, seat billing, authenticated
+          reviewer signatures, organization isolation and automatic client
+          delivery are not included in this preview. There is no advertised
+          uptime SLA, backup recovery commitment, regulatory certification or
+          automatic external evidence verification.
         </p>
         <Link className="btn" href="/#open-a-case">
           Request a software pilot

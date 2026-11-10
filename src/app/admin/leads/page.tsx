@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/adminAuth";
 import { PILOT_PROSPECTS } from "@/lib/pilotProspects";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
@@ -20,6 +21,7 @@ const back = (msg: string) => redirect(`/admin/leads?msg=${encodeURIComponent(ms
 
 async function loadPilot() {
   "use server";
+  await requireAdmin();
   const {added,skipped}=await saveLeads(PILOT_PROSPECTS.map(l=>({...l,score:l.practice.includes("bankruptcy")?60:30})));
   revalidatePath("/admin/leads");
   back(`Pilot: ${added} prospects added, ${skipped} duplicates. Review fit and contact details before queueing; no emails sent.`);
@@ -27,6 +29,7 @@ async function loadPilot() {
 
 async function findCity(form: FormData) {
   "use server";
+  await requireAdmin();
   const city = String(form.get("city") ?? "").trim();
   const state = String(form.get("state") ?? "").trim();
   if (!city || !state) back("Enter a city and state.");
@@ -45,6 +48,7 @@ async function findCity(form: FormData) {
 
 async function findCourt(form: FormData) {
   "use server";
+  await requireAdmin();
   const segment = String(form.get("segment") ?? "estate") as Segment;
   const since = String(form.get("since") ?? "") || undefined;
   let msg: string;
@@ -61,6 +65,7 @@ async function findCourt(form: FormData) {
 
 async function importList(form: FormData) {
   "use server";
+  await requireAdmin();
   const segment = String(form.get("segment") ?? "estate") as Segment;
   const leads = parseImport(String(form.get("csv") ?? ""), segment).slice(0, 500);
   await enrichAll(leads, 150_000);
@@ -71,6 +76,7 @@ async function importList(form: FormData) {
 
 async function bulk(form: FormData) {
   "use server";
+  await requireAdmin();
   const ids = form.getAll("id").map(String);
   const action = String(form.get("action") ?? "");
   if (!ids.length) back("Select at least one lead.");

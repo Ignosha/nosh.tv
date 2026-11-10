@@ -2380,3 +2380,15 @@ h3 {
 .studio-preview section { break-inside: avoid; }
 @media(max-width: 950px) { .studio { grid-template-columns: 1fr; } }
 @media print { body:has(.studio) header, body:has(.studio) footer, body:has(.studio) .no-print { display: none !important; } .studio { display: block; } .studio-preview { border: 0; padding: 0; color: #111; background: white; } .studio-preview a { color: #111; } }
+
+.assurance-workspace { display: grid; gap: 20px; }
+.assurance-workspace label, .assurance-page label { display: grid; gap: 6px; margin: 12px 0; }
+.assurance-workspace input, .assurance-workspace textarea, .assurance-workspace select, .assurance-page input[type=file] { width: 100%; padding: 10px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 6px; }
+.assurance-workspace textarea { min-height: 85px; }
+.assurance-workspace select[multiple] { min-height: 100px; }
+.assurance-metrics { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 12px; }
+.assurance-metrics strong { font-size: 32px; }
+.assurance-action { padding: 16px 0; border-top: 1px solid var(--line); }
+.assurance-diff { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; max-height: 500px; overflow: auto; }
+@media print { body:has(.assurance-workspace) .masthead, body:has(.assurance-page) .masthead, body:has(.assurance-workspace) footer, body:has(.assurance-page) footer { display: none !important; } .assurance-workspace, .assurance-page { color: #111; background: #fff; } .assurance-workspace .form-card { color: #111; background: #fff; border-color: #bbb; } .assurance-diff { max-height: none; overflow: visible; } .assurance-action { break-inside: avoid; } }
+.assurance-workspace input[type=checkbox] { width: auto; }

@@ -16,7 +16,7 @@ export default function Builder() {
           record.
         </p>
         <p>
-          <a href="/verify">Verify an issued record</a> ·{" "}
+          <a href="/assurance">Track risks &amp; actions</a> · <a href="/report-compare">Compare revisions</a> · <a href="/verify">Verify an issued record</a> ·{" "}
           <a href="/report-studio">Features &amp; pilot plans</a>
         </p>
       </header>

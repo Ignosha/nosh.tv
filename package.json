@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start -p 3100",
     "typecheck": "tsc --noEmit",
-    "test": "node tests/premier.cjs && node tests/database.cjs",
-    "test:browser": "node tests/report-studio.browser.cjs"
+    "test": "node tests/premier.cjs && node tests/assurance.cjs && node tests/database.cjs",
+    "test:browser": "node tests/report-studio.browser.cjs && node tests/assurance.browser.cjs",
+    "test:admin-security": "node tests/admin-security.cjs"
   },
   "dependencies": {
     "@noble/hashes": "^1.8.0",

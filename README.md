@@ -146,3 +146,7 @@ Database acceptance tests run against embedded PostgreSQL (PGlite), including sc
 ## Report Studio software preview
 
 Open `/report-builder` for branded report preparation, three reusable templates, source-linked findings, local file hashes, review checks, printable reports and verifiable issued versions. The browser preview works without a database. Download drafts before closing; no automatic persistence is enabled. Case administrators can verify and preserve issued records under `/admin/cases/<id>/reports` after applying the latest schema. See [REPORT-STUDIO.md](REPORT-STUDIO.md) for archive behavior, proposed $199/$499 pilot prices and current limitations. These software prices are separate from investigation fees and are not active subscriptions.
+
+## Company Assurance pilot
+
+`/assurance` adds evidence-backed risk assessment, dependent remediation workflows, recurring obligations, operational policy starters, owner workload summaries and portable portfolio exports. `/report-compare` verifies and compares issued report revisions. Hosted programs and preserved audit snapshots are available under `/admin/assurance` after schema setup, with optimistic save conflicts and direct admin-action authentication. Proposed Company Assurance pricing is **$1,499/month**, separate from $199/$499 Report Studio plans and investigation services. No subscriptions or company account isolation are enabled. See [ASSURANCE.md](ASSURANCE.md) for scoring, workflow rules, limits and production requirements.

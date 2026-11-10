@@ -1,8 +1,10 @@
+import { requireAdmin } from "@/lib/adminAuth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 export const dynamic = "force-dynamic";
 async function create(form: FormData) {
   "use server";
+  await requireAdmin();
   const name = String(form.get("name") ?? "").trim().slice(0,200);
   const email = String(form.get("email") ?? "").trim();
   const lead = String(form.get("lead") ?? "").trim().slice(0,200);
@@ -13,6 +15,7 @@ async function create(form: FormData) {
 }
 async function outcome(form: FormData) {
   "use server";
+  await requireAdmin();
   const screening = String(form.get("screening"));
   const caseId = String(form.get("case"));
   const text = String(form.get("outcome") ?? "").trim().slice(0,4000);

@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/adminAuth";
 import { db } from "@/lib/db";
 import { tokenEvidence } from "@/lib/tokenEvidence";
 import Link from "next/link";
@@ -26,6 +27,7 @@ const usd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigi
 // ---------- server actions (all under /admin, behind basic auth) ----------
 async function setStage(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const to = String(form.get("stage"));
   if (!STAGE_IDS.includes(to as never)) return;
@@ -37,6 +39,7 @@ async function setStage(form: FormData) {
 
 async function setPackage(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const pkg = String(form.get("package"));
   await updateCase(id, { package: PACKAGES.some((p) => p.id === pkg) ? pkg : null });
@@ -46,6 +49,7 @@ async function setPackage(form: FormData) {
 
 async function runAnalysis(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const c = await getCase(id);
   if (!c) return;
@@ -58,6 +62,7 @@ async function runAnalysis(form: FormData) {
 
 async function approveReport(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const approve = form.get("approve") === "1";
   const summary = form.get("summary");
@@ -75,6 +80,7 @@ async function approveReport(form: FormData) {
 
 async function saveNotes(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const followup = String(form.get("followup") ?? "");
   await updateCase(id, {
@@ -86,6 +92,7 @@ async function saveNotes(form: FormData) {
 
 async function logContact(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const what = String(form.get("what") ?? "Contacted");
   const c = await getCase(id);
@@ -98,6 +105,7 @@ async function logContact(form: FormData) {
 
 async function emailNow(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const subject = String(form.get("subject") ?? "");
   const body = String(form.get("body") ?? "");
@@ -114,6 +122,7 @@ async function emailNow(form: FormData) {
 
 async function runExtra(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const kind = String(form.get("kind"));
   const c = await getCase(id);

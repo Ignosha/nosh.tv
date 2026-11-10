@@ -267,3 +267,52 @@ grant execute on function kl_archive_report(uuid,jsonb) to service_role;
 -- Archives may be read by the server and appended only through the validated RPC path.
 revoke insert,update,delete,truncate on kl_report_versions from anon,authenticated,service_role;
 grant select on kl_report_versions to service_role;
+
+-- Hosted assurance workspaces: optimistic revisions and transactionally preserved audit snapshots.
+create table if not exists kl_assurance_programs (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  workspace jsonb not null,
+  revision integer not null default 1,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create table if not exists kl_assurance_history (
+  program_id uuid not null references kl_assurance_programs(id),
+  revision integer not null,
+  actor text not null,
+  reason text not null,
+  workspace jsonb not null,
+  recorded_at timestamptz not null default now(),
+  primary key(program_id,revision)
+);
+alter table kl_assurance_programs enable row level security;
+alter table kl_assurance_history enable row level security;
+create or replace function kl_preserve_assurance_history() returns trigger language plpgsql as $$
+begin raise exception 'Assurance audit history is append-only'; end $$;
+drop trigger if exists kl_assurance_history_immutable on kl_assurance_history;
+create trigger kl_assurance_history_immutable before update or delete on kl_assurance_history for each row execute function kl_preserve_assurance_history();
+create or replace function kl_save_assurance(p_id uuid,p_expected integer,p_workspace jsonb,p_actor text,p_reason text)
+returns table(id uuid,revision integer) language plpgsql security definer set search_path=public as $$
+declare target uuid; current_revision integer; next_revision integer;
+begin
+  if p_workspace->>'format' is distinct from 'TraceSworn Assurance v1' or length(trim(coalesce(p_workspace->>'name','')))=0 or
+    length(trim(coalesce(p_actor,'')))=0 or length(trim(coalesce(p_reason,'')))=0 or octet_length(p_workspace::text)>800000 then raise exception 'Invalid assurance save'; end if;
+  if p_id is null then
+    if p_expected<>0 then raise exception 'New workspace revision must be zero'; end if;
+    insert into kl_assurance_programs(name,workspace) values(p_workspace->>'name',p_workspace) returning kl_assurance_programs.id into target;
+    next_revision:=1;
+  else
+    select ap.revision into current_revision from kl_assurance_programs ap where ap.id=p_id for update;
+    if not found then raise exception 'Workspace unavailable'; end if;
+    if current_revision<>p_expected then raise exception 'Revision conflict: refresh or export your draft before reloading'; end if;
+    target:=p_id;next_revision:=current_revision+1;
+    update kl_assurance_programs set workspace=p_workspace,name=p_workspace->>'name',revision=next_revision,updated_at=now() where kl_assurance_programs.id=target;
+  end if;
+  insert into kl_assurance_history(program_id,revision,actor,reason,workspace) values(target,next_revision,left(p_actor,120),left(p_reason,2000),p_workspace);
+  return query select target,next_revision;
+end $$;
+revoke all on function kl_save_assurance(uuid,integer,jsonb,text,text) from public,anon,authenticated;
+grant execute on function kl_save_assurance(uuid,integer,jsonb,text,text) to service_role;
+revoke insert,update,delete,truncate on kl_assurance_programs,kl_assurance_history from anon,authenticated,service_role;
+grant select on kl_assurance_programs,kl_assurance_history to service_role;

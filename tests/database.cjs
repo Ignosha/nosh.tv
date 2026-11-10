@@ -198,6 +198,68 @@ const assert = require("node:assert/strict");
   );
   await db.exec("reset role");
   console.log("PASS: anonymous callers cannot archive reports");
+  const program = {
+    format: "TraceSworn Assurance v1",
+    name: "Test company",
+    owner: "Owner",
+    freshnessDays: 90,
+    evidence: [],
+    risks: [],
+    actions: [],
+  };
+  r = await db.query("select * from kl_save_assurance(null,0,$1,$2,$3)", [
+    JSON.stringify(program),
+    "Operator",
+    "Create program",
+  ]);
+  const programId = r.rows[0].id;
+  assert.equal(r.rows[0].revision, 1);
+  program.name = "Updated company";
+  r = await db.query("select * from kl_save_assurance($1,1,$2,$3,$4)", [
+    programId,
+    JSON.stringify(program),
+    "Operator",
+    "Updated name",
+  ]);
+  assert.equal(r.rows[0].revision, 2);
+  await assert.rejects(
+    () =>
+      db.query("select * from kl_save_assurance($1,1,$2,$3,$4)", [
+        programId,
+        JSON.stringify(program),
+        "Operator",
+        "Stale save",
+      ]),
+    /Revision conflict/,
+  );
+  r = await db.query(
+    "select revision,workspace from kl_assurance_history where program_id=$1 order by revision",
+    [programId],
+  );
+  assert.equal(r.rows.length, 2);
+  assert.equal(r.rows[0].workspace.name, "Test company");
+  await assert.rejects(
+    () =>
+      db.query(
+        "update kl_assurance_history set actor='Changed' where program_id=$1",
+        [programId],
+      ),
+    /append-only/,
+  );
+  await db.exec("set role anon");
+  await assert.rejects(
+    () =>
+      db.query("select * from kl_save_assurance(null,0,$1,$2,$3)", [
+        JSON.stringify(program),
+        "Anon",
+        "Try",
+      ]),
+    /permission denied/,
+  );
+  await db.exec("reset role");
+  console.log(
+    "PASS: assurance saves preserve audit snapshots, reject stale revisions and deny anonymous writes",
+  );
   await db.close();
 })().catch((e) => {
   console.error(e);

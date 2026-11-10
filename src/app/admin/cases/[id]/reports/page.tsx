@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/adminAuth";
 import { getCase } from "@/lib/cases";
 import { db } from "@/lib/db";
 import { validateIssuedRecord } from "@/lib/reportStudio";
@@ -5,6 +6,7 @@ import { notFound, redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 async function archive(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const c = await getCase(id);
   if (!c) notFound();

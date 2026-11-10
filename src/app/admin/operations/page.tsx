@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/adminAuth";
 import { db } from "@/lib/db";
 import { isUuid } from "@/lib/cases";
 import { contribution, PREMIER_SCOPE } from "@/lib/servicePolicy";
@@ -6,6 +7,7 @@ import { revalidatePath } from "next/cache";
 export const dynamic = "force-dynamic";
 async function retryJob(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = Number(form.get("job_id"));
   if (!Number.isSafeInteger(id) || id < 1) throw new Error("Invalid job");
   const { error } = await db()!
@@ -23,6 +25,7 @@ async function retryJob(form: FormData) {
 }
 async function recordTime(form: FormData) {
   "use server";
+  await requireAdmin();
   const caseId = String(form.get("case_id")),
     minutes = Number(form.get("minutes")),
     note = String(form.get("note") ?? "")

@@ -6,7 +6,8 @@ export function middleware(req: NextRequest) {
   if (!password) return new NextResponse("Set ADMIN_PASSWORD to enable /admin.", { status: 503 });
   const header = req.headers.get("authorization") ?? "";
   if (header.startsWith("Basic ")) {
-    const decoded = atob(header.slice(6));
+    let decoded: string;
+    try { decoded = atob(header.slice(6)); } catch { return new NextResponse("Invalid authentication", { status: 401 }); }
     const sep = decoded.indexOf(":");
     if (sep >= 0 && decoded.slice(0, sep) === "admin" && decoded.slice(sep + 1) === password) return NextResponse.next();
   }
