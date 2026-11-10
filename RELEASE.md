@@ -2,7 +2,9 @@
 
 **Repository controls are implemented and locally tested. The production release is blocked until the evidence below is completed.** Passing a build or readiness endpoint is not an enterprise certification.
 
-The connected Vercel project is `nosh.tv`, with verified `tracesworn.com` domains. Metadata inspection found a Supabase URL but no public session key in its environment; this executor has no production database credentials. No production variables, migrations, identity providers or deployments have been changed by this work.
+The connected Vercel project is `nosh.tv`, with verified `tracesworn.com` domains. Metadata inspection found a Supabase URL but no public session key in its environment; this executor has no production database credentials. No production variables, migrations, identity providers or production deployments have been changed by this work.
+
+The most recent preview failed before building because the legacy preparation worker requested a ten-minute cron on a Hobby account. The default schedule is now daily to permit previews on the existing account. That worker processes at most one job per invocation; daily scheduling is for evaluation and does not establish service delivery capacity. Commercial service launch needs a permitted hosting plan, a suitable worker cadence and a measured backlog budget. Enterprise mode disables the legacy worker entirely. GitHub verification passed for the enterprise hardening commit; hosted preview verification is recorded separately below.
 
 ## Architecture and scope
 
