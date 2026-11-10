@@ -6,6 +6,12 @@ The connected Vercel project is `nosh.tv`, with verified `tracesworn.com` domain
 
 The most recent preview failed before building because the legacy preparation worker requested a ten-minute cron on a Hobby account. The default schedule is now daily to permit previews on the existing account. That worker processes at most one job per invocation; daily scheduling is for evaluation and does not establish service delivery capacity. Commercial service launch needs a permitted hosting plan, a suitable worker cadence and a measured backlog budget. Enterprise mode disables the legacy worker entirely. GitHub verification passed for the enterprise hardening commit; hosted preview verification is recorded separately below.
 
+## Hosted preview evidence — 2026-11-10
+
+Commit `2114626b05e0af78a908749395a49fcb1cf6227a` deployed successfully as Vercel preview `dpl_Hs3fJdPpXE1a5fWnCy3Quqd8D8Pa`. Its GitHub Verification run `42860537185` completed successfully. Authenticated hosting checks returned `/api/health/live` 200 with `alive`, `/report-studio` 200, `/assurance` 200 and unauthenticated `/admin` 401. Company access `/workspace` returned 503 and `/api/health/ready` returned a redacted 503 `not_ready`, as expected without company configuration. Responses included frame denial and no-store on health/company paths. These checks prove the hosting build blocker is resolved; they do not prove successful company authentication or database readiness. The preview uses existing preview configuration, not an activated enterprise deployment. Production domains were not promoted.
+
+The existing Supabase host responds to requests, but no database administration connection or public session key is available here. A Supabase connection was requested to allow inspection, reviewed migrations and public key retrieval; it remains pending. Never paste privileged credentials into chat or put them in the enterprise web environment.
+
 ## Architecture and scope
 
 Company access is `/workspace`, backed by Supabase Auth, mandatory current `aal2` MFA and Postgres RLS. Sessions are server-managed HttpOnly, SameSite=Lax, Secure-on-HTTPS cookies. Every company page/action verifies the Auth provider's user; it never trusts an unverified cookie user object. Every mutation checks the exact configured request origin. SSO initiation and PKCE callback exchange use the official SDK and require a configured provider. Password accounts must be provisioned externally; there is no application signup route.
