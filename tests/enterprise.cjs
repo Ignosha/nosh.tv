@@ -7,11 +7,32 @@ const fs = require("node:fs"),
   await db.exec(
     `create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);create function auth.jwt()returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;create function auth.uid()returns uuid language sql stable as $$select(auth.jwt()->>'sub')::uuid$$;grant usage on schema public,auth to authenticated,anon,service_role;`,
   );
-  for (let i = 0; i < 2; i++) {
-    await db.exec(fs.readFileSync("supabase/schema.sql", "utf8"));
-    await db.exec(fs.readFileSync("supabase/enterprise.sql", "utf8"));
-  }
-  console.log("PASS enterprise migrations rerun");
+  const setup = fs.readFileSync("supabase/company-setup.sql", "utf8");
+  const guardedUser = randomUUID();
+  await db.query("insert into auth.users values($1,'existing@example.com',now())", [guardedUser]);
+  await assert.rejects(() => db.exec(setup), /existing records detected/);
+  await db.exec("rollback");
+  assert.equal((await db.query("select to_regclass('public.kl_cases') as name")).rows[0].name, null);
+  assert.equal((await db.query("select count(*)::int as n from auth.users")).rows[0].n, 1);
+  await db.query("delete from auth.users where id=$1", [guardedUser]);
+  await db.exec("create table public.existing_records(id int);insert into public.existing_records values(1)");
+  await assert.rejects(() => db.exec(setup), /existing records detected/);
+  await db.exec("rollback");
+  assert.equal((await db.query("select count(*)::int as n from public.existing_records")).rows[0].n, 1);
+  await db.exec("drop table public.existing_records;create schema storage;create table storage.objects(id int);insert into storage.objects values(1)");
+  await assert.rejects(() => db.exec(setup), /existing records detected/);
+  await db.exec("rollback");
+  await db.exec("delete from storage.objects");
+  console.log("PASS dashboard setup refuses existing application, Auth and storage data");
+  const failedSetup = setup.replace("commit;\nselect public.kl_enterprise_ready()", "select company_setup_intentional_failure();\ncommit;\nselect public.kl_enterprise_ready()");
+  assert.notEqual(failedSetup, setup);
+  await assert.rejects(() => db.exec(failedSetup), /company_setup_intentional_failure/);
+  await db.exec("rollback");
+  assert.equal((await db.query("select to_regclass('public.kl_cases') as name")).rows[0].name, null);
+  console.log("PASS dashboard setup rolls back all migrations if a later statement fails");
+  for (let i = 0; i < 2; i++) await db.exec(setup);
+  assert.equal((await db.query("select kl_enterprise_ready() as ready")).rows[0].ready, true);
+  console.log("PASS enterprise migrations rerun through the empty-project dashboard bundle");
   const ids = {
     ownerA: randomUUID(),
     ownerB: randomUUID(),
