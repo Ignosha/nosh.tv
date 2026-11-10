@@ -2363,3 +2363,20 @@ h3 {
   color: var(--ink);
   margin: 0;
 }
+
+/* Report Studio: browser-first editor and printable branded report. */
+.studio { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.studio-editor { display: grid; gap: 18px; }
+.studio-toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+.studio-editor label { display: grid; gap: 6px; margin: 12px 0; font-size: 14px; }
+.studio-editor input:not([type=checkbox]):not([type=color]), .studio-editor select, .studio-editor textarea { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.studio-editor textarea { min-height: 100px; }
+.studio-editor fieldset { border: 1px solid var(--line); margin: 16px 0; padding: 14px; min-width: 0; }
+.studio-editor .studio-check { display: flex; align-items: center; gap: 10px; }
+.studio-preview { background: var(--paper); border: 1px solid var(--line); padding: 28px; overflow-wrap: anywhere; }
+.studio-preview h1 { font-size: 36px; }
+.studio-preview h2 { font-size: 23px; margin-top: 28px; }
+.studio-preview h3 { font-size: 17px; }
+.studio-preview section { break-inside: avoid; }
+@media(max-width: 950px) { .studio { grid-template-columns: 1fr; } }
+@media print { body:has(.studio) header, body:has(.studio) footer, body:has(.studio) .no-print { display: none !important; } .studio { display: block; } .studio-preview { border: 0; padding: 0; color: #111; background: white; } .studio-preview a { color: #111; } }

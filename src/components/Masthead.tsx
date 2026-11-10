@@ -14,6 +14,7 @@ export function Masthead() {
         </Link>
         <nav className="nav" aria-label="Main">
           <Link href="/tools" className="nav-hide-sm">Free tools</Link>
+          <Link href="/report-builder" className="nav-hide">Report Studio</Link>
           <Link href="/tools/trace" className="nav-hide">Tracing</Link>
           <Link href="/#services" className="nav-hide">Pricing</Link>
           <Link href="/#matters" className="nav-hide">Who we serve</Link>

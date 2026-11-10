@@ -145,6 +145,59 @@ const assert = require("node:assert/strict");
   console.log(
     "PASS: stale preparation is rejected; extras and approved reports are preserved",
   );
+  const issued = {
+    record: {
+      format: "TraceSworn Report Studio v1",
+      revision: 1,
+      issuedAt: "2026-11-10T00:00:00Z",
+      document: { author: "Author", reviewer: "Reviewer" },
+    },
+    fingerprint: { value: "a".repeat(64) },
+  };
+  r = await db.query("select kl_archive_report($1,$2) version", [
+    matter.id,
+    JSON.stringify(issued),
+  ]);
+  assert.equal(r.rows[0].version, 1);
+  r = await db.query("select kl_archive_report($1,$2) version", [
+    matter.id,
+    JSON.stringify(issued),
+  ]);
+  assert.equal(r.rows[0].version, 1);
+  issued.record.revision = 2;
+  issued.fingerprint.value = "b".repeat(64);
+  r = await db.query("select kl_archive_report($1,$2) version", [
+    matter.id,
+    JSON.stringify(issued),
+  ]);
+  assert.equal(r.rows[0].version, 2);
+  await assert.rejects(
+    () =>
+      db.query(
+        "update kl_report_versions set reviewer='Changed' where case_id=$1",
+        [matter.id],
+      ),
+    /append-only/,
+  );
+  await assert.rejects(
+    () =>
+      db.query("delete from kl_report_versions where case_id=$1", [matter.id]),
+    /append-only/,
+  );
+  console.log(
+    "PASS: report archive versions are sequential, duplicate-safe and append-only",
+  );
+  await db.exec("set role anon");
+  await assert.rejects(
+    () =>
+      db.query("select kl_archive_report($1,$2)", [
+        matter.id,
+        JSON.stringify(issued),
+      ]),
+    /permission denied/,
+  );
+  await db.exec("reset role");
+  console.log("PASS: anonymous callers cannot archive reports");
   await db.close();
 })().catch((e) => {
   console.error(e);

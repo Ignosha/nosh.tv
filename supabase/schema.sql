@@ -225,3 +225,45 @@ begin
 end $$;
 revoke all on function kl_save_preparation(uuid,integer,jsonb,jsonb,jsonb) from public,anon,authenticated;
 grant execute on function kl_save_preparation(uuid,integer,jsonb,jsonb,jsonb) to service_role;
+
+-- Issued Report Studio records are preserved separately from editable case drafts.
+create table if not exists kl_report_versions (
+  id uuid primary key default gen_random_uuid(),
+  case_id uuid not null references kl_cases(id),
+  version integer not null check(version>0),
+  issued_at timestamptz not null,
+  archived_at timestamptz not null default now(),
+  author text not null,
+  reviewer text not null,
+  sealed jsonb not null,
+  fingerprint text not null check(fingerprint ~ '^[a-f0-9]{64}$'),
+  unique(case_id,version), unique(case_id,fingerprint)
+);
+alter table kl_report_versions enable row level security;
+create or replace function kl_preserve_issued_report() returns trigger language plpgsql as $$
+begin raise exception 'Issued report archives are append-only'; end $$;
+drop trigger if exists kl_report_versions_immutable on kl_report_versions;
+create trigger kl_report_versions_immutable before update or delete on kl_report_versions for each row execute function kl_preserve_issued_report();
+create or replace function kl_archive_report(p_case uuid,p_sealed jsonb)
+returns integer language plpgsql security definer set search_path=public as $$
+declare next_version integer; found_version integer;
+begin
+  perform id from kl_cases where id=p_case for update;
+  if not found then raise exception 'Matter unavailable'; end if;
+  if p_sealed->'record'->>'format' is distinct from 'TraceSworn Report Studio v1' or
+     length(coalesce(p_sealed->'record'->'document'->>'author',''))=0 or
+     length(coalesce(p_sealed->'record'->'document'->>'reviewer',''))=0 or
+     lower(p_sealed->'record'->'document'->>'reviewer')=lower(p_sealed->'record'->'document'->>'author') then raise exception 'Invalid reviewed report'; end if;
+  select version into found_version from kl_report_versions where case_id=p_case and fingerprint=p_sealed->'fingerprint'->>'value';
+  if found_version is not null then return found_version; end if;
+  select coalesce(max(version),0)+1 into next_version from kl_report_versions where case_id=p_case;
+  insert into kl_report_versions(case_id,version,issued_at,author,reviewer,sealed,fingerprint)
+  values(p_case,next_version,(p_sealed->'record'->>'issuedAt')::timestamptz,p_sealed->'record'->'document'->>'author',p_sealed->'record'->'document'->>'reviewer',p_sealed,p_sealed->'fingerprint'->>'value');
+  insert into kl_events(case_id,kind,body) values(p_case,'report-archive','Archived issued report version '||next_version||'. Declared reviewer: '||(p_sealed->'record'->'document'->>'reviewer'));
+  return next_version;
+end $$;
+revoke all on function kl_archive_report(uuid,jsonb) from public,anon,authenticated;
+grant execute on function kl_archive_report(uuid,jsonb) to service_role;
+-- Archives may be read by the server and appended only through the validated RPC path.
+revoke insert,update,delete,truncate on kl_report_versions from anon,authenticated,service_role;
+grant select on kl_report_versions to service_role;

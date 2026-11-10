@@ -142,3 +142,7 @@ Each email step is claimed in the database before sending and has a stable provi
 This environment has no Supabase, sender or billing credentials, so production activation, actual outreach delivery and full database acceptance testing remain blocked. The researched list is a starting pipeline, not acquired clients. See `PILOT.md` for the validation and operator routine.
 
 Database acceptance tests run against embedded PostgreSQL (PGlite), including schema reruns, 4/50 submission caps, the 25-hour gate, payment-triggered queueing, exclusive job claims, invalidation, stale-write rejection and preservation of approved reports. This does not replace acceptance against deployed Supabase, RLS roles and email delivery.
+
+## Report Studio software preview
+
+Open `/report-builder` for branded report preparation, three reusable templates, source-linked findings, local file hashes, review checks, printable reports and verifiable issued versions. The browser preview works without a database. Download drafts before closing; no automatic persistence is enabled. Case administrators can verify and preserve issued records under `/admin/cases/<id>/reports` after applying the latest schema. See [REPORT-STUDIO.md](REPORT-STUDIO.md) for archive behavior, proposed $199/$499 pilot prices and current limitations. These software prices are separate from investigation fees and are not active subscriptions.

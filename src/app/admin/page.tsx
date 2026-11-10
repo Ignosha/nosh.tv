@@ -55,7 +55,7 @@ export default async function Admin() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
         <div>
           <span className="kicker">Case desk</span>
-          <a href="/admin/operations">Operations &amp; margins →</a> <a href="/admin/firms">Firm Premier administration →</a><h1 className="serif" style={{ fontSize: 44, margin: 0 }}>Good to see you.</h1>
+          <a href="/report-builder">Report Studio →</a> <a href="/admin/operations">Operations &amp; margins →</a> <a href="/admin/firms">Firm Premier administration →</a><h1 className="serif" style={{ fontSize: 44, margin: 0 }}>Good to see you.</h1>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Link className="btn btn-small btn-primary" href="/admin/leads">Client finder &amp; outreach</Link>

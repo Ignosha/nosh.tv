@@ -6,7 +6,7 @@ const vm = require('node:vm');
 function load(path, dependencies = {}) {
   const code = ts.transpileModule(fs.readFileSync(path,'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
   const exports = {};
-  vm.runInNewContext(code,{exports,require:name=>dependencies[name],Error,Date,Map,Set,BigInt,Number,URLSearchParams,Object,String,Math,process});
+  vm.runInNewContext(code,{exports,require:name=>dependencies[name],Error,Date,Map,Set,BigInt,Number,URLSearchParams,Object,String,Math,process,URL,crypto:require("node:crypto").webcrypto,TextEncoder,Uint8Array});
   return exports;
 }
 const a = '0x'+'1'.repeat(40), b = '0x'+'2'.repeat(40);
@@ -55,4 +55,23 @@ test('Unclaimed or suppressed outreach step never sends',async()=>{
   const {sendNextStep}=load('src/lib/outreachSend.ts',{'./db':{db:()=>({from:()=>chain})},'./email':{sendEmail:async()=>{sent++;return {ok:true}}},'./outreach':{outreachReady:()=>({ok:true}),draftStep:()=>({subject:'test',body:'test'})},'./leads':{},'./site':{SITE_URL:'https://example.com'}});
   const result=await sendNextStep({id:'id',email:'a@example.com',status:'queued',step:0});
   assert.equal(result.ok,false);assert.equal(sent,0);
+});
+
+const fingerprintLib=load('src/lib/fingerprint.ts');
+const studio=load('src/lib/reportStudio.ts',{'./fingerprint':fingerprintLib});
+function completeDocument(){return {...studio.newDocument(),organization:'Example practice',matterReference:'CASE-1',preparedFor:'Client',author:'Author',reviewer:'Reviewer',scope:'Supplied records only',methodology:'Review cited sources',limitations:'No ownership inference',conclusion:'Observations only',sources:[{id:'S1',title:'Original record',reference:'https://example.com/source',observedAt:'2026-11-10',sha256:'',note:''}],findings:[{id:'F1',date:'',observation:'A documented observation',sourceIds:['S1']}],checks:{sources:true,limitations:true,conclusions:true}};}
+test('Report issuance requires citations, review checks and a distinct reviewer',async()=>{
+  const doc=completeDocument();assert.equal(studio.publicationIssues(doc).length,0);
+  await assert.rejects(()=>studio.sealDocument({...doc,reviewer:'AUTHOR'},1),/distinct/);
+  await assert.rejects(()=>studio.sealDocument({...doc,checks:{sources:false,limitations:true,conclusions:true}},1),/review checks/);
+  assert.throws(()=>studio.parseDocument({...doc,findings:[{...doc.findings[0],sourceIds:['missing']}]}),/missing source/);
+  assert.throws(()=>studio.parseDocument({...doc,sources:[{...doc.sources[0],reference:'javascript:alert(1)'}]}),/HTTPS/);
+});
+test('Issued reports verify, detect tampering and remain independent of later edits',async()=>{
+  const doc=completeDocument();const issued=await studio.sealDocument(doc,1);
+  assert.equal((await studio.validateIssuedRecord(issued)).record.revision,1);
+  doc.findings[0].observation='Changed later';
+  assert.equal(issued.record.document.findings[0].observation,'A documented observation');
+  const modified=JSON.parse(JSON.stringify(issued));modified.record.document.conclusion='Changed';
+  await assert.rejects(()=>studio.validateIssuedRecord(modified),/fingerprint/);
 });

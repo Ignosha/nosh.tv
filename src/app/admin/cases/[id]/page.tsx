@@ -354,7 +354,8 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
       <div className="form-card" style={{ display: "grid", gap: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
           <h3 style={{ margin: 0 }}>Premium work</h3>
-          <Link className="btn btn-small btn-primary" href={`/admin/cases/${c.id}/exhibits`}>Open court exhibit pack →</Link>
+          <Link className="btn btn-small" href={`/admin/cases/${c.id}/reports`}>Issued report archive</Link>
+              <Link className="btn btn-small btn-primary" href={`/admin/cases/${c.id}/exhibits`}>Open court exhibit pack →</Link>
         </div>
         <p className="fine" style={{ margin: 0 }}>{btcCount} Bitcoin address(es) on this matter. Tracing, cost basis and dissipation read Bitcoin history from the public ledger; results are saved to the matter and sealed into the exhibit pack.</p>
         <div className="instrument">
