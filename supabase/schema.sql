@@ -111,3 +111,35 @@ create index if not exists kl_lead_events_lead on kl_lead_events (lead_id, at de
 alter table kl_watches enable row level security;
 alter table kl_leads enable row level security;
 alter table kl_lead_events enable row level security;
+
+-- Firm Premier: bearer links are confidential credentials, matching case portals.
+create table if not exists kl_firms (
+  id uuid primary key default gen_random_uuid(),
+  token uuid not null unique default gen_random_uuid(),
+  name text not null,
+  email text not null,
+  case_lead text not null,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table kl_firms enable row level security;
+alter table kl_cases add column if not exists firm_id uuid references kl_firms(id);
+alter table kl_cases add column if not exists case_lead text;
+alter table kl_cases add column if not exists due_at timestamptz;
+create index if not exists kl_cases_firm on kl_cases(firm_id, created_at);
+create table if not exists kl_screenings (
+  id uuid primary key default gen_random_uuid(),
+  firm_id uuid not null references kl_firms(id),
+  month date not null,
+  status text not null default 'pending' check (status in ('pending','complete')),
+  completed_at timestamptz,
+  unique(firm_id, month)
+);
+alter table kl_screenings enable row level security;
+create table if not exists kl_screening_matters (
+  screening_id uuid not null references kl_screenings(id),
+  case_id uuid not null references kl_cases(id),
+  outcome text,
+  primary key(screening_id,case_id)
+);
+alter table kl_screening_matters enable row level security;

@@ -4,13 +4,13 @@ import { TraceTool } from "@/components/TraceTool";
 
 export const metadata: Metadata = {
   title: "Follow the money — TraceSworn",
-  description: "See where Bitcoin was sent from an address, which wallets were spent together, and which transfers landed at an exchange. Live from the public ledger.",
+  description: "Follow Bitcoin and Ethereum native transfers with sourced explorer labels and explicit coverage limits.",
 };
 
 export default function TracePage() {
   return (
     <>
-      <ToolHeader kicker="Tracing map" title="Follow the money," accent="hop by hop." intro="Enter a Bitcoin address to see where its funds went, which addresses were spent together (and so likely share an owner), and which transfers reached an exchange or custodian." />
+      <ToolHeader kicker="Tracing map" title="Follow the money," accent="hop by hop." intro="Choose Bitcoin or an Ethereum network to follow native transfers. Review sourced explorer labels, transaction links and coverage limits before drawing conclusions." />
       <section className="wrap" style={{ paddingBottom: 96 }}>
         <TraceTool />
       </section>

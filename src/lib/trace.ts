@@ -5,6 +5,8 @@ import { btcHistory, type History } from "./btc";
 
 export type TraceNode = {
   address: string;
+  label?: string;
+  explorer?: string;
   hop: number;
   kind: "seed" | "same-owner" | "destination" | "service";
   txCount: number | null;
@@ -13,6 +15,8 @@ export type TraceNode = {
 };
 export type TraceEdge = { from: string; to: string; btc: number; txs: number; first: string; last: string; sample: string };
 export type Trace = {
+  asset?: string;
+  explorer?: string;
   readAt: string;
   seeds: string[];
   since: string | null;

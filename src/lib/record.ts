@@ -4,7 +4,7 @@ import type { Case } from "./cases";
 import type { Trace } from "./trace";
 import type { CostBasis, Dissipation } from "./schedules";
 
-export type Extras = { trace?: Trace; costBasis?: CostBasis; dissipation?: Dissipation; alerts?: unknown[] };
+export type Extras = { trace?: Trace; ethereumTrace?: Trace; costBasis?: CostBasis; dissipation?: Dissipation; alerts?: unknown[] };
 
 export const extrasOf = (c: Case) => (c.extras ?? {}) as Extras;
 
@@ -24,6 +24,7 @@ export async function matterRecord(c: Case) {
     valuationDate: c.date_of_death,
     report: c.report,
     tracing: x.trace ?? null,
+    ethereumTracing: x.ethereumTrace ?? null,
     costBasis: x.costBasis ?? null,
     dissipation: x.dissipation ?? null,
     alerts: x.alerts ?? [],

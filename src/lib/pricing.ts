@@ -3,7 +3,7 @@
 // Each paid package has a live Stripe Payment Link below; NEXT_PUBLIC_PAY_<ID> can override it.
 
 export type Package = {
-  id: "scan" | "report" | "recovery" | "complex" | "partner";
+  id: "scan" | "report" | "recovery" | "complex" | "partner" | "premier";
   name: string;
   price: number; // USD
   cadence: "free" | "once" | "month";
@@ -81,6 +81,11 @@ export const PACKAGES: Package[] = [
       "Cancel any month",
     ],
   },
+  {
+    id: "premier", name: "Firm Premier", price: 10000, cadence: "month",
+    tagline: "A dedicated crypto investigation desk for your firm.",
+    includes: ["Ethereum money tracing with sourced exchange labels", "Private firm portal for every matter", "Unlimited asset-movement alert enrollment", "Monthly screening of the firm’s new matters", "Same-week turnaround with a named case lead"],
+  },
 ];
 
 // Add-ons keep one flat price fair when a matter is bigger than its package.
@@ -105,6 +110,7 @@ const STRIPE_LINKS: Record<Exclude<Package["id"], "scan">, string> = {
   recovery: "https://buy.stripe.com/8x28wPeBi1tp0m52ya6Vq0c",
   complex: "https://buy.stripe.com/9B6bJ164M8VR0m5gp06Vq0d",
   partner: "https://buy.stripe.com/eVq7sLbp64FBd8Rgp06Vq0a",
+  premier: "", // Configure a verified $10,000/month payment link before accepting subscriptions.
 };
 export const ADDONS_LINK = "https://buy.stripe.com/aFa28ral2egbfgZ5Km6Vq0b";
 export const ALERTS_LINK = "https://buy.stripe.com/8x26oH3WE8VR9WF2ya6Vq0e";
@@ -118,6 +124,7 @@ export function payLink(id: Package["id"]): string | null {
     recovery: process.env.NEXT_PUBLIC_PAY_RECOVERY,
     complex: process.env.NEXT_PUBLIC_PAY_COMPLEX,
     partner: process.env.NEXT_PUBLIC_PAY_PARTNER,
+    premier: process.env.NEXT_PUBLIC_PAY_PREMIER,
   };
   const url = env[id] || STRIPE_LINKS[id];
   return /^https:\/\//.test(url) ? url : null;

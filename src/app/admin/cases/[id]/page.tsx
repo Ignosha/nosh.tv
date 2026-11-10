@@ -10,6 +10,7 @@ import { aiEnabled } from "@/lib/ai";
 import { SITE_URL, OPERATOR_NAME } from "@/lib/site";
 import { CopyButton } from "@/components/CopyButton";
 import { TraceMap } from "@/components/TraceMap";
+import { traceEthereum } from "@/lib/evmTrace";
 import { traceBitcoin } from "@/lib/trace";
 import { costBasis, dissipation } from "@/lib/schedules";
 import { extrasOf, btcAddresses } from "@/lib/record";
@@ -115,7 +116,13 @@ async function runExtra(form: FormData) {
   if (!c) return;
   const btc = btcAddresses(c);
   const extras = extrasOf(c);
-  if (kind === "trace") {
+  if (kind === "eth-trace") {
+    const seeds = [...new Set([...(c.findings?.addresses ?? []), ...(c.report?.rows ?? [])].filter(a => a.chain === "ethereum").map(a => a.address.toLowerCase()))];
+    if (!seeds.length) return;
+    const ethereumTrace = await traceEthereum(seeds, "ethereum", 3);
+    await updateCase(id, { extras: { ...extras, ethereumTrace } });
+    await logEvent(id,"trace","Ethereum native-transfer trace read from Blockscout; review limitations before publishing.");
+  } else if (kind === "trace") {
     const since = String(form.get("since") ?? "") || null;
     const trace = await traceBitcoin(btc.slice(0, 8), { hops: 3, since, maxNodes: 48, fanout: 4 });
     await updateCase(id, { extras: { ...extras, trace } });
@@ -382,6 +389,8 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
             </form>
           </div>
         </div>
+        <form action={runExtra}><input type="hidden" name="id" value={c.id}/><input type="hidden" name="kind" value="eth-trace"/><button className="btn">Run Ethereum trace (3 hops)</button></form>
+        {x.ethereumTrace ? <><TraceMap trace={x.ethereumTrace}/><p className="fine">{x.ethereumTrace.limits.join(" ")}</p></> : null}
         {x.trace ? <TraceMap trace={x.trace} /> : null}
       </div>
 

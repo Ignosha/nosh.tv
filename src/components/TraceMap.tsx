@@ -60,10 +60,10 @@ export function TraceMap({ trace }: { trace: Trace }) {
             return (
               <g key={e.from + e.to}>
                 <path d={`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`} fill="none" stroke="var(--accent)" strokeOpacity={0.55} strokeWidth={sw}>
-                  <title>{`${btc(e.btc)} BTC in ${e.txs} transaction(s), ${e.first}${e.last !== e.first ? " to " + e.last : ""}. Example: ${e.sample}`}</title>
+                  <title>{`${btc(e.btc)} ${trace.asset ?? "BTC"} in ${e.txs} transaction(s), ${e.first}${e.last !== e.first ? " to " + e.last : ""}. Example: ${e.sample}`}</title>
                 </path>
                 <text x={x2 - 8} y={y2 - 6} fontSize={10.5} textAnchor="end" fill="var(--ink-2)" fontFamily="var(--font-mono)" style={{ paintOrder: "stroke", stroke: "var(--paper)", strokeWidth: 3 }}>
-                  {btc(e.btc)} BTC
+                  {btc(e.btc)} {trace.asset ?? "BTC"}
                 </text>
               </g>
             );
@@ -72,11 +72,11 @@ export function TraceMap({ trace }: { trace: Trace }) {
             const p = pos.get(n.address)!;
             const c = COLORS[n.kind];
             return (
-              <a key={n.address} href={`https://blockstream.info/address/${n.address}`} target="_blank" rel="noreferrer">
+              <a key={n.address} href={n.explorer ?? `https://blockstream.info/address/${n.address}`} target="_blank" rel="noreferrer">
                 <rect x={p.x} y={p.y} width={W} height={H} rx={9} fill={c.fill} stroke={c.stroke} strokeWidth={1.5} />
-                <text x={p.x + 10} y={p.y + 18} fontSize={12} fill="var(--ink)" fontFamily="var(--font-mono)">{short(n.address)}</text>
+                <text x={p.x + 10} y={p.y + 18} fontSize={12} fill="var(--ink)" fontFamily="var(--font-mono)">{n.label ?? short(n.address)}</text>
                 <text x={p.x + 10} y={p.y + 35} fontSize={10.5} fill="var(--ink-3)" fontFamily="var(--font-sans)">
-                  {n.balance !== null ? `${btc(n.balance)} BTC now` : "not read"}
+                  {n.balance !== null ? `${btc(n.balance)} ${trace.asset ?? "BTC"} now` : "not read"}
                   {n.txCount !== null ? ` · ${n.txCount.toLocaleString("en-US")} tx` : ""}
                 </text>
                 <title>{`${n.address}\n${c.label}${n.note ? "\n" + n.note : ""}`}</title>
@@ -93,7 +93,7 @@ export function TraceTable({ trace }: { trace: Trace }) {
   return (
     <div className="table-scroll">
       <table className="clue-table">
-        <thead><tr><th>From</th><th>To</th><th style={{ textAlign: "right" }}>BTC</th><th>Dates</th><th>Example transaction</th></tr></thead>
+        <thead><tr><th>From</th><th>To</th><th style={{ textAlign: "right" }}>{trace.asset ?? "BTC"}</th><th>Dates</th><th>Example transaction</th></tr></thead>
         <tbody>
           {trace.edges.map((e) => (
             <tr key={e.from + e.to}>
@@ -101,7 +101,7 @@ export function TraceTable({ trace }: { trace: Trace }) {
               <td className="mono" style={{ fontSize: 12 }}>{short(e.to)}</td>
               <td className="num">{btc(e.btc)}<div className="snippet">{e.txs} tx</div></td>
               <td className="mono" style={{ fontSize: 12, whiteSpace: "nowrap" }}>{e.first}{e.last !== e.first ? ` → ${e.last}` : ""}</td>
-              <td><a className="addr" href={`https://blockstream.info/tx/${e.sample}`} target="_blank" rel="noreferrer">{e.sample.slice(0, 16)}…</a></td>
+              <td><a className="addr" href={`${trace.explorer ?? "https://blockstream.info"}/tx/${e.sample}`} target="_blank" rel="noreferrer">{e.sample.slice(0, 16)}…</a></td>
             </tr>
           ))}
         </tbody>

@@ -88,3 +88,28 @@ npm run dev                  # http://localhost:3100
 Behind an HTTPS proxy, run Node with `NODE_USE_ENV_PROXY=1` so server-side `fetch` uses it.
 
 Design: **Heirloom**: oat paper, forest ink and terracotta; Fraunces, Hanken Grotesk and DM Mono; soft folder cards and pill controls. Light by default, with a dark toggle.
+
+## Firm Premier — $10,000/month
+
+The `premier` package adds five services: Ethereum native-transfer tracing, a private firm portal, unlimited alert enrollment, monthly new-matter screening, and same-week turnaround with a named case lead.
+
+1. Apply the updated `supabase/schema.sql`. Firm tables have RLS enabled and are accessible only through server-side service-role queries.
+2. Open `/admin/firms` with admin authentication. Provision a firm after confirming the engagement and billing, and enter the actual case lead's name. Share the generated `/firm/<token>` link securely; it is a bearer credential granting access to all firm matters. Revocation currently requires setting `kl_firms.active=false` in the database. Existing individual case links require separate revocation.
+3. Submit new matters through that portal. Each receives the named lead and Friday 23:59 UTC deadline; weekend submissions enter the next week. This tracks an operational service commitment; investigation and approval still require the case lead.
+4. Submit scan findings through the matter page. Firm addresses automatically enroll in daily alerts with no subscription enrollment cap. The existing watch worker processes 300 oldest-check addresses per invocation; schedule more frequent runs or increase worker capacity for larger portfolios. Alerts are daily polling, not real-time, and delivery needs Resend configuration. Failed or partial EVM reads do not become false zero-balance alerts.
+5. The authenticated `/api/cron/screening` job catches up closed calendar months from firm enrollment. It adds every new portal matter to a screening cycle. `/admin/firms` records per-matter review outcomes and marks the cycle complete only when all have outcomes. No-matter months complete automatically. Screening only covers matters submitted to the portal; this does not ingest a firm's external matter-management system.
+6. In the case desk, run Ethereum tracing for discovered Ethereum addresses. Results enter the sealed evidence record. The public tracing tool supports Ethereum, Base, Arbitrum, Optimism and Polygon as well as Bitcoin. Ethereum tracing includes native transfers only, up to three hops, 36 nodes, two history pages per address, and five destinations per address. Token transfers, internal calls, bridges and ownership attribution require further investigation. Labels are third-party assertions and may be absent.
+
+Blockscout uses these exact hosts, with no API key:
+
+- `eth.blockscout.com`
+- `base.blockscout.com`
+- `arbitrum.blockscout.com`
+- `explorer.optimism.io` (canonical destination of `optimism.blockscout.com`)
+- `polygon.blockscout.com`
+
+In this environment Ethereum answered successfully; Base, Arbitrum and Polygon returned remote Cloudflare challenges. An outbound allowlist alone cannot resolve those remote challenges. Unavailable reads remain explicitly unknown.
+
+Set `NEXT_PUBLIC_PAY_PREMIER` only to a verified **$10,000/month** subscription checkout. Until configured the site routes Premier inquiries into intake. The old $1,500 Firm Plan remains separate. Premier subscription activation, renewal and cancellation are currently administered manually; the existing case payment webhook is not a firm entitlement system.
+
+Validation: `npm run typecheck`, `npm run build`, and `node tests/premier.cjs`. Full database and email acceptance testing requires configured Supabase and Resend; no service credentials are included.

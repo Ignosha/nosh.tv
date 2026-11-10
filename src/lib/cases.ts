@@ -43,6 +43,9 @@ export type Drafts = {
 };
 
 export type Case = {
+  firm_id?: string | null;
+  case_lead?: string | null;
+  due_at?: string | null;
   id: string;
   created_at: string;
   role: string;

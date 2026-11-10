@@ -5,6 +5,7 @@ import { TraceMap, TraceTable } from "./TraceMap";
 import { downloadSealed } from "@/lib/download";
 
 export function TraceTool() {
+  const [network, setNetwork] = useState("bitcoin");
   const [text, setText] = useState("");
   const [since, setSince] = useState("");
   const [state, setState] = useState<"idle" | "reading" | "done" | "failed">("idle");
@@ -14,6 +15,7 @@ export function TraceTool() {
 
   async function run(e: React.FormEvent) {
     e.preventDefault();
+    setTrace(null);
     setState("reading");
     setError("");
     setFp("");
@@ -21,7 +23,7 @@ export function TraceTool() {
       const res = await fetch("/api/trace", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ addresses: text.split(/[\s,]+/).filter(Boolean), since: since || undefined }),
+        body: JSON.stringify({ network, addresses: text.split(/[\s,]+/).filter(Boolean), since: since || undefined }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || "Trace failed");
@@ -36,9 +38,9 @@ export function TraceTool() {
   return (
     <div style={{ display: "grid", gap: 18 }}>
       <form className="form-card" onSubmit={run}>
-        <div className="form-grid">
+        <div className="form-grid"><div className="field"><label htmlFor="trace-network">Network</label><select id="trace-network" value={network} onChange={e=>setNetwork(e.target.value)}>{["bitcoin","ethereum","base","arbitrum","optimism","polygon"].map(n=><option key={n} value={n}>{n}</option>)}</select></div>
           <div className="field" style={{ gridColumn: "1 / -1" }}>
-            <label htmlFor="trace-addr">Bitcoin address(es), up to 3</label>
+            <label htmlFor="trace-addr">Address(es), up to 3</label>
             <textarea id="trace-addr" value={text} onChange={(e) => setText(e.target.value)} placeholder="bc1q… or 1… or 3…" style={{ minHeight: 70 }} required />
           </div>
           <div className="field">
@@ -48,7 +50,7 @@ export function TraceTool() {
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
           <button className="btn btn-primary" type="submit" disabled={state === "reading"}>{state === "reading" ? "Reading the ledger…" : "Follow the money"}</button>
-          <span className="fine">Read live from Blockstream. Nothing is stored.</span>
+          <span className="fine">Read live from Blockstream or Blockscout. Nothing is stored.</span>
         </div>
       </form>
       {state === "failed" ? <div className="notice err">{error}</div> : null}
@@ -63,7 +65,7 @@ export function TraceTool() {
           <TraceTable trace={trace} />
           {trace.limits.length ? <div className="notice warn">{trace.limits.join(" ")}</div> : null}
           <p className="fine" style={{ margin: 0 }}>
-            This preview follows one hop. A Complex Matter follows three hops, groups every wallet the subject controls, and names the exchanges where funds landed, so counsel knows whom to subpoena.
+            This preview follows one hop. Explorer labels and Bitcoin co-spending are clues requiring independent confirmation. Missing or truncated history is disclosed above.
           </p>
         </div>
       ) : null}
