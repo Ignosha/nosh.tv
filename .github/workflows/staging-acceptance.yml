@@ -1,0 +1,53 @@
+name: Live staging acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Creates synthetic staging users/companies and preserves their audit records
+        required: true
+        type: choice
+        options: [ISOLATED_STAGING_PROJECT]
+permissions:
+  contents: read
+concurrency:
+  group: live-enterprise-staging
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    if: github.ref == 'refs/heads/feat/firm-premier' && inputs.confirmation == 'ISOLATED_STAGING_PROJECT'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: enterprise-staging
+    steps:
+      - name: Require environment approval and exact branch restriction
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/environments/enterprise-staging" > /tmp/environment.json
+          gh api "repos/$GITHUB_REPOSITORY/environments/enterprise-staging/deployment-branch-policies" > /tmp/branches.json
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const env = JSON.parse(fs.readFileSync('/tmp/environment.json'));
+          const branches = JSON.parse(fs.readFileSync('/tmp/branches.json'));
+          if (!env.protection_rules?.some(rule => rule.type === 'required_reviewers' && rule.reviewers?.length > 0)
+            || env.deployment_branch_policy?.custom_branch_policies !== true
+            || branches.branch_policies?.length !== 1
+            || branches.branch_policies[0].name !== 'feat/firm-premier'
+            || branches.branch_policies[0].type !== 'branch') {
+            console.error('Configure required environment reviewers and restrict deployments to the reviewed staging branch.');
+            process.exit(1);
+          }
+          NODE
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Real Auth, MFA, roles and tenant API acceptance
+        env:
+          ACCEPTANCE_CONFIRMATION: ISOLATED_STAGING_PROJECT
+          SUPABASE_URL: https://bowpuebiycqbodkpwdcb.supabase.co
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/live-acceptance.mjs
