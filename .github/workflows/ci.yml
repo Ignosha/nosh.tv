@@ -9,6 +9,18 @@ concurrency:
   group: verify-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install archive encryption tools
+        run: sudo apt-get update -qq && sudo apt-get install -y age
+      - name: Restore synthetic native PostgreSQL backup and verify ACLs/RLS
+        run: node scripts/native-recovery.mjs
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20

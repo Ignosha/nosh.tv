@@ -13,7 +13,8 @@
     "test:admin-security": "node tests/admin-security.cjs",
     "check:release": "node scripts/enterprise-preflight.mjs",
     "test:enterprise-boundary": "node tests/enterprise-boundary.cjs",
-    "test:sample-flow": "node tests/sample-flow.browser.cjs && SAMPLE_FLOW_NO_JS=1 node tests/sample-flow.browser.cjs && SAMPLE_FLOW_NO_JS=1 SAMPLE_FLOW_FAILURE=1 node tests/sample-flow.browser.cjs"
+    "test:sample-flow": "node tests/sample-flow.browser.cjs && SAMPLE_FLOW_NO_JS=1 node tests/sample-flow.browser.cjs && SAMPLE_FLOW_NO_JS=1 SAMPLE_FLOW_FAILURE=1 node tests/sample-flow.browser.cjs",
+    "test:recovery": "node scripts/native-recovery.mjs"
   },
   "dependencies": {
     "@noble/hashes": "^1.8.0",
