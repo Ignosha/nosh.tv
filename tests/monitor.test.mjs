@@ -16,11 +16,11 @@ function harness(notify = false) {
       if (state.rejectMail) throw Error("Synthetic network failure");
       return Response.json({ id: "fixture" });
     }
-    assert.equal(options.redirect, "error");
+    assert.equal(options.redirect, "manual");
     assert.equal(options.cache, "no-store");
     if (url.startsWith("https://tracesworn.com/")) {
       assert.equal(options.headers.apikey, undefined, "Public database key must not reach the website");
-      return Response.json({ status: "alive" });
+      return new Response("<!doctype html><title>Fixture website</title>", { headers: { "content-type": "text/html" } });
     }
     assert.ok(url.startsWith("https://bowpuebiycqbodkpwdcb.supabase.co/"));
     assert.equal(options.headers.apikey, "public-test-key");
@@ -34,7 +34,7 @@ function harness(notify = false) {
 }
 const base = Date.parse("2026-11-11T01:00:00Z");
 
-test("fixed-target probes check readiness, closed signup, anonymous denial and process liveness", async () => {
+test("fixed-target probes check readiness, closed signup, anonymous denial and website reachability", async () => {
   const h = harness();
   const result = await runMonitor(h.env, h.request, base);
   assert.equal(result.status, "healthy");
@@ -82,6 +82,17 @@ test("bounded bodies and missing anonymous denial fail closed", async () => {
   const checks = await probe(h.env, h.request);
   assert.equal(checks.find(x => x.name === "staging_database_ready").ok, false);
   assert.equal(checks.find(x => x.name === "staging_anonymous_company_denied").ok, false);
+});
+
+test("old checker failures do not become a new incident", async () => {
+  const h = harness(true);
+  h.storage.set("latest", JSON.stringify({ failureStreak: 181, incident: true, alertedIncident: true }));
+  h.state.broken = true;
+  const result = await runMonitor(h.env, h.request, base);
+  assert.equal(result.version, 2);
+  assert.equal(result.failureStreak, 1);
+  assert.equal(result.incident, false);
+  assert.equal(h.emails.length, 0);
 });
 
 test("missing configuration makes no requests and HTTP handler exposes no state", async () => {

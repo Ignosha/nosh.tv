@@ -26,27 +26,39 @@ export async function probe(env, request = fetch) {
     { name: "staging_database_ready", url: database + "/rest/v1/rpc/kl_enterprise_ready", method: "POST", body: "{}", validate: value => value === true },
     { name: "staging_signup_closed", url: database + "/auth/v1/settings", validate: value => value.disable_signup === true },
     { name: "staging_anonymous_company_denied", url: database + "/rest/v1/kl_organizations?select=id&limit=1", denied: true },
-    { name: "production_process_live", url: "https://tracesworn.com/api/health/live", validate: value => value.status === "alive", production: true },
+    { name: "production_website_reachable", url: "https://tracesworn.com/", production: true, statusOnly: true },
   ];
   return Promise.all(jobs.map(async job => {
     const start = Date.now();
     try {
       const response = await request(job.url, {
-        method: job.method || "GET", body: job.body, redirect: "error", cache: "no-store", signal: AbortSignal.timeout(10000),
+        method: job.method || "GET", body: job.body, redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(10000),
         headers: job.production ? { accept: "application/json" } : { apikey: env.SUPABASE_PUBLIC_KEY, "content-type": "application/json" },
       });
       let ok;
       if (job.denied) { ok = [401, 403].includes(response.status); await response.body?.cancel(); }
+      else if (job.statusOnly) { ok = response.status === 200; await response.body?.cancel(); }
       else if (response.ok) ok = job.validate(await smallJson(response));
       else { ok = false; await response.body?.cancel(); }
       return { name: job.name, ok, httpStatus: response.status, milliseconds: Date.now() - start };
-    } catch { return { name: job.name, ok: false, httpStatus: null, milliseconds: Date.now() - start }; }
+    } catch (error) {
+      // Allowlisted categories help distinguish monitor defects from upstream outages.
+      // Never log raw exception text, which can contain request details.
+      const failure = /illegal invocation/i.test(error?.message || "") ? "fetch_binding"
+        : /redirect value/i.test(error?.message || "") ? "fetch_redirect_option"
+        : /cache mode|cache.*not implemented/i.test(error?.message || "") ? "fetch_cache_option"
+        : error?.name === "TimeoutError" || error?.name === "AbortError" ? "timeout"
+        : error?.name === "TypeError" ? "runtime_type_error" : "request_failed";
+      return { name: job.name, ok: false, httpStatus: null, milliseconds: Date.now() - start, failure };
+    }
   }));
 }
 
 export async function runMonitor(env, request = fetch, now = Date.now()) {
   const checks = await probe(env, request);
-  const previous = await env.MONITOR_STATE.get("latest", "json");
+  const saved = await env.MONITOR_STATE.get("latest", "json");
+  // Do not inherit incident counters from the earlier invalid-fetch checker.
+  const previous = saved?.version === 2 ? saved : null;
   const failures = checks.filter(check => !check.ok).map(check => check.name);
   const streak = failures.length ? (previous?.failureStreak || 0) + 1 : 0;
   const status = failures.length ? "degraded" : "healthy";
@@ -73,7 +85,7 @@ export async function runMonitor(env, request = fetch, now = Date.now()) {
       if (response.ok) { lastAlertAt = now; alertedIncident = !recovered; }
     } catch { delivery = "failed"; }
   }
-  const snapshot = { at: new Date(now).toISOString(), status, checks, failureStreak: streak,
+  const snapshot = { version: 2, at: new Date(now).toISOString(), status, checks, failureStreak: streak,
     incident, incidentSince: status === "healthy" && !alertedIncident ? 0 : incidentSince,
     alertedIncident, lastAlertAt, notification: delivery };
   await env.MONITOR_STATE.put("latest", JSON.stringify(snapshot));

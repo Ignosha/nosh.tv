@@ -38,6 +38,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: node --test tests/monitor.test.mjs tests/operations.test.mjs
+      - run: node --test tests/monitor.runtime.test.mjs
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: |
