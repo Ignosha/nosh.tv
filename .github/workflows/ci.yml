@@ -10,23 +10,30 @@ concurrency:
   cancel-in-progress: true
 jobs:
   recovery:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install archive encryption tools
-        run: sudo apt-get update -qq && sudo apt-get install -y age
+      - name: Install pinned archive encryption tools
+        run: |
+          curl --fail --silent --show-error --location --connect-timeout 10 --max-time 60 --retry 3 https://github.com/FiloSottile/age/releases/download/v1.3.2/age-v1.3.2-linux-amd64.tar.gz --output "$RUNNER_TEMP/age.tar.gz"
+          echo "cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10  $RUNNER_TEMP/age.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/age.tar.gz" -C "$RUNNER_TEMP"
       - name: Restore synthetic native PostgreSQL backup and verify ACLs/RLS
+        env:
+          AGE_BINARY_PATH: ${{ runner.temp }}/age/age
+          AGE_KEYGEN_BINARY_PATH: ${{ runner.temp }}/age/age-keygen
         run: node scripts/native-recovery.mjs
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       NEXT_TELEMETRY_DISABLED: '1'
       ADMIN_PASSWORD: ci-local-test-only
+      BROWSER_EXECUTABLE: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,7 +47,8 @@ jobs:
       - run: node --test tests/monitor.test.mjs tests/operations.test.mjs
       - run: node --test tests/monitor.runtime.test.mjs
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
+      - name: Verify preinstalled Chrome
+        run: test -x "$BROWSER_EXECUTABLE" && "$BROWSER_EXECUTABLE" --version
       - run: |
           npm start > /tmp/app.log 2>&1 &
           for attempt in $(seq 1 30); do
