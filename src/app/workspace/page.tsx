@@ -1,8 +1,20 @@
 import { requireMfa } from "@/lib/enterprise/session";
 import { CompanyForm } from "@/components/CompanyForms";
+import { SampleProgramButton } from "@/components/SampleProgramButton";
 import { acceptInvite, createSampleProgram } from "./actions";
-export default async function Workspace() {
+export default async function Workspace({ searchParams }: {
+  searchParams?: Promise<{ sample_error?: string; reference?: string }>;
+} = {}) {
   const { client, user } = await requireMfa();
+  const feedback = await searchParams;
+  const failures: Record<string, string> = {
+    quota: "The program limit has been reached. Open an existing workspace or contact your administrator.",
+    read_only: "This company is read-only. Contact your administrator before creating a program.",
+    unavailable: "Sample setup could not finish. Please try again or contact your administrator.",
+  };
+  const failure = feedback?.sample_error && Object.hasOwn(failures, feedback.sample_error)
+    ? failures[feedback.sample_error] : undefined;
+  const reference = feedback?.reference && /^[a-f0-9-]{36}$/.test(feedback.reference) ? feedback.reference : null;
   const [organizations, memberships] = await Promise.all([
     client.from("kl_organizations").select("id,name,entitlement,access_until"),
     client.from("kl_org_members").select("organization_id,role")
@@ -17,6 +29,7 @@ export default async function Workspace() {
   return (
     <>
       <h1>Your organizations</h1>
+      {failure ? <p role="alert" className="notice err">{failure}{reference ? ` Reference ${reference}` : ""}</p> : null}
       {data?.length ? (
         <>
           <p className="muted">Choose a company to open its programs, reports and memberships.</p>
@@ -33,13 +46,13 @@ export default async function Workspace() {
                 </a>
                 {editable.has(org.id) && ["active", "trialing"].includes(org.entitlement)
                   && Date.parse(org.access_until) > Date.now() ? (
-                  <CompanyForm
+                  <form
                     action={createSampleProgram.bind(null, org.id)}
-                    label="Create sample program"
                     className="company-quickstart"
                   >
                     <p className="fine">Create an empty sample with your account as owner, or open the existing first test program.</p>
-                  </CompanyForm>
+                    <SampleProgramButton />
+                  </form>
                 ) : null}
               </li>
             ))}

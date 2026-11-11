@@ -4,21 +4,19 @@ export function CompanyForm({
   action,
   children,
   label,
-  className = "form-card",
 }: {
   action: (
     form: FormData,
   ) => Promise<{ error?: string; token?: string; ok?: boolean }>;
   children: React.ReactNode;
   label: string;
-  className?: string;
 }) {
   const [message, setMessage] = useState(""),
     [token, setToken] = useState(""),
     [busy, setBusy] = useState(false);
   return (
     <form
-      className={className}
+      className="form-card"
       action={async (form) => {
         setBusy(true);
         setMessage("");

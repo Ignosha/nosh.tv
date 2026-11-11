@@ -53,6 +53,9 @@ export async function proxy(req: NextRequest) {
     r.headers.set("Content-Security-Policy", csp);
     r.headers.set("Cache-Control", "private, no-store, max-age=0");
     r.headers.set("X-Robots-Tag", "noindex, nofollow");
+    // Native POST forms need their real same-origin Origin header. no-referrer
+    // makes browsers serialize it as "null", which our mutation guard rejects.
+    r.headers.set("Referrer-Policy", "same-origin");
     return r;
   };
   let settings;

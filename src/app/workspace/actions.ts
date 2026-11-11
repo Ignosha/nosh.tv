@@ -44,13 +44,21 @@ export async function saveCompany(
     return operationError(e);
   }
 }
-export async function createSampleProgram(org: string, _form: FormData) {
+function sampleProgramFailure(result: { error: string }): never {
+  const message = result.error.toLowerCase();
+  const category = message.includes("quota") ? "quota" : message.includes("read-only") ? "read_only" : "unavailable";
+  const reference = result.error.match(/Reference ([a-f0-9-]{36})$/)?.[1];
+  console.warn(JSON.stringify({ event: "enterprise.sample_program", stage: "failed", category, reference }));
+  redirect(`/workspace?sample_error=${category}${reference ? `&reference=${reference}` : ""}`);
+}
+export async function createSampleProgram(org: string, _form: FormData): Promise<void> {
   await requireMutationOrigin();
   const { client, user } = await requireOrganization(org, [
     "owner",
     "admin",
     "editor",
   ]);
+  console.info(JSON.stringify({ event: "enterprise.sample_program", stage: "authorized" }));
   const name = "First test program";
   const existing = await client
     .from("kl_assurance_programs")
@@ -60,7 +68,7 @@ export async function createSampleProgram(org: string, _form: FormData) {
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
-  if (existing.error) return operationError(existing.error);
+  if (existing.error) sampleProgramFailure(operationError(existing.error));
   let id = existing.data?.id as string | undefined;
   if (!id) {
     const saved = await saveCompany(
@@ -71,8 +79,11 @@ export async function createSampleProgram(org: string, _form: FormData) {
       user.email ?? user.id,
       "Initial setup: create sample program",
     );
-    if ("error" in saved) return saved;
+    if ("error" in saved) sampleProgramFailure(saved);
     id = saved.id;
+    console.info(JSON.stringify({ event: "enterprise.sample_program", stage: "saved" }));
+  } else {
+    console.info(JSON.stringify({ event: "enterprise.sample_program", stage: "existing" }));
   }
   redirect(`/workspace/${org}/programs/${id}`);
 }
