@@ -27,7 +27,7 @@ export function Masthead() {
             Tracing
           </Link>
           <Link
-            href={enterprise ? "/report-studio" : "/#services"}
+            href={enterprise ? "/plans" : "/#services"}
             className="nav-hide"
           >
             Pricing

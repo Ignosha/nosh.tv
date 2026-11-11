@@ -28,6 +28,14 @@ The operator subsequently reported that tapping the button left the page unchang
 
 ## Architecture and scope
 
+### Company product expansion
+
+Company pages now offer five playbooks with verified initial ownership, unassessed risks, dependent tasks and recurring review setup. They save through the existing authenticated `kl_company_save` RPC and preserve its quotas, membership checks, optimistic revisions and audit history. Playbooks tighten evidence freshness to the stricter configured window rather than silently loosening it. No database migration was added for these features.
+
+`/workspace/[org]/portfolio` evaluates up to 20 saved programs per page with exact tenant-scoped counts. It exposes priority exceptions, owner/type/search filters, capacity usage and saved revision links. Its authenticated management brief and downloads disclose pagination and a 500-exception cap; CSV streams all open-action requests on the selected page and neutralizes spreadsheet formulas. Exports re-read saved revisions and remain available after expiry. They are management snapshots, not additional approval or compliance attestations.
+
+`/plans` offers proposed Company, Portfolio and Enterprise capacities at $1,499/$3,499/$7,499 per month. Its optional ROI uses buyer assumptions and retains negative outcomes. A native POST creates a sealed discussion proposal with server-selected catalog prices, strict origin checking and an 8 KB input limit. It works without JavaScript and neither charges a payment nor activates access. The plans paths use same-origin referrers so native POSTs retain their valid Origin header. Company subscriptions and real provider launch gates remain unchanged; see `COMMERCIAL.md`.
+
 Company access is `/workspace`, backed by Supabase Auth, mandatory current `aal2` MFA and Postgres RLS. Sessions are server-managed HttpOnly, SameSite=Lax, Secure-on-HTTPS cookies. Every company page/action verifies the Auth provider's user; it never trusts an unverified cookie user object. Every mutation checks the exact configured request origin. SSO initiation and PKCE callback exchange use the official SDK and require a configured provider. Password accounts must be provisioned externally; there is no application signup route.
 
 Organization membership is enforced again in Postgres for reads and RPC writes. Owners manage roles; admins/editors can prepare programs, reviewers approve, viewers read published reports. Owners/admins can also review, but submitting or owning an action prevents self-approval. Active membership and MFA are checked on every access. Revoking membership removes future access, including when the contract is expired. Already downloaded/exported content cannot be remotely erased.

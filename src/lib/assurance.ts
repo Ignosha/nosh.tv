@@ -463,6 +463,54 @@ export function ownerWorkload(
 }
 export const POLICY_PACKS = [
   {
+    id: "crypto-matter",
+    name: "Crypto matter screening",
+    freshnessDays: 30,
+    risks: [
+      "Relevant wallets or exchange records may be missing",
+      "Asset attribution and valuation lack corroborating evidence",
+      "Material tracing exceptions remain unresolved",
+    ],
+    tasks: [
+      "Collect matter scope, key dates and supplied wallet or exchange records",
+      "Review sourced balances, attribution limitations and tracing exceptions",
+      "Resolve exceptions and prepare the independently reviewed evidence pack",
+    ],
+    recurrence: 30,
+  },
+  {
+    id: "access-review",
+    name: "Quarterly access review",
+    freshnessDays: 90,
+    risks: [
+      "System access inventory is incomplete",
+      "Privileged access lacks an accountable review",
+      "Departed or reassigned users retain unnecessary access",
+    ],
+    tasks: [
+      "Collect current system, membership and privileged-access inventories",
+      "Review access against current responsibilities with a separate approver",
+      "Record revocations, resolve exceptions and preserve review evidence",
+    ],
+    recurrence: 90,
+  },
+  {
+    id: "incident-evidence",
+    name: "Incident evidence response",
+    freshnessDays: 7,
+    risks: [
+      "Relevant incident records may be lost or altered",
+      "Incident scope and timeline lack corroborating sources",
+      "Corrective actions lack verified closure",
+    ],
+    tasks: [
+      "Preserve relevant source records and record their provenance",
+      "Review the incident timeline, source integrity and unresolved questions",
+      "Document corrective actions and obtain independent closure review",
+    ],
+    recurrence: 30,
+  },
+  {
     id: "vendor-oversight",
     name: "Vendor oversight",
     freshnessDays: 90,
@@ -507,6 +555,8 @@ export function applyPolicyPack(
     throw new Error("Choose a valid policy start date");
   if (w.risks.some((r) => r.id.startsWith(pack.id + ":")))
     throw new Error("This policy pack is already applied");
+  // A new playbook must not silently loosen an existing evidence window.
+  w.freshnessDays = Math.min(w.freshnessDays, pack.freshnessDays);
   pack.risks.forEach((title, i) =>
     w.risks.push({
       id: `${pack.id}:risk:${i}`,

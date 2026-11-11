@@ -14,6 +14,7 @@ const nextConfig = {
           { key: "Strict-Transport-Security", value: "max-age=31536000" },
         ],
       },
+      { source: "/plans/:path*", headers: [{ key: "Referrer-Policy", value: "same-origin" }] },
     ];
   },
 };

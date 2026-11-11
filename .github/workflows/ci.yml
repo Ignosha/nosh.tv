@@ -59,6 +59,7 @@ jobs:
           TEST_ADMIN_PASSWORD=ci-local-test-only npm run test:admin-security
           npm run test:enterprise-boundary
           npm run test:sample-flow
+          npm run test:company-growth
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

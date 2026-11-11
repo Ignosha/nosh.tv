@@ -153,4 +153,6 @@ Open `/report-builder` for branded report preparation, three reusable templates,
 
 ## Enterprise deployment path
 
+Company workflows now include five setup playbooks, a paginated portfolio exception inbox, printable management briefs, sealed JSON/streamed CSV exports and a native capacity/proposal builder at `/plans`. See [COMMERCIAL.md](COMMERCIAL.md) for proposed company pricing, scope limits and the distinction between a proposal and an activated paid contract. `npm run test:company-growth` covers real Next/browser/data flows with disposable fixture identities; it does not log into live Supabase.
+
 Company users now use `/workspace` with Supabase Auth, mandatory MFA, organization RLS, role permissions, authenticated independent review, invitations and contract entitlements. Enterprise mode disables shared-admin and bearer-token pilot surfaces. The web runtime uses a public session key only; service credentials stay in a separate operations environment. See [RELEASE.md](RELEASE.md) for tested controls, migration order and the outstanding live release gates. This repository is not yet a verified production deployment or compliance certification.

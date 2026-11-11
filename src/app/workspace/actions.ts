@@ -1,7 +1,12 @@
 "use server";
 import { requireMutationOrigin } from "@/lib/enterprise/origin";
 import { requireMfa, requireOrganization } from "@/lib/enterprise/session";
-import { newAssurance, parseAssurance } from "@/lib/assurance";
+import {
+  applyPolicyPack,
+  newAssurance,
+  parseAssurance,
+  POLICY_PACKS,
+} from "@/lib/assurance";
 import { operationError } from "@/lib/enterprise/errors";
 import { isUuid } from "@/lib/cases";
 import { revalidatePath } from "next/cache";
@@ -46,19 +51,37 @@ export async function saveCompany(
 }
 function sampleProgramFailure(result: { error: string }): never {
   const message = result.error.toLowerCase();
-  const category = message.includes("quota") ? "quota" : message.includes("read-only") ? "read_only" : "unavailable";
+  const category = message.includes("quota")
+    ? "quota"
+    : message.includes("read-only")
+      ? "read_only"
+      : "unavailable";
   const reference = result.error.match(/Reference ([a-f0-9-]{36})$/)?.[1];
-  console.warn(JSON.stringify({ event: "enterprise.sample_program", stage: "failed", category, reference }));
-  redirect(`/workspace?sample_error=${category}${reference ? `&reference=${reference}` : ""}`);
+  console.warn(
+    JSON.stringify({
+      event: "enterprise.sample_program",
+      stage: "failed",
+      category,
+      reference,
+    }),
+  );
+  redirect(
+    `/workspace?sample_error=${category}${reference ? `&reference=${reference}` : ""}`,
+  );
 }
-export async function createSampleProgram(org: string, _form: FormData): Promise<void> {
+export async function createSampleProgram(
+  org: string,
+  _form: FormData,
+): Promise<void> {
   await requireMutationOrigin();
   const { client, user } = await requireOrganization(org, [
     "owner",
     "admin",
     "editor",
   ]);
-  console.info(JSON.stringify({ event: "enterprise.sample_program", stage: "authorized" }));
+  console.info(
+    JSON.stringify({ event: "enterprise.sample_program", stage: "authorized" }),
+  );
   const name = "First test program";
   const existing = await client
     .from("kl_assurance_programs")
@@ -81,11 +104,53 @@ export async function createSampleProgram(org: string, _form: FormData): Promise
     );
     if ("error" in saved) sampleProgramFailure(saved);
     id = saved.id;
-    console.info(JSON.stringify({ event: "enterprise.sample_program", stage: "saved" }));
+    console.info(
+      JSON.stringify({ event: "enterprise.sample_program", stage: "saved" }),
+    );
   } else {
-    console.info(JSON.stringify({ event: "enterprise.sample_program", stage: "existing" }));
+    console.info(
+      JSON.stringify({ event: "enterprise.sample_program", stage: "existing" }),
+    );
   }
   redirect(`/workspace/${org}/programs/${id}`);
+}
+export async function createPlaybookProgram(
+  org: string,
+  form: FormData,
+): Promise<void> {
+  await requireMutationOrigin();
+  const { user } = await requireOrganization(org, ["owner", "admin", "editor"]);
+  const template = String(form.get("playbook") ?? ""),
+    name = String(form.get("name") ?? "").trim();
+  if (
+    !POLICY_PACKS.some((pack) => pack.id === template) ||
+    !name ||
+    name.length > 200
+  ) {
+    redirect(`/workspace/${org}?playbook_error=invalid#playbooks`);
+  }
+  const workspace = applyPolicyPack(
+    { ...newAssurance(), name, owner: user.id },
+    template,
+    new Date().toISOString().slice(0, 10),
+  );
+  const saved = await saveCompany(
+    org,
+    null,
+    0,
+    workspace,
+    user.email ?? user.id,
+    `Program created from playbook: ${template}`,
+  );
+  if ("error" in saved) {
+    const category = saved.error.toLowerCase().includes("quota")
+      ? "quota"
+      : saved.error.toLowerCase().includes("read-only")
+        ? "read_only"
+        : "unavailable";
+    redirect(`/workspace/${org}?playbook_error=${category}#playbooks`);
+  }
+  redirect(`/workspace/${org}/programs/${saved.id}`);
 }
 export async function approveCompanyAction(org: string, form: FormData) {
   await requireMutationOrigin();

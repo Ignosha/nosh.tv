@@ -12,9 +12,9 @@ const sans = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex" });
 
 export const metadata: Metadata = {
-  title: "TraceSworn — Crypto asset discovery and sealed valuation",
+  title: process.env.ENTERPRISE_MODE === "1" ? "TraceSworn — Evidence operations for companies" : "TraceSworn — Crypto asset discovery and sealed valuation",
   description:
-    "TraceSworn finds crypto in estates, divorces and bankruptcies, values it on the date that matters, and seals every figure in a verifiable record. Fixed fees.",
+    process.env.ENTERPRISE_MODE === "1" ? "Repeatable evidence playbooks, accountable owners, independent review and portfolio management briefs for company teams." : "TraceSworn finds crypto in estates, divorces and bankruptcies, values it on the date that matters, and seals every figure in a verifiable record. Fixed fees.",
 };
 
 export const viewport: Viewport = {

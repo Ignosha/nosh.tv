@@ -7,14 +7,15 @@
     "build": "next build",
     "start": "next start -p 3100",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/build-company-setup.mjs --check && node tests/premier.cjs && node tests/assurance.cjs && node tests/hardening.cjs && node tests/database.cjs && node tests/enterprise.cjs",
+    "test": "node scripts/build-company-setup.mjs --check && node tests/premier.cjs && node tests/assurance.cjs && node tests/company-growth.cjs && node tests/hardening.cjs && node tests/database.cjs && node tests/enterprise.cjs",
     "build:company-sql": "node scripts/build-company-setup.mjs",
     "test:browser": "node tests/report-studio.browser.cjs && node tests/assurance.browser.cjs",
     "test:admin-security": "node tests/admin-security.cjs",
     "check:release": "node scripts/enterprise-preflight.mjs",
     "test:enterprise-boundary": "node tests/enterprise-boundary.cjs",
     "test:sample-flow": "node tests/sample-flow.browser.cjs && SAMPLE_FLOW_NO_JS=1 node tests/sample-flow.browser.cjs && SAMPLE_FLOW_NO_JS=1 SAMPLE_FLOW_FAILURE=1 node tests/sample-flow.browser.cjs",
-    "test:recovery": "node scripts/native-recovery.mjs"
+    "test:recovery": "node scripts/native-recovery.mjs",
+    "test:company-growth": "COMPANY_GROWTH_FLOW=1 node tests/sample-flow.browser.cjs && COMPANY_GROWTH_FLOW=1 SAMPLE_FLOW_NO_JS=1 node tests/sample-flow.browser.cjs"
   },
   "dependencies": {
     "@noble/hashes": "^1.8.0",

@@ -2,12 +2,16 @@ import { requireOrganization } from "@/lib/enterprise/session";
 import { AssuranceWorkspace } from "@/components/AssuranceWorkspace";
 import { newAssurance } from "@/lib/assurance";
 import { saveCompany } from "../actions";
+import { CompanyPlaybooks } from "@/components/CompanyPlaybooks";
 export default async function Company({
   params,
+  searchParams,
 }: {
   params: Promise<{ org: string }>;
+  searchParams: Promise<{ playbook_error?: string }>;
 }) {
   const { org } = await params;
+  const { playbook_error } = await searchParams;
   const { client, user, role } = await requireOrganization(org);
   const [organization, programs, directory] = await Promise.all([
     client.from("kl_organizations").select("*").eq("id", org).single(),
@@ -41,6 +45,7 @@ export default async function Company({
           : "Read-only: exports and history remain available"}
       </p>
       <p>
+        <a href={`/workspace/${org}/portfolio`}>Portfolio command center</a> ·{" "}
         <a href={`/workspace/${org}/members`}>Memberships</a> ·{" "}
         <a href={`/workspace/${org}/reports`}>Report publication</a>
       </p>
@@ -53,6 +58,7 @@ export default async function Company({
       ))}
       {writable && ["owner", "admin", "editor"].includes(role) ? (
         <>
+          <CompanyPlaybooks org={org} error={playbook_error} />
           <h2>Create a program</h2>
           <AssuranceWorkspace
             key={org}
