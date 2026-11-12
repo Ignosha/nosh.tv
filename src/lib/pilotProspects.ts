@@ -1,0 +1,68 @@
+import type { LeadDraft } from "./finder";
+/** Researched 2026-11-10 on firm-owned pages. Public contact listing is not consent or evidence of buying intent. */
+export const PILOT_PROSPECTS: LeadDraft[] = [
+  {
+    source: "import",
+    source_ref: "pilot:thcalaw.com",
+    name: null,
+    firm: "Thomas H. Curran Associates",
+    email: null,
+    phone: "617-207-8670",
+    website: "https://thcalaw.com",
+    city: "Boston",
+    state: "MA",
+    segment: "bankruptcy",
+    practice: ["bankruptcy", "crypto"],
+    score: 0,
+    evidence:
+      "Firm article on crypto bankruptcy claw-backs and tracing: https://thcalaw.com/bankruptcy-attorney-litigation-attorney/crypto-bankruptcy-claw-backs-strategic-imperatives-for-creditors/ . Contact: https://thcalaw.com/contact/ . No public email verified; use business contact route after review.",
+  },
+  {
+    source: "import",
+    source_ref: "pilot:thebeckagefirm.com",
+    name: null,
+    firm: "The Beckage Firm",
+    email: "info@thebeckagefirm.com",
+    phone: "223-253-4762",
+    website: "https://thebeckagefirm.com",
+    city: "Buffalo",
+    state: "NY",
+    segment: "bankruptcy",
+    practice: ["crypto"],
+    score: 0,
+    evidence:
+      "Crypto risk and recovery practice: https://thebeckagefirm.com/services-overview/crypto-risk-recovery/ . Non-emergency business email explicitly listed at https://thebeckagefirm.com/contact/ . Potential referral/overflow partner; insolvency fit needs qualification. Do not use emergency response hotline for sales.",
+  },
+  {
+    source: "import",
+    source_ref: "pilot:morrisjames.com",
+    name: null,
+    firm: "Morris James LLP",
+    email: null,
+    phone: null,
+    website: "https://www.morrisjames.com",
+    city: "Wilmington",
+    state: "DE",
+    segment: "bankruptcy",
+    practice: ["bankruptcy", "crypto"],
+    score: 0,
+    evidence:
+      "Firm-owned article discusses cryptocurrency disputes, asset valuation and bankruptcy: https://www.morrisjames.com/p/102jxzd/navigating-cryptocurrency-disputes-in-litigation-and-bankruptcy-legal-challenges/ . No public email verified in the source.",
+  },
+  {
+    source: "import",
+    source_ref: "pilot:carltonfields.com",
+    name: null,
+    firm: "Carlton Fields",
+    email: null,
+    phone: null,
+    website: "https://www.carltonfields.com",
+    city: "Tampa",
+    state: "FL",
+    segment: "bankruptcy",
+    practice: ["bankruptcy", "crypto"],
+    score: 0,
+    evidence:
+      "Dedicated crypto insolvency and fiduciary practice, including tracing and execution against crypto assets: https://www.carltonfields.com/services/intellectual-property-data-technology/technology/crypto-insolvency-and-fiduciary-practice . Larger firm; likely longer procurement. Contact practice team after qualification.",
+  },
+];

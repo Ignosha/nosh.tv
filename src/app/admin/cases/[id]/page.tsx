@@ -1,3 +1,6 @@
+import { requireAdmin } from "@/lib/adminAuth";
+import { db } from "@/lib/db";
+import { tokenEvidence } from "@/lib/tokenEvidence";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -10,19 +13,21 @@ import { aiEnabled } from "@/lib/ai";
 import { SITE_URL, OPERATOR_NAME } from "@/lib/site";
 import { CopyButton } from "@/components/CopyButton";
 import { TraceMap } from "@/components/TraceMap";
+import { traceEthereum } from "@/lib/evmTrace";
 import { traceBitcoin } from "@/lib/trace";
 import { costBasis, dissipation } from "@/lib/schedules";
 import { extrasOf, btcAddresses } from "@/lib/record";
 import { startWatching, stopWatching, watchesFor } from "@/lib/watch";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const usd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // ---------- server actions (all under /admin, behind basic auth) ----------
 async function setStage(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const to = String(form.get("stage"));
   if (!STAGE_IDS.includes(to as never)) return;
@@ -34,6 +39,7 @@ async function setStage(form: FormData) {
 
 async function setPackage(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const pkg = String(form.get("package"));
   await updateCase(id, { package: PACKAGES.some((p) => p.id === pkg) ? pkg : null });
@@ -43,33 +49,38 @@ async function setPackage(form: FormData) {
 
 async function runAnalysis(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const c = await getCase(id);
   if (!c) return;
   const report = await buildReport(c);
   const drafts = await buildDrafts(c, report);
-  await updateCase(id, { report, drafts, report_approved: false });
+  await updateCase(id, { report, drafts, report_version: c.findings_version, report_approved: false });
   await logEvent(id, "analysis", `Read ${report.rows.length} holding line(s); ${report.failed.length} address(es) failed. Drafts ${drafts.ai ? "polished with AI" : "from templates"}.`);
   revalidatePath(`/admin/cases/${id}`);
 }
 
 async function approveReport(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const approve = form.get("approve") === "1";
   const summary = form.get("summary");
   const c = await getCase(id);
   if (!c) return;
-  await updateCase(id, {
+  if (approve && (!c.report || c.report_version !== c.findings_version)) throw new Error("Prepare a report for the latest findings before approving.");
+  const {data:saved,error}=await db()!.from("kl_cases").update({
     report_approved: approve,
     ...(typeof summary === "string" && c.drafts ? { drafts: { ...c.drafts, summary: summary.slice(0, 8000) } } : {}),
-  });
+  }).eq("id",id).eq("findings_version",c.findings_version??0).select("id");
+  if(error || !saved?.length) throw new Error("Findings changed while reviewing. Refresh and review the latest draft.");
   await logEvent(id, "report", approve ? "Report approved and published to the matter page." : "Report hidden from the matter page.");
   revalidatePath(`/admin/cases/${id}`);
 }
 
 async function saveNotes(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const followup = String(form.get("followup") ?? "");
   await updateCase(id, {
@@ -81,6 +92,7 @@ async function saveNotes(form: FormData) {
 
 async function logContact(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const what = String(form.get("what") ?? "Contacted");
   const c = await getCase(id);
@@ -93,6 +105,7 @@ async function logContact(form: FormData) {
 
 async function emailNow(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const subject = String(form.get("subject") ?? "");
   const body = String(form.get("body") ?? "");
@@ -109,13 +122,21 @@ async function emailNow(form: FormData) {
 
 async function runExtra(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const kind = String(form.get("kind"));
   const c = await getCase(id);
   if (!c) return;
   const btc = btcAddresses(c);
   const extras = extrasOf(c);
-  if (kind === "trace") {
+  if (kind === "eth-trace") {
+    const seeds = [...new Set([...(c.findings?.addresses ?? []), ...(c.report?.rows ?? [])].filter(a => a.chain === "ethereum").map(a => a.address.toLowerCase()))];
+    if (!seeds.length) return;
+    const ethereumTrace = await traceEthereum(seeds, "ethereum", 3);
+    const tokens = await Promise.all(seeds.slice(0,3).map(a=>tokenEvidence(a)));
+    await updateCase(id, { extras: { ...extras, ethereumTrace, tokenEvidence: tokens } });
+    await logEvent(id,"trace","Ethereum native-transfer trace read from Blockscout; review limitations before publishing.");
+  } else if (kind === "trace") {
     const since = String(form.get("since") ?? "") || null;
     const trace = await traceBitcoin(btc.slice(0, 8), { hops: 3, since, maxNodes: 48, fanout: 4 });
     await updateCase(id, { extras: { ...extras, trace } });
@@ -342,7 +363,8 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
       <div className="form-card" style={{ display: "grid", gap: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
           <h3 style={{ margin: 0 }}>Premium work</h3>
-          <Link className="btn btn-small btn-primary" href={`/admin/cases/${c.id}/exhibits`}>Open court exhibit pack →</Link>
+          <Link className="btn btn-small" href={`/admin/cases/${c.id}/reports`}>Issued report archive</Link>
+              <Link className="btn btn-small btn-primary" href={`/admin/cases/${c.id}/exhibits`}>Open court exhibit pack →</Link>
         </div>
         <p className="fine" style={{ margin: 0 }}>{btcCount} Bitcoin address(es) on this matter. Tracing, cost basis and dissipation read Bitcoin history from the public ledger; results are saved to the matter and sealed into the exhibit pack.</p>
         <div className="instrument">
@@ -382,6 +404,9 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
             </form>
           </div>
         </div>
+        <form action={runExtra}><input type="hidden" name="id" value={c.id}/><input type="hidden" name="kind" value="eth-trace"/><button className="btn">Run Ethereum trace (3 hops)</button></form>
+        {x.tokenEvidence?.map(t=><div className="form-card" key={t.address}><h3>ERC-20 evidence: {t.address.slice(0,12)}…</h3>{t.transfers.map((v,i)=><p key={i}><a href={v.source}>{v.timestamp.slice(0,10)} · {v.amount??v.raw} {v.symbol}</a> · contract {v.contract} · {v.from.slice(0,10)}… → {v.to.slice(0,10)}…</p>)}<p className="fine">{t.limits.join(" ")}</p></div>)}
+        {x.ethereumTrace ? <><TraceMap trace={x.ethereumTrace}/><p className="fine">{x.ethereumTrace.limits.join(" ")}</p></> : null}
         {x.trace ? <TraceMap trace={x.trace} /> : null}
       </div>
 

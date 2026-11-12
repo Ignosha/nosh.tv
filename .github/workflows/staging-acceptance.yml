@@ -1,0 +1,53 @@
+name: Live staging acceptance
+on:
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Creates synthetic staging users/companies and preserves their audit records
+        required: true
+        type: choice
+        options: [ISOLATED_STAGING_PROJECT]
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+concurrency:
+  group: live-enterprise-staging
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    if: >-
+      github.repository == 'Ignosha/nosh.tv' && (
+        (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feat/firm-premier' && inputs.confirmation == 'ISOLATED_STAGING_PROJECT') ||
+        (github.event_name == 'pull_request' && github.event.label.name == 'run-staging-acceptance' && github.event.pull_request.number == 10 && github.event.pull_request.head.ref == 'feat/firm-premier' && github.event.pull_request.head.repo.full_name == github.repository)
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: enterprise-staging
+      url: https://github.com/Ignosha/nosh.tv/commit/${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Require environment approval and exact branch restriction
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/environments/enterprise-staging" > /tmp/environment.json
+          gh api "repos/$GITHUB_REPOSITORY/environments/enterprise-staging/deployment-branch-policies" > /tmp/branches.json
+          node scripts/check-operations-environment.mjs
+      - run: npm ci
+      - name: Real Auth, MFA, roles and tenant API acceptance
+        env:
+          ACCEPTANCE_CONFIRMATION: ISOLATED_STAGING_PROJECT
+          SUPABASE_URL: https://bowpuebiycqbodkpwdcb.supabase.co
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/live-acceptance.mjs

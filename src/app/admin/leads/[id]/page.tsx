@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/adminAuth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -12,6 +13,7 @@ export const maxDuration = 60;
 
 async function setStatus(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const status = String(form.get("status")) as LeadStatus;
   if (!LEAD_STATUSES.some((s) => s.id === status)) return;
@@ -23,6 +25,7 @@ async function setStatus(form: FormData) {
 
 async function save(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   await updateLead(id, { email: email || null, name: String(form.get("name") ?? "").trim() || null, notes: String(form.get("notes") ?? "").slice(0, 10000) });
@@ -31,6 +34,7 @@ async function save(form: FormData) {
 
 async function sendNow(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const l = await getLead(id);
   if (!l) return;
@@ -41,6 +45,7 @@ async function sendNow(form: FormData) {
 
 async function markSent(form: FormData) {
   "use server";
+  await requireAdmin();
   const id = String(form.get("id"));
   const l = await getLead(id);
   if (!l) return;

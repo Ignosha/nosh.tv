@@ -6,7 +6,16 @@
     "dev": "next dev -p 3100",
     "build": "next build",
     "start": "next start -p 3100",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/build-company-setup.mjs --check && node tests/premier.cjs && node tests/assurance.cjs && node tests/company-growth.cjs && node tests/hardening.cjs && node tests/database.cjs && node tests/enterprise.cjs",
+    "build:company-sql": "node scripts/build-company-setup.mjs",
+    "test:browser": "node tests/report-studio.browser.cjs && node tests/assurance.browser.cjs",
+    "test:admin-security": "node tests/admin-security.cjs",
+    "check:release": "node scripts/enterprise-preflight.mjs",
+    "test:enterprise-boundary": "node tests/enterprise-boundary.cjs",
+    "test:sample-flow": "node tests/sample-flow.browser.cjs && SAMPLE_FLOW_NO_JS=1 node tests/sample-flow.browser.cjs && SAMPLE_FLOW_NO_JS=1 SAMPLE_FLOW_FAILURE=1 node tests/sample-flow.browser.cjs",
+    "test:recovery": "node scripts/native-recovery.mjs",
+    "test:company-growth": "COMPANY_GROWTH_FLOW=1 node tests/sample-flow.browser.cjs && COMPANY_GROWTH_FLOW=1 SAMPLE_FLOW_NO_JS=1 node tests/sample-flow.browser.cjs"
   },
   "dependencies": {
     "@noble/hashes": "^1.8.0",
@@ -14,16 +23,23 @@
     "@scure/bip32": "^1.7.0",
     "@scure/bip39": "^1.6.0",
     "@scure/btc-signer": "^1.8.1",
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
-    "next": "^15.5.29",
+    "next": "^16.4.6",
     "pdfjs-dist": "^4.10.38",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
     "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "miniflare": "^4.20260730.0",
+    "playwright": "^1.65.0",
     "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22 <25"
   }
 }

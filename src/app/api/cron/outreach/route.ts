@@ -19,18 +19,21 @@ export async function GET(req: Request) {
   if (day === 0 || day === 6) return NextResponse.json({ sent: 0, note: "Weekend: no outreach." });
 
   const since = new Date(Date.now() - 86400000).toISOString();
-  const { count } = await client.from("kl_leads").select("id", { count: "exact", head: true }).gte("last_sent_at", since);
+  const { count, error: countError } = await client.from("kl_leads").select("id", { count: "exact", head: true }).gte("last_sent_at", since);
+  if (countError) return NextResponse.json({error:"Could not verify daily send limit"},{status:503});
   const room = Math.max(0, DAILY_LIMIT - (count ?? 0));
   if (!room) return NextResponse.json({ sent: 0, note: "Daily limit reached." });
 
-  const { data } = await client
+  const { data, error: queryError } = await client
     .from("kl_leads")
     .select("*")
     .in("status", ["queued", "contacted"])
     .not("email", "is", null)
+    .is("send_claimed_at", null)
     .or(`next_send_at.is.null,next_send_at.lte.${new Date().toISOString()}`)
     .order("score", { ascending: false })
     .limit(room);
+  if(queryError) return NextResponse.json({error:"Could not load due prospects"},{status:503});
   let sent = 0;
   const errors: string[] = [];
   for (const l of (data as Lead[]) ?? []) {

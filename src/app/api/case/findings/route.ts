@@ -42,7 +42,9 @@ export async function POST(req: Request) {
     files: (prev?.files ?? 0) + Math.max(0, Math.min(999, Number(body.files) || 0)),
     xpubs: [...new Set([...(prev?.xpubs ?? []), ...xpubs])],
   };
-  await updateCase(c.id, { findings: merged, next_followup_at: new Date().toISOString() });
+  const saved = await updateCase(c.id, { findings: merged, next_followup_at: new Date().toISOString() });
+  if (!saved) return NextResponse.json({error:"Could not save findings"},{status:500});
+  // Alert enrollment is handled by the watch worker; keep portal submissions quick.
   await logEvent(c.id, "findings", `Family sent ${addresses.length} address(es), ${sources.length} exchange/wallet clue(s)${xpubs.length ? `, ${xpubs.length} wallet key(s)` : ""}.`);
   return NextResponse.json({ ok: true, total: merged.addresses.length });
 }
