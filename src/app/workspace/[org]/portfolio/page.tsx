@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { loadCompanyPortfolio } from "@/lib/enterprise/portfolio";
 import { PORTFOLIO_PAGE_SIZE, portfolioPage } from "@/lib/companyPortfolio";
 import { PortfolioQueue } from "@/components/PortfolioQueue";
+import { PortfolioPulse } from "@/components/PortfolioPulse";
 
 export default async function Portfolio({
   params,
@@ -37,7 +38,11 @@ export default async function Portfolio({
         <a className="btn" href={`${base}/export?page=${page}&format=json`}>
           Export sealed brief
         </a>
+        <a className="btn" href={`${base}/export?page=${page}&format=ics`}>
+          Export deadline calendar
+        </a>
       </div>
+      <PortfolioPulse result={result} />
       <p className="fine">
         Saved programs on page {page} of {pages} · {result.programs.length} of{" "}
         {totalPrograms} programs · evaluated {result.evaluatedOn} UTC. Metrics
@@ -131,7 +136,9 @@ export default async function Portfolio({
       </nav>
       <p className="fine">
         Risk scores use supplied facts and judgments. A clear inbox does not
-        establish compliance or prove that all risks are known.
+        establish compliance or prove that all risks are known. Calendar exports
+        are one-time snapshots of open-action deadlines on this page. Use a
+        dedicated calendar; re-import behaviour varies by app.
       </p>
     </>
   );

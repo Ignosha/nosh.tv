@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { authConfig, secureCookies } from "./config";
 export async function sessionClient() {
@@ -70,7 +70,7 @@ export async function requireOrganization(
     .eq("user_id", session.user.id)
     .eq("active", true)
     .maybeSingle();
-  if (error || !data || !roles.includes(data.role))
-    throw new Error("Organization access denied");
+  if (error) throw new Error("Organization access unavailable");
+  if (!data || !roles.includes(data.role)) notFound();
   return { ...session, role: data.role, organizationId: id };
 }

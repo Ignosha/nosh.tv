@@ -6,6 +6,8 @@ import {
   portfolioPage,
 } from "@/lib/companyPortfolio";
 import { seal } from "@/lib/fingerprint";
+import { deadlineCalendar } from "@/lib/deadlineCalendar";
+import { appOrigin } from "@/lib/enterprise/config";
 
 export const dynamic = "force-dynamic";
 export async function GET(
@@ -16,8 +18,8 @@ export async function GET(
   const url = new URL(request.url),
     page = portfolioPage(url.searchParams.get("page"));
   const format = url.searchParams.get("format");
-  if (format !== "csv" && format !== "json")
-    return new Response("Choose csv or json", { status: 400 });
+  if (format !== "csv" && format !== "json" && format !== "ics")
+    return new Response("Choose csv, json or ics", { status: 400 });
   const { organization, result, totalPrograms } = await loadCompanyPortfolio(
     org,
     page,
@@ -42,10 +44,18 @@ export async function GET(
     exceptions: result.exceptions,
     note: "Snapshot of saved program revisions. Scores reflect supplied judgments; a fingerprint establishes integrity, not approval, factual accuracy or compliance.",
   };
-  const lines = evidenceRequestCsvLines(result.requests),
+  const lines =
+      format === "ics"
+        ? deadlineCalendar(
+            result.requests,
+            org,
+            appOrigin(),
+            new Date().toISOString(),
+          )
+        : evidenceRequestCsvLines(result.requests),
     encoder = new TextEncoder();
   const content =
-    format === "csv"
+    format === "csv" || format === "ics"
       ? new ReadableStream<Uint8Array>({
           pull(controller) {
             const next = lines.next();
@@ -60,9 +70,11 @@ export async function GET(
   return new Response(content, {
     headers: {
       "Content-Type":
-        format === "csv"
-          ? "text/csv; charset=utf-8"
-          : "application/json; charset=utf-8",
+        format === "ics"
+          ? "text/calendar; charset=utf-8"
+          : format === "csv"
+            ? "text/csv; charset=utf-8"
+            : "application/json; charset=utf-8",
       "Content-Disposition": `attachment; filename="tracesworn-portfolio-page-${page}.${format}"`,
       "Cache-Control": "private, no-store",
     },

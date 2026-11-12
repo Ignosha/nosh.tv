@@ -63,6 +63,14 @@ export default async function Program({
     <>
       <a href={`/workspace/${org}`}>← Company</a>
       <h1>{w.name}</h1>
+      <div className="studio-toolbar no-print">
+        <a className="btn" href={`/workspace/${org}/programs/${id}/changes`}>
+          Compare saved revisions
+        </a>
+        <a className="btn" href={`/workspace/${org}/portfolio`}>
+          Portfolio command center
+        </a>
+      </div>
       <AssuranceWorkspace
         key={id}
         initial={w}

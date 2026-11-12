@@ -49,6 +49,7 @@ export type PortfolioSummary = {
   blocked: number;
   review: number;
   evidenceGaps: number;
+  complete: number;
 };
 export type EvidenceRequest = {
   programId: string;
@@ -78,6 +79,7 @@ export type CompanyPortfolio = {
     blocked: number;
     review: number;
     evidenceGaps: number;
+    complete: number;
   };
 };
 
@@ -246,6 +248,7 @@ export function companyPortfolio(
       blocked: p.blocked.length,
       review: p.awaitingReview,
       evidenceGaps: p.staleEvidence.length,
+      complete: p.complete,
     };
   });
   exceptions.sort(
@@ -270,6 +273,7 @@ export function companyPortfolio(
     blocked: 0,
     review: 0,
     evidenceGaps: 0,
+    complete: 0,
   };
   for (const program of programs)
     for (const key of [
@@ -281,6 +285,7 @@ export function companyPortfolio(
       "blocked",
       "review",
       "evidenceGaps",
+      "complete",
     ] as const)
       totals[key] += program[key];
   return {

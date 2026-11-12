@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 export default function CompanyPlans() {
   return (
-    <div className="wrap company-plans-page">
+    <div className="wrap company-plans-page experience-page">
       <p className="kicker">Company plans</p>
       <h1>A repeatable evidence process, priced around your portfolio.</h1>
       <p className="lede">

@@ -36,6 +36,19 @@ function load(file, dependencies = {}) {
 const assurance = load("src/lib/assurance.ts");
 const model = load("src/lib/companyPortfolio.ts", { "./assurance": assurance });
 const pricing = load("src/lib/softwarePlans.ts");
+const fingerprint = load("src/lib/fingerprint.ts");
+const changes = load("src/lib/programChanges.ts", {
+  "./assurance": assurance,
+  "./fingerprint": fingerprint,
+});
+const calendar = load("src/lib/deadlineCalendar.ts", {
+  "./assurance": assurance,
+  "node:crypto": require("node:crypto"),
+});
+const examples = load("src/lib/productExample.ts", {
+  "./assurance": assurance,
+  "./companyPortfolio": model,
+});
 const uid = "11111111-1111-4111-8111-111111111111",
   org = "22222222-2222-4222-8222-222222222222";
 const member = { id: uid, label: "owner@example.invalid", active: true };
@@ -182,6 +195,114 @@ test("evidence requests escape spreadsheet formulas and retain revision referenc
   assert.ok(csv.includes('"\'+malicious()"'));
   assert.ok(csv.includes('"\'@example"'));
   assert.ok(csv.includes("Saved revision"));
+});
+
+test("calendar snapshots fold UTF-8 safely, escape property injection and preserve stable private event identities", () => {
+  const w = workspace();
+  w.actions[0].title =
+    "Review 😀 ".repeat(8) + ",;\\\r\nATTENDEE:attacker@example.invalid";
+  const requests = model.companyPortfolio(
+    [row(w)],
+    [member],
+    "2026-11-11",
+  ).requests;
+  const render = (items = requests, date = "2026-11-11T12:34:56Z") =>
+    [
+      ...calendar.deadlineCalendar(items, org, "https://example.invalid", date),
+    ].join("");
+  const output = render();
+  for (const line of output.split("\r\n"))
+    assert.ok(Buffer.byteLength(line, "utf8") <= 75);
+  const unfolded = output.replace(/\r\n /g, "");
+  assert.equal((unfolded.match(/BEGIN:VEVENT/g) || []).length, 3);
+  assert.ok(unfolded.includes("DTSTAMP:20261111T123456Z\r\n"));
+  assert.ok(unfolded.includes("DTSTART;VALUE=DATE:20261001\r\n"));
+  assert.ok(
+    unfolded.includes("\\,\\;\\\\\\nATTENDEE:attacker@example.invalid"),
+  );
+  assert.ok(!unfolded.includes("\r\nATTENDEE:"));
+  assert.ok(!unfolded.includes("BEGIN:VALARM"));
+  assert.ok(unfolded.includes(`/workspace/${org}/programs/${row().id}`));
+  assert.equal(
+    unfolded.match(/UID:.+/)[0],
+    render(
+      requests.map((r) => ({ ...r, revision: 3 })),
+      "2026-11-12T12:34:56Z",
+    )
+      .replace(/\r\n /g, "")
+      .match(/UID:.+/)[0],
+  );
+  assert.ok(render([]).endsWith("END:VCALENDAR\r\n"));
+  assert.throws(
+    () => [
+      ...calendar.deadlineCalendar(
+        requests,
+        org,
+        "https://user:secret@example.invalid/",
+        "2026-11-11",
+      ),
+    ],
+    /context/,
+  );
+  assert.throws(
+    () => render([{ ...requests[0], dueDate: "2026-02-30" }]),
+    /calendar item/,
+  );
+});
+
+test("revision reports match stable IDs, preserve full changes and evaluate both snapshots on the same date", () => {
+  const before = workspace(),
+    after = JSON.parse(JSON.stringify(before));
+  after.actions.reverse();
+  assert.equal(
+    changes.comparePrograms(before, after, "2026-11-11").changes.length,
+    0,
+    "Reordering is not a content change",
+  );
+  after.name = "New program name";
+  after.evidence.push({
+    id: "E-new",
+    title: "Source",
+    reference: "https://example.invalid/source",
+    sha256: "",
+    observedAt: "2026-11-11",
+  });
+  after.risks[0].assessed = true;
+  after.risks[0].impact = 5;
+  after.risks.pop();
+  after.actions.forEach((a) => {
+    if (a.riskId === before.risks.at(-1).id) a.riskId = "";
+  });
+  const report = changes.comparePrograms(before, after, "2026-11-11");
+  assert.equal(report.added, 1);
+  assert.equal(report.removed, 1);
+  assert.ok(report.changed >= 1);
+  assert.equal(report.settings[0].after, "New program name");
+  assert.equal(report.after.unassessed, report.before.unassessed - 2);
+  assert.equal(report.before.overdue, report.after.overdue);
+  assert.ok(
+    report.changes
+      .find((r) => r.kind === "risk" && r.change === "removed")
+      .fields.some((f) => f.name === "title" && f.after === null),
+  );
+  assert.throws(
+    () => changes.comparePrograms(before, after, "2026-02-30"),
+    /date/,
+  );
+  assert.equal(changes.revisionNumber(undefined, 3), 3);
+  assert.equal(changes.revisionNumber("2", 3), 2);
+  for (const input of ["-1", "0", "1.5", "2147483648", ["2"], "1e2"])
+    assert.throws(() => changes.revisionNumber(input, 3), /revision/);
+});
+
+test("interactive product example derives its labels from the real portfolio model", () => {
+  const result = examples.productExample("2026-11-12");
+  assert.equal(result.totals.open, 3);
+  assert.equal(result.totals.overdue, 1);
+  assert.equal(result.totals.review, 1);
+  for (const kind of ["overdue", "risk", "evidence", "review"])
+    assert.ok(result.exceptions.some((item) => item.kind === kind));
+  assert.ok(JSON.stringify(result).includes("Example team owner"));
 });
 
 test("capacity recommendations use both limits, custom scopes and negative ROI", () => {

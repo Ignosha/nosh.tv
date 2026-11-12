@@ -399,6 +399,72 @@ const key = "sb_publishable_local_fixture";
       assert.equal(created.workspace.actions.length, 3);
       assert.equal(created.workspace.evidence.length, 0);
       assert.equal(created.workspace.freshnessDays, 30);
+      const revised = JSON.parse(JSON.stringify(created.workspace));
+      revised.actions[0].title = "Review updated source scope";
+      revised.evidence.push({
+        id: "source-new",
+        title: "Updated scope source",
+        reference: "https://example.invalid/source",
+        sha256: "",
+        observedAt: now.slice(0, 10),
+      });
+      await inRole(true, () =>
+        db.query("select * from kl_company_save($1,$2,1,$3,$4)", [
+          org,
+          created.id,
+          JSON.stringify(revised),
+          "Update scope and attach source",
+        ]),
+      );
+      const changesUrl =
+        base + `/workspace/${org}/programs/${created.id}/changes`;
+      await page.goto(changesUrl);
+      await page
+        .getByRole("heading", {
+          name: "What changed in Client portfolio playbook",
+        })
+        .waitFor();
+      await page
+        .getByText("Update scope and attach source", { exact: true })
+        .waitFor();
+      await page.getByLabel("From revision").fill("1");
+      await page.getByLabel("To revision").fill("2");
+      await page.getByRole("button", { name: "Compare revisions" }).click();
+      await page.waitForURL(/from=1&to=2/);
+      const changeExport = await context.request.get(
+        changesUrl + "/export?from=1&to=2",
+      );
+      assert.equal(changeExport.status(), 200);
+      assert.ok(changeExport.headers()["cache-control"].includes("no-store"));
+      const changeRecord = (await changeExport.json()).record;
+      assert.equal(changeRecord.sources.before.revision, 1);
+      assert.equal(changeRecord.sources.after.revision, 2);
+      assert.equal(changeRecord.sources.after.actorId, uid);
+      assert.equal(changeRecord.comparison.added, 1);
+      assert.equal(changeRecord.comparison.changed, 1);
+      assert.equal(
+        changeRecord.comparison.changes
+          .find((r) => r.kind === "action")
+          .fields.find((f) => f.name === "title").after,
+        "Review updated source scope",
+      );
+      assert.equal(
+        (
+          await context.request.get(changesUrl + "/export?from=0&to=2")
+        ).status(),
+        404,
+      );
+      assert.equal(
+        (
+          await context.request.get(changesUrl + "/export?from=2&to=1")
+        ).status(),
+        404,
+      );
+      if (process.env.SAMPLE_FLOW_NO_JS !== "1")
+        await page.screenshot({
+          path: "/tmp/nosh-growth-changes.png",
+          fullPage: true,
+        });
       const foreignUid = randomUUID();
       const foreignOrg = await inAdmin(async () => {
         await db.query("insert into auth.users values($1,$2,now())", [
@@ -499,6 +565,31 @@ const key = "sb_publishable_local_fixture";
       );
       assert.equal(csv.status(), 200);
       assert.ok((await csv.text()).includes("Client portfolio playbook"));
+      const calendar = await context.request.get(
+        portfolioUrl + "/export?format=ics",
+      );
+      assert.equal(calendar.status(), 200);
+      assert.ok(calendar.headers()["content-type"].startsWith("text/calendar"));
+      assert.ok(calendar.headers()["cache-control"].includes("no-store"));
+      const events = (await calendar.text()).replace(/\r\n /g, "");
+      assert.equal((events.match(/BEGIN:VEVENT/g) || []).length, 3);
+      assert.ok(events.includes("SEQUENCE:2"));
+      assert.ok(events.includes("SUMMARY:Due: Review updated source scope"));
+      assert.ok(events.includes(`/workspace/${org}/programs/${created.id}`));
+      assert.equal(
+        (
+          await context.request.get(
+            base +
+              `/workspace/${foreignOrg}/programs/${created.id}/changes/export`,
+          )
+        ).status(),
+        404,
+      );
+      const foreignCalendar = await context.request.get(
+        base + `/workspace/${foreignOrg}/portfolio/export?format=ics`,
+      );
+      assert.ok(foreignCalendar.status() >= 400);
+      assert.ok(!(await foreignCalendar.text()).includes("BEGIN:VEVENT"));
       const denied = await context.request.get(
         base + "/workspace/" + foreignOrg + "/portfolio/export?format=json",
       );
@@ -592,6 +683,16 @@ const key = "sb_publishable_local_fixture";
         ).status(),
         200,
         "Expired companies retain authorized exports",
+      );
+      assert.equal(
+        (
+          await context.request.get(portfolioUrl + "/export?format=ics")
+        ).status(),
+        200,
+      );
+      assert.equal(
+        (await context.request.get(changesUrl + "/export")).status(),
+        200,
       );
       const proposalUrl = base + "/plans/proposal";
       const crafted = await context.request.post(proposalUrl, {
@@ -696,8 +797,64 @@ const key = "sb_publishable_local_fixture";
         assert.equal(proposal.record.proposedPlan.id, "portfolio");
         assert.equal(proposal.record.proposedPlan.monthlyUsd, 3499);
       }
+      for (const path of ["/", "/product", "/trust"]) {
+        await page.goto(base + path);
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth > window.innerWidth,
+          ),
+          false,
+          path + " fits the mobile viewport",
+        );
+        if (path === "/product" && process.env.SAMPLE_FLOW_NO_JS !== "1") {
+          await page
+            .getByRole("button", { name: "Evidence", exact: true })
+            .click();
+          await page
+            .getByRole("heading", { name: "Supplier control statement" })
+            .waitFor();
+          await page
+            .getByRole("button", { name: "Review", exact: true })
+            .click();
+          await page
+            .getByRole("heading", { name: "Approve the review outcome" })
+            .waitFor();
+        }
+        if (process.env.SAMPLE_FLOW_NO_JS !== "1")
+          await page.screenshot({
+            path:
+              "/tmp/nosh-growth-" +
+              (path === "/" ? "home" : path.slice(1)) +
+              "-mobile.png",
+            fullPage: true,
+          });
+      }
+      await page.locator(".product-mobile-menu summary").click();
+      await page
+        .getByRole("link", { name: "Product overview", exact: true })
+        .waitFor();
+      const security = await context.request.get(base + "/trust/record");
+      assert.equal(security.status(), 200);
+      assert.equal(
+        (await security.json()).record.format,
+        "TraceSworn Security Overview v1",
+      );
+      if (process.env.SAMPLE_FLOW_NO_JS !== "1") {
+        await page.setViewportSize({ width: 1440, height: 1000 });
+        await page.goto(base);
+        await page.screenshot({
+          path: "/tmp/nosh-growth-home-desktop.png",
+          fullPage: true,
+        });
+        await page.locator(".theme-toggle").click();
+        await page.screenshot({
+          path: "/tmp/nosh-growth-home-light.png",
+          fullPage: true,
+          animations: "disabled",
+        });
+      }
       console.log(
-        "PASS company growth: audited playbook save, portfolio scope, foreign-tenant export denial, sealed brief, CSV, print, quota, expired exports and proposal math",
+        "PASS company growth: audited playbooks, saved revision comparisons, scoped CSV/JSON/calendar, tenant denial, quota, expired exports, proposals, mobile navigation and product example",
       );
     }
   } finally {

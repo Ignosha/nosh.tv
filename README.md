@@ -71,7 +71,7 @@ Every downloadable record is wrapped as `{ record, fingerprint }`, where `finger
 | BTC, ETH, SOL, POL, USDT prices | Coinbase Exchange | Last trade, and the daily UTC close on any past date |
 | USDC price | CoinGecko | The free tier covers the last 365 days; older dates show "unavailable" |
 
-There is no mock or sample data. When a reading fails, the page says "unavailable" and never substitutes a figure.
+Live readings never substitute sample figures: when a reading fails, the page says "unavailable". The company landing page and `/product` include a clearly labeled fictional, interactive product example; it never reads or writes customer records.
 
 ## Setup
 
@@ -154,5 +154,9 @@ Open `/report-builder` for branded report preparation, three reusable templates,
 ## Enterprise deployment path
 
 Company workflows now include five setup playbooks, a paginated portfolio exception inbox, printable management briefs, sealed JSON/streamed CSV exports and a native capacity/proposal builder at `/plans`. See [COMMERCIAL.md](COMMERCIAL.md) for proposed company pricing, scope limits and the distinction between a proposal and an activated paid contract. `npm run test:company-growth` covers real Next/browser/data flows with disposable fixture identities; it does not log into live Supabase.
+
+The company experience uses a responsive navy/mint interface, light and dark themes, mobile navigation, a company sidebar and saved-workload visuals. `/product` demonstrates the real portfolio calculations using fictional records. `/trust` provides a downloadable, fingerprinted software security overview, with deployment acceptance and customer arrangements explicitly separate.
+
+`/workspace/[org]/programs/[id]/changes` compares two preserved revisions by stable record ID, with full field changes in a sealed export and both snapshots evaluated on the same UTC date. Reordering records alone is not an edit. The portfolio's authenticated `.ics` export creates a one-time calendar snapshot of open deadlines on the selected program page, with stable event identifiers and escaped/folded UTF-8 text. It is not a public feed, email invitation or reminder service; calendar import behavior varies by app. Authorized exports remain available after contract expiry.
 
 Company users now use `/workspace` with Supabase Auth, mandatory MFA, organization RLS, role permissions, authenticated independent review, invitations and contract entitlements. Enterprise mode disables shared-admin and bearer-token pilot surfaces. The web runtime uses a public session key only; service credentials stay in a separate operations environment. See [RELEASE.md](RELEASE.md) for tested controls, migration order and the outstanding live release gates. This repository is not yet a verified production deployment or compliance certification.
