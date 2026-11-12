@@ -44,10 +44,8 @@ export function WorkspaceNavigation({
       <div className="workspace-sidebar-note">
         <ProductIcon name="shield" />
         <p>
-          Individual identity.
-          <br />
-          Independent review.
-          <br />A preserved record.
+          Company access requires verified sign-in and multi-factor
+          authentication.
         </p>
       </div>
     </aside>

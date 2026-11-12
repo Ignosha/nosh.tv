@@ -11,10 +11,10 @@ export default function CompanyPlans() {
   return (
     <div className="wrap company-plans-page experience-page">
       <p className="kicker">Company plans</p>
-      <h1>A repeatable evidence process, priced around your portfolio.</h1>
+      <h1>Plans for company teams.</h1>
       <p className="lede">
-        Give teams a clear place to collect sources, resolve exceptions, obtain
-        independent review and report to management.
+        Each plan includes the company workspace, evidence records, independent
+        review and exports. Choose limits for team seats and saved programs.
       </p>
       <CompanyPlanBuilder contactEmail={CONTACT_EMAIL} />
     </div>

@@ -47,6 +47,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-company={process.env.ENTERPRISE_MODE === "1" ? "true" : undefined}
       className={`${display.variable} ${sans.variable} ${mono.variable}`}
       suppressHydrationWarning
     >

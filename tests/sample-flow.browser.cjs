@@ -848,7 +848,7 @@ const key = "sb_publishable_local_fixture";
         });
         await page.locator(".theme-toggle").click();
         await page.screenshot({
-          path: "/tmp/nosh-growth-home-light.png",
+          path: "/tmp/nosh-growth-home-alternate-theme.png",
           fullPage: true,
           animations: "disabled",
         });

@@ -13,11 +13,7 @@ export default function Trust() {
     <div className="experience-page">
       <section className="product-page-intro wrap">
         <p className="product-eyebrow">Security and operating scope</p>
-        <h1>
-          Controls you can inspect.
-          <br />
-          <em>Terms you can agree.</em>
-        </h1>
+        <h1>Access, records and operating terms.</h1>
         <p className="product-lede">
           Understand the software boundaries and the deployment arrangements to
           confirm before your company starts using the service.
@@ -59,7 +55,7 @@ export default function Trust() {
         <div className="product-story-panel trust-arrangements">
           <div>
             <p className="product-eyebrow">Before onboarding</p>
-            <h2>The operating agreement matters too.</h2>
+            <h2>What to agree before onboarding.</h2>
             <p>{SECURITY_OVERVIEW.scope}</p>
           </div>
           <ol>

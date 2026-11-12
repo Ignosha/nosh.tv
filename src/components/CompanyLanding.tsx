@@ -1,243 +1,196 @@
 import Link from "next/link";
 import { COMPANY_PLANS } from "@/lib/softwarePlans";
 import { ProductExample } from "./ProductExample";
-import { ProductIcon } from "./ProductIcon";
 
-const features = [
+const work = [
   {
-    icon: "grid",
-    title: "Start with a repeatable process",
-    copy: "Five playbooks turn a blank workspace into linked risks, staged tasks and accountable owners.",
-    link: "/product#playbooks",
-    label: "Explore the workflow",
-    tone: "mint",
+    number: "01",
+    title: "Collect the source material",
+    copy: "Start a review from one of five playbooks. Assign evidence requests, set due dates and keep source references with the work.",
+    href: "/product#playbooks",
+    label: "Playbooks and requests",
   },
   {
-    icon: "change",
-    title: "See exactly what changed",
-    copy: "Compare saved revisions to find edits to source records, control judgments and action status.",
-    link: "/product#changes",
-    label: "See revision comparisons",
-    tone: "blue",
+    number: "02",
+    title: "Record the review",
+    copy: "Track open questions and send completed work to a different authorized reviewer. Each save keeps the actor, reason and previous revision.",
+    href: "/product#changes",
+    label: "Review and revision history",
   },
   {
-    icon: "clock",
-    title: "Keep deadlines within reach",
-    copy: "Find overdue work and export open deadlines to your team's calendar, without sharing a public feed.",
-    link: "/product#calendar",
-    label: "Explore calendar handoffs",
-    tone: "coral",
+    number: "03",
+    title: "Prepare the management brief",
+    copy: "See overdue actions across programs. Export a brief, compare revisions or take the outstanding deadlines into your calendar.",
+    href: "/product#briefs",
+    label: "Briefs and exports",
   },
-] as const;
+];
 export function CompanyLanding() {
   return (
-    <div className="experience-page">
-      <section className="product-hero wrap">
-        <div className="product-hero-copy">
-          <p className="product-eyebrow">
-            <span className="product-status-dot" /> Evidence operations for
-            company teams
-          </p>
-          <h1>
-            Move the work.
-            <br />
-            <em>Keep the proof.</em>
-          </h1>
-          <p className="product-lede">
-            Bring evidence, accountable owners and independent review into one
-            clear workflow—from the first request to the management pack.
-          </p>
-          <div className="product-actions">
-            <Link className="btn btn-primary" href="/product">
-              Explore the product <ProductIcon name="arrow" />
-            </Link>
-            <Link className="btn" href="/plans">
-              Plan your rollout
-            </Link>
-          </div>
-          <div className="product-proofline">
-            <span>
-              <ProductIcon name="shield" />
-              MFA and company permissions
-            </span>
-            <span>
-              <ProductIcon name="review" />
-              Independent review
-            </span>
-          </div>
+    <div className="experience-page ledger-home">
+      <section className="ledger-intro wrap">
+        <div className="ledger-caption">
+          <span>TraceSworn / Company software</span>
+          <span>Evidence · Review · Record</span>
         </div>
-        <div className="product-hero-visual">
-          <div className="product-orbit product-orbit-one" aria-hidden="true" />
-          <div className="product-orbit product-orbit-two" aria-hidden="true" />
-          <ProductExample
-            today={new Date().toISOString().slice(0, 10)}
-            compact
-          />
-          <div className="product-floating-note">
-            <ProductIcon name="proof" />
-            <div>
-              <strong>From source to decision</strong>
-              <span>Saved revisions. Visible ownership.</span>
+        <div className="ledger-intro-grid">
+          <div>
+            <h1>
+              Company reviews,
+              <br />
+              with the evidence attached.
+            </h1>
+            <p className="ledger-intro-copy">
+              A workspace for the sources, people and decisions behind your
+              firm’s reviews. Keep requests, approvals and saved revisions
+              together.
+            </p>
+            <div className="product-actions">
+              <Link className="btn btn-primary" href="/workspace">
+                Open your workspace <span aria-hidden="true">→</span>
+              </Link>
+              <Link className="ledger-text-link" href="/product">
+                See how it works <span aria-hidden="true">→</span>
+              </Link>
             </div>
           </div>
+          <aside className="ledger-scope">
+            <p className="ledger-label">Use it for</p>
+            <ul>
+              <li>Crypto matter screening</li>
+              <li>Supplier oversight</li>
+              <li>Access reviews</li>
+              <li>Financial reviews</li>
+              <li>Incident evidence</li>
+            </ul>
+            <Link href="/trust">
+              Access & security <span aria-hidden="true">→</span>
+            </Link>
+          </aside>
         </div>
       </section>
       <section
-        className="product-capability-strip wrap"
-        aria-label="Product capabilities"
+        className="ledger-demonstration wrap"
+        aria-labelledby="workspace-example-title"
       >
-        <span>One connected process</span>
-        {[
-          "Evidence requests",
-          "Accountable owners",
-          "Revision history",
-          "Reviewed closure",
-          "Management briefs",
-        ].map((label) => (
-          <strong key={label}>{label}</strong>
-        ))}
-      </section>
-      <section className="product-section wrap">
-        <div className="product-section-heading">
+        <div className="ledger-section-heading">
           <div>
-            <p className="product-eyebrow">Built for the handoffs</p>
-            <h2>
-              Less searching.
-              <br />
-              More work moving forward.
+            <p className="ledger-label">Inside the workspace</p>
+            <h2 id="workspace-example-title">
+              The outstanding work, in one view.
             </h2>
           </div>
           <p>
-            Give every person a clear next step, and keep the record behind each
-            decision close at hand.
+            Switch between priorities, evidence and reviews.{" "}
+            <br />
+            The records below are fictional.
           </p>
         </div>
-        <div className="product-feature-grid">
-          {features.map((feature) => (
-            <article
-              className={`product-feature-card tone-${feature.tone}`}
-              key={feature.title}
-            >
-              <span className="product-feature-icon">
-                <ProductIcon name={feature.icon} />
-              </span>
-              <h3>{feature.title}</h3>
-              <p>{feature.copy}</p>
-              <Link href={feature.link}>
-                {feature.label}
-                <ProductIcon name="arrow" />
-              </Link>
+        <ProductExample today={new Date().toISOString().slice(0, 10)} />
+      </section>
+      <section className="ledger-process wrap" aria-labelledby="process-title">
+        <div className="ledger-section-heading">
+          <div>
+            <p className="ledger-label">The process</p>
+            <h2 id="process-title">From request to reviewed record.</h2>
+          </div>
+          <Link className="ledger-text-link" href="/product">
+            Product details <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+        <div>
+          {work.map((item) => (
+            <article className="ledger-work-row" key={item.number}>
+              <span className="ledger-row-number">{item.number}</span>
+              <h3>{item.title}</h3>
+              <div>
+                <p>{item.copy}</p>
+                <Link className="ledger-text-link" href={item.href}>
+                  {item.label} <span aria-hidden="true">→</span>
+                </Link>
+              </div>
             </article>
           ))}
         </div>
       </section>
-      <section className="product-section wrap">
-        <div className="product-story-panel">
+      <section className="ledger-record-section">
+        <div className="wrap ledger-record-grid">
           <div>
-            <p className="product-eyebrow">A record management can use</p>
-            <h2>The brief should not be another project.</h2>
-            <p>
-              Work from saved revisions, focus on exceptions and prepare a
-              management pack with clear source references. Export a printable
-              brief, spreadsheet-safe request list or fingerprinted snapshot.
-            </p>
-            <Link className="btn" href="/product#briefs">
-              Explore management packs
-              <ProductIcon name="arrow" />
-            </Link>
+            <p className="ledger-label">The record you keep</p>
+            <h2>Compare two saved revisions.</h2>
           </div>
-          <div
-            className="product-brief-visual"
-            aria-label="Management brief illustration"
-          >
-            <div className="brief-paper">
-              <span>TRACESWORN / MANAGEMENT BRIEF</span>
-              <h3>
-                The work.
-                <br />
-                The decisions.
-                <br />
-                The record.
-              </h3>
-              <div className="brief-sample-bars" aria-hidden="true">
-                <i />
-                <i />
-                <i />
-                <i />
-              </div>
-              <p>Illustration · source revisions and explicit scope</p>
-            </div>
-            <span className="brief-seal">
-              <ProductIcon name="proof" />
-              Sealed exports
-            </span>
+          <div>
+            <p>
+              Compare two saved versions of a program before the next review.
+              Inspect the evidence, risk assessments and actions that changed,
+              alongside the recorded author and reason.
+            </p>
+            <p>
+              Download the full change report or a management brief with its
+              source revisions. Fingerprints let recipients check whether an
+              exported file has changed.
+            </p>
+            <Link className="ledger-text-link" href="/product#changes">
+              About revision comparisons <span aria-hidden="true">→</span>
+            </Link>
+            <p className="ledger-record-note">
+              A file fingerprint checks integrity. It does not verify the
+              underlying facts or grant approval.
+            </p>
           </div>
         </div>
       </section>
-      <section className="product-section wrap">
-        <div className="product-section-heading">
+      <section className="ledger-pricing wrap" aria-labelledby="pricing-title">
+        <div className="ledger-section-heading">
           <div>
-            <p className="product-eyebrow">Capacity that fits</p>
-            <h2>Start focused. Expand with the work.</h2>
+            <p className="ledger-label">Company plans</p>
+            <h2 id="pricing-title">Choose the capacity you need.</h2>
           </div>
           <p>
-            Company controls are included across the proposals. Choose a team
-            and program capacity that fits your rollout.
+            The same company controls at each level.{" "}
+            <br />
+            Team and program limits set the proposed fee.
           </p>
         </div>
-        <div className="product-price-grid">
+        <div className="ledger-plan-register">
           {COMPANY_PLANS.map((plan) => (
-            <article
-              className={`product-price-card ${plan.id === "portfolio" ? "product-price-featured" : ""}`}
-              key={plan.id}
-            >
-              <p className="product-eyebrow">{plan.name}</p>
-              <h3>
-                ${plan.monthlyUsd.toLocaleString("en-US")}
-                <span>/month proposed</span>
-              </h3>
-              <p>{plan.description}</p>
-              <div className="product-plan-capacity">
-                <strong>
-                  {plan.seats}
-                  <span>active seats</span>
-                </strong>
-                <strong>
-                  {plan.programs}
-                  <span>saved programs</span>
-                </strong>
+            <article className="ledger-plan-row" key={plan.id}>
+              <div>
+                <h3>
+                  <Link href="/plans#scope">
+                    {plan.name} <span aria-hidden="true">→</span>
+                  </Link>
+                </h3>
+                <p>{plan.description}</p>
               </div>
-              <Link className="btn" href="/plans#scope">
-                Scope this rollout
-                <ProductIcon name="arrow" />
-              </Link>
+              <p className="ledger-plan-capacity">
+                {plan.seats} active seats
+                <br />
+                {plan.programs} saved programs
+              </p>
+              <p className="ledger-plan-price">
+                ${plan.monthlyUsd.toLocaleString("en-US")}
+                <span>per month, proposed</span>
+              </p>
             </article>
           ))}
         </div>
         <p className="fine">
-          Proposed prices in USD, excluding applicable taxes and separately
-          scoped services. A signed scope sets access, support and retention;
-          there is no automatic purchase here.
+          USD, excluding applicable taxes and separately scoped services. Final
+          access, support and retention are agreed in a signed scope.
         </p>
+        <Link className="ledger-text-link" href="/plans#scope">
+          Build a scoped proposal <span aria-hidden="true">→</span>
+        </Link>
       </section>
-      <section className="product-final-cta wrap">
+      <section className="ledger-close wrap">
         <div>
-          <p className="product-eyebrow">A clearer way to operate</p>
-          <h2>Make the next handoff a better one.</h2>
-          <p>
-            Explore a working example, compare capacity or open your company
-            workspace.
-          </p>
+          <p className="ledger-label">Already have an account?</p>
+          <h2>Your company workspace is ready for you.</h2>
         </div>
-        <div className="product-actions">
-          <Link className="btn btn-primary" href="/workspace">
-            Open workspace
-            <ProductIcon name="arrow" />
-          </Link>
-          <Link className="btn" href="/trust">
-            Review security controls
-          </Link>
-        </div>
+        <Link className="btn btn-primary" href="/workspace">
+          Sign in <span aria-hidden="true">→</span>
+        </Link>
       </section>
     </div>
   );

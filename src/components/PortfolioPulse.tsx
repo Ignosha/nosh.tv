@@ -20,7 +20,7 @@ export function PortfolioPulse({ result }: { result: CompanyPortfolio }) {
       <section className="form-card portfolio-pulse">
         <div>
           <p className="product-eyebrow">Work distribution</p>
-          <h2>See the handoff.</h2>
+          <h2>Action status</h2>
           <p className="fine">Saved actions on this portfolio page.</p>
         </div>
         <div className="pulse-content">

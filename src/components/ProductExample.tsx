@@ -1,15 +1,8 @@
 "use client";
 import { useState } from "react";
 import { productExample } from "@/lib/productExample";
-import { ProductIcon } from "./ProductIcon";
 
-export function ProductExample({
-  today,
-  compact = false,
-}: {
-  today: string;
-  compact?: boolean;
-}) {
+export function ProductExample({ today }: { today: string }) {
   const [view, setView] = useState<"overview" | "evidence" | "review">(
     "overview",
   );
@@ -23,42 +16,32 @@ export function ProductExample({
   );
   return (
     <section
-      className={`product-example ${compact ? "product-example-compact" : ""}`}
+      className="product-example"
       aria-label="Interactive product example"
     >
       <div className="example-titlebar">
-        <span className="example-window-dots" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </span>
-        <span>TraceSworn / workspace</span>
+        <span>Portfolio / review register</span>
         <span className="example-badge">Fictional example</span>
       </div>
       <div className="example-content">
         <div className="example-heading">
-          <div>
-            <p className="product-eyebrow">The work, in focus</p>
-            <h2>A clearer morning review.</h2>
-          </div>
-          <span className="example-avatar" aria-hidden="true">
-            EX
-          </span>
+          <h2>Outstanding items</h2>
+          <span className="example-asof">As of {today}</span>
         </div>
-        <div className="example-metrics">
+        <dl className="example-metrics">
           <div>
-            <strong>{data.totals.open}</strong>
-            <span>Open actions</span>
+            <dt>Open actions</dt>
+            <dd>{data.totals.open}</dd>
           </div>
           <div>
-            <strong>{data.totals.overdue}</strong>
-            <span>Overdue</span>
+            <dt>Overdue</dt>
+            <dd>{data.totals.overdue}</dd>
           </div>
           <div>
-            <strong>{data.totals.review}</strong>
-            <span>For review</span>
+            <dt>Awaiting review</dt>
+            <dd>{data.totals.review}</dd>
           </div>
-        </div>
+        </dl>
         <div
           className="example-switcher"
           role="group"
@@ -81,53 +64,39 @@ export function ProductExample({
             </button>
           ))}
         </div>
+        <div className="example-register-head" aria-hidden="true">
+          <span>Item / saved program</span>
+          <span>Requires attention</span>
+          <span>Revision</span>
+        </div>
         <div className="example-inbox" aria-live="polite">
           {selected.map((item) => (
             <article
               className={`example-work-item example-${item.kind}`}
               key={item.key}
             >
-              <span className="example-item-icon">
-                <ProductIcon
-                  name={
-                    item.kind === "review"
-                      ? "review"
-                      : item.kind === "evidence"
-                        ? "proof"
-                        : "clock"
-                  }
-                />
-              </span>
               <div>
-                <span className="example-item-kind">
-                  {item.kind === "risk"
-                    ? "High priority"
-                    : item.kind === "evidence"
-                      ? "Evidence freshness"
-                      : item.kind === "review"
-                        ? "Independent review"
-                        : "Deadline passed"}
-                </span>
                 <h3>{item.title}</h3>
-                <p>
-                  {item.program} · revision {item.revision}
-                </p>
+                <p>{item.program}</p>
               </div>
-              <ProductIcon name="arrow" />
+              <span className="example-item-kind">
+                {item.kind === "risk"
+                  ? "High risk"
+                  : item.kind === "evidence"
+                    ? "Stale evidence"
+                    : item.kind === "review"
+                      ? "Review requested"
+                      : "Overdue"}
+              </span>
+              <span className="example-item-revision">
+                <span className="sr-only">Revision </span>
+                {String(item.revision).padStart(2, "0")}
+              </span>
             </article>
           ))}
         </div>
-        <div className="example-flow" aria-label="Workflow stages">
-          {["Scope", "Evidence", "Review", "Brief"].map((stage, index) => (
-            <span key={stage}>
-              <i>{index + 1}</i>
-              {stage}
-            </span>
-          ))}
-        </div>
         <p className="example-footnote">
-          Interactive illustration · fictional records evaluated {today}. No
-          customer data or approvals.
+          Sample records only. No customer data or approvals.
         </p>
       </div>
     </section>

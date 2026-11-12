@@ -13,7 +13,7 @@ const capabilities = [
     id: "playbooks",
     number: "01",
     icon: "grid",
-    title: "Begin with the next steps already mapped.",
+    title: "Start a review from a playbook.",
     text: "Choose a playbook for crypto matter screening, supplier oversight, access review, financial review or incident response. It creates linked risks, dependent tasks and a recurring review with you as the initial accountable owner.",
     bullets: [
       "Start unassessed, with no invented evidence",
@@ -25,7 +25,7 @@ const capabilities = [
     id: "changes",
     number: "02",
     icon: "change",
-    title: "Know what changed before the next decision.",
+    title: "Compare saved revisions.",
     text: "Compare two preserved program revisions to see added, changed and removed evidence, risks and actions. Inspect the saved actors, reasons and the effect on the work queue.",
     bullets: [
       "Stable record IDs keep reordering separate from edits",
@@ -37,7 +37,7 @@ const capabilities = [
     id: "calendar",
     number: "03",
     icon: "clock",
-    title: "Bring deadlines into the way your team works.",
+    title: "Export outstanding deadlines.",
     text: "Export open-action due dates from the selected portfolio page as an iCalendar file. Keep the program link close to each deadline so the current evidence and review status are easy to find.",
     bullets: [
       "One-time calendar snapshot, not a public subscription",
@@ -49,7 +49,7 @@ const capabilities = [
     id: "briefs",
     number: "04",
     icon: "proof",
-    title: "Finish with a management record people can follow.",
+    title: "Prepare a management brief.",
     text: "Use the portfolio inbox to focus on exceptions, then create a printable brief, sealed snapshot or spreadsheet-safe evidence request list from saved revisions.",
     bullets: [
       "Explicit program, revision and pagination scope",
@@ -63,14 +63,10 @@ export default function Product() {
     <div className="experience-page">
       <section className="product-page-intro wrap">
         <p className="product-eyebrow">Explore the product</p>
-        <h1>
-          A connected process.
-          <br />
-          <em>A clearer record.</em>
-        </h1>
+        <h1>The company workspace.</h1>
         <p className="product-lede">
-          Move from scattered requests to visible ownership, reviewed work and
-          management-ready evidence.
+          Collect source records, assign the work and keep a history of the
+          review. Here is what each part does.
         </p>
         <div className="product-actions">
           <Link className="btn btn-primary" href="/workspace">
@@ -113,8 +109,8 @@ export default function Product() {
       </section>
       <section className="product-final-cta wrap">
         <div>
-          <p className="product-eyebrow">Ready to evaluate fit?</p>
-          <h2>Scope the team, the work and the terms.</h2>
+          <p className="product-eyebrow">Company plans</p>
+          <h2>Work out the capacity for your team.</h2>
         </div>
         <div className="product-actions">
           <Link className="btn btn-primary" href="/plans#scope">
